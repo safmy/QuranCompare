@@ -26,8 +26,15 @@ const QuranManuscriptAnalysis = () => {
 
   const loadData = async () => {
     try {
-      setLoading(true);
-      const excelData = await window.fs.readFile('quran_manuscript.xlsx');
+      console.log("Attempting to fetch Excel file...");
+      const response = await fetch('/quran_manuscript.xlsx');
+      console.log("Fetch response:", response);
+      
+      if (!response.ok) {
+        console.error("Fetch failed with status:", response.status);
+        throw new Error(`Could not load Excel file (${response.status})`);
+      }
+      const excelData = await response.arrayBuffer();
       
       const workbook = XLSX.read(excelData, {
         cellStyles: true,
@@ -50,7 +57,7 @@ const QuranManuscriptAnalysis = () => {
       
       setLoading(false);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error("Error details:", error);
       setLoading(false);
     }
   };
