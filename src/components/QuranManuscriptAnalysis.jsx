@@ -30,7 +30,8 @@ const QuranManuscriptAnalysis = () => {
 
   useEffect(() => {
     // When comparator source changes, we need to recalculate statistics
-    if (Object.keys(uthmaniText).length > 0 && data.originalData.length > 0) {
+    if (data.originalData.length > 0) {
+      // Even without Uthmani text, we can still use other comparators
       const processedData = processQuranData(data.originalData);
       setData(processedData);
     }
@@ -41,20 +42,38 @@ const QuranManuscriptAnalysis = () => {
       setLoading(true);
       setLoadError(null);
 
-      // Load Uthmani text file
-      const uthmaniResponse = await fetch('/quran-uthmani.txt');
-      if (!uthmaniResponse.ok) {
-        throw new Error('Could not load the Uthmani text file. Please ensure "quran-uthmani.txt" is placed in the public directory.');
+      // Define paths with public URL base for production
+      const uthmaniPath = process.env.PUBLIC_URL + '/quran-uthmani.txt';
+      const excelPath = process.env.PUBLIC_URL + '/quran_manuscript.xlsx';
+
+      let uthmaniVerses = {};
+      try {
+        // Load Uthmani text file
+        const uthmaniResponse = await fetch(uthmaniPath);
+        if (uthmaniResponse.ok) {
+          const uthmaniContent = await uthmaniResponse.text();
+          uthmaniVerses = parseUthmaniText(uthmaniContent);
+          console.log("Uthmani text loaded successfully");
+        } else {
+          console.warn(`Could not load the Uthmani text file (${uthmaniPath}). Will proceed without it.`);
+          // If Uthmani text is not available, remove it from available comparators
+          setAvailableComparators(prev => prev.filter(c => c !== 'uthmani'));
+          // Switch to another comparator if Uthmani was selected
+          if (comparatorSource === 'uthmani') {
+            setComparatorSource('');  // Will be set to first manuscript later
+          }
+        }
+      } catch (error) {
+        console.error("Error loading Uthmani text:", error);
+        // Handle gracefully - continue without Uthmani text
       }
       
-      const uthmaniContent = await uthmaniResponse.text();
-      const uthmaniVerses = parseUthmaniText(uthmaniContent);
       setUthmaniText(uthmaniVerses);
       
-      // Load Excel file with manuscripts
-      const excelResponse = await fetch('/quran_manuscript.xlsx');
+      // Load Excel file with manuscripts - this is required
+      const excelResponse = await fetch(excelPath);
       if (!excelResponse.ok) {
-        throw new Error('Could not load the Excel file. Please ensure "quran_manuscript.xlsx" is placed in the public directory.');
+        throw new Error(`Could not load the Excel file (${excelPath}). Please ensure "quran_manuscript.xlsx" is placed in the public directory.`);
       }
       
       const arrayBuffer = await excelResponse.arrayBuffer();
@@ -99,32 +118,43 @@ const QuranManuscriptAnalysis = () => {
   };
 
   const parseUthmaniText = (text) => {
-    // Simple parser for the Uthmani text format
-    // This assumes each line is a verse, and we need to track sura/verse numbers
-    const verses = {};
-    let currentSura = 1;
-    let verseInSura = 1;
-    
-    // Split by lines
-    const lines = text.split('\n').filter(line => line.trim().length > 0);
-    
-    for (let i = 0; i < lines.length; i++) {
-      // Handle bismillah markers for new suras
-      if (i > 0 && lines[i].startsWith('بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ') && lines[i].length < 50) {
-        currentSura++;
-        verseInSura = 1;
-        // Skip bismillah line in counting except for Sura 1 (Al-Fatiha) and Sura 9 (At-Tawba)
-        if (currentSura !== 1 && currentSura !== 9) {
-          continue;
-        }
+    try {
+      // Simple parser for the Uthmani text format
+      // This assumes each line is a verse, and we need to track sura/verse numbers
+      const verses = {};
+      let currentSura = 1;
+      let verseInSura = 1;
+      
+      // Split by lines
+      const lines = text.split('\n').filter(line => line.trim().length > 0);
+      
+      if (lines.length === 0) {
+        console.error("Uthmani text file appears to be empty or contains no valid lines");
+        return {}; // Return empty object instead of failing
       }
       
-      const key = `${currentSura}:${verseInSura}`;
-      verses[key] = lines[i];
-      verseInSura++;
+      for (let i = 0; i < lines.length; i++) {
+        // Handle bismillah markers for new suras
+        if (i > 0 && lines[i].includes('بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ') && lines[i].length < 50) {
+          currentSura++;
+          verseInSura = 1;
+          // Skip bismillah line in counting except for Sura 1 (Al-Fatiha) and Sura 9 (At-Tawba)
+          if (currentSura !== 1 && currentSura !== 9) {
+            continue;
+          }
+        }
+        
+        const key = `${currentSura}:${verseInSura}`;
+        verses[key] = lines[i];
+        verseInSura++;
+      }
+      
+      console.log(`Successfully parsed Uthmani text with ${Object.keys(verses).length} verses`);
+      return verses;
+    } catch (error) {
+      console.error("Error parsing Uthmani text:", error);
+      return {}; // Return empty object instead of failing
     }
-    
-    return verses;
   };
 
   // Function to count Arabic letters (excluding spaces, diacritics, etc.)
@@ -143,13 +173,30 @@ const QuranManuscriptAnalysis = () => {
     // 2. For each Sura:Verse, determine the reference text based on selected comparator
     const refTexts = {};
     
-    if (comparatorSource === 'uthmani') {
+    if (comparatorSource === 'uthmani' && Object.keys(uthmaniText).length > 0) {
       // Use Uthmani text as reference
       Object.assign(refTexts, uthmaniText);
     } else {
       // Use selected manuscript from the Excel data as reference
+      // If comparatorSource is empty or invalid, find the most complete manuscript
+      let effectiveComparator = comparatorSource;
+      
+      if (!effectiveComparator || effectiveComparator === 'uthmani') {
+        // Find the manuscript with the most entries
+        const manuscriptCounts = _.countBy(rawData, 'Manuscript');
+        const mostCompleteManuscript = Object.entries(manuscriptCounts)
+          .sort((a, b) => b[1] - a[1])[0][0];
+        effectiveComparator = mostCompleteManuscript;
+        
+        // Update the state with the new comparator if needed
+        if (comparatorSource !== effectiveComparator) {
+          console.log(`Switching to ${effectiveComparator} as fallback comparator`);
+          setTimeout(() => setComparatorSource(effectiveComparator), 0);
+        }
+      }
+      
       for (const row of rawData) {
-        if (row.Manuscript === comparatorSource) {
+        if (row.Manuscript === effectiveComparator) {
           const key = `${row.Sura}:${row.Verse}`;
           refTexts[key] = row.Text || '';
         }
@@ -526,7 +573,9 @@ const QuranManuscriptAnalysis = () => {
               value={comparatorSource}
               onChange={(e) => setComparatorSource(e.target.value)}
             >
-              <option value="uthmani">Uthmani Text (Base)</option>
+              {availableComparators.includes('uthmani') && (
+                <option value="uthmani">Uthmani Text (Base)</option>
+              )}
               {availableComparators.filter(c => c !== 'uthmani').map(comp => (
                 <option key={comp} value={comp}>
                   {comp}
@@ -537,10 +586,15 @@ const QuranManuscriptAnalysis = () => {
           <div className="flex-grow">
             <p className="text-sm font-medium mb-1">Current Reference:</p>
             <div className="p-2 bg-gray-100 rounded">
-              {comparatorSource === 'uthmani' ? 
+              {comparatorSource === 'uthmani' && availableComparators.includes('uthmani') ? 
                 'Uthmani Text (from quran-uthmani.txt)' : 
-                `Manuscript: ${comparatorSource}`}
+                `Manuscript: ${comparatorSource || 'None selected'}`}
             </div>
+            {!availableComparators.includes('uthmani') && (
+              <p className="mt-2 text-sm text-yellow-600">
+                Note: Uthmani text file could not be loaded. Using manuscript text as reference.
+              </p>
+            )}
           </div>
         </div>
       </div>
