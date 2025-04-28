@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, ScatterChart, Scatter, ZAxis, PieChart, Pie, Cell } from 'recharts';
 import * as XLSX from 'xlsx';
 import _ from 'lodash';
 
@@ -18,28 +18,46 @@ const QuranManuscriptAnalysis = () => {
   const [selectedManuscript, setSelectedManuscript] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [referenceTexts, setReferenceTexts] = useState({});
+  const [uthmaniText, setUthmaniText] = useState({});
+  const [comparatorSource, setComparatorSource] = useState('uthmani'); // Default to Uthmani
+  const [availableComparators, setAvailableComparators] = useState(['uthmani']);
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
   useEffect(() => {
     loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    // When comparator source changes, we need to recalculate statistics
+    if (Object.keys(uthmaniText).length > 0 && data.originalData.length > 0) {
+      const processedData = processQuranData(data.originalData);
+      setData(processedData);
+    }
+  }, [comparatorSource]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       setLoadError(null);
-      console.log("Attempting to fetch Excel file...");
-      const response = await fetch('/quran_manuscript.xlsx');
-      console.log("Fetch response:", response);
-      
-      if (!response.ok) {
-        console.error("Fetch failed with status:", response.status);
-        throw new Error(`Could not load Excel file (${response.status})`);
+
+      // Load Uthmani text file
+      const uthmaniResponse = await fetch('/quran-uthmani.txt');
+      if (!uthmaniResponse.ok) {
+        throw new Error('Could not load the Uthmani text file. Please ensure "quran-uthmani.txt" is placed in the public directory.');
       }
       
-      const arrayBuffer = await response.arrayBuffer();
+      const uthmaniContent = await uthmaniResponse.text();
+      const uthmaniVerses = parseUthmaniText(uthmaniContent);
+      setUthmaniText(uthmaniVerses);
+      
+      // Load Excel file with manuscripts
+      const excelResponse = await fetch('/quran_manuscript.xlsx');
+      if (!excelResponse.ok) {
+        throw new Error('Could not load the Excel file. Please ensure "quran_manuscript.xlsx" is placed in the public directory.');
+      }
+      
+      const arrayBuffer = await excelResponse.arrayBuffer();
       
       const workbook = XLSX.read(new Uint8Array(arrayBuffer), {
         cellStyles: true,
@@ -60,6 +78,10 @@ const QuranManuscriptAnalysis = () => {
         throw new Error('No data found in the worksheet. Please check the Excel file format.');
       }
       
+      // Get list of manuscripts for comparator selection
+      const manuscripts = [...new Set(rawData.map(row => row.Manuscript))];
+      setAvailableComparators(['uthmani', ...manuscripts]);
+      
       // Process the data and prepare for visualization
       const processedData = processQuranData(rawData);
       setData(processedData);
@@ -70,18 +92,47 @@ const QuranManuscriptAnalysis = () => {
       
       setLoading(false);
     } catch (error) {
-      console.error("Error details:", error);
+      console.error('Error loading data:', error);
       setLoadError(error.message || 'Failed to load manuscript data');
       setLoading(false);
     }
+  };
+
+  const parseUthmaniText = (text) => {
+    // Simple parser for the Uthmani text format
+    // This assumes each line is a verse, and we need to track sura/verse numbers
+    const verses = {};
+    let currentSura = 1;
+    let verseInSura = 1;
+    
+    // Split by lines
+    const lines = text.split('\n').filter(line => line.trim().length > 0);
+    
+    for (let i = 0; i < lines.length; i++) {
+      // Handle bismillah markers for new suras
+      if (i > 0 && lines[i].startsWith('بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ') && lines[i].length < 50) {
+        currentSura++;
+        verseInSura = 1;
+        // Skip bismillah line in counting except for Sura 1 (Al-Fatiha) and Sura 9 (At-Tawba)
+        if (currentSura !== 1 && currentSura !== 9) {
+          continue;
+        }
+      }
+      
+      const key = `${currentSura}:${verseInSura}`;
+      verses[key] = lines[i];
+      verseInSura++;
+    }
+    
+    return verses;
   };
 
   // Function to count Arabic letters (excluding spaces, diacritics, etc.)
   const countArabicLetters = (text) => {
     if (!text || typeof text !== 'string') return 0;
     
-    // Remove asterisks, spaces, and common diacritics - fixed escape character
-    const cleanText = text.replace(/[*\s\u064B-\u0652]/g, '');
+    // Remove asterisks, spaces, and common diacritics
+    const cleanText = text.replace(/[\*\s\u064B-\u0652]/g, '');
     return cleanText.length;
   };
 
@@ -89,27 +140,44 @@ const QuranManuscriptAnalysis = () => {
     // 1. Group by Sura and Verse to create reference texts
     const groupedBySuraVerse = _.groupBy(rawData, row => `${row.Sura}:${row.Verse}`);
     
-    // 2. For each Sura:Verse, find the most complete text version as reference
+    // 2. For each Sura:Verse, determine the reference text based on selected comparator
     const refTexts = {};
     
-    for (const [key, group] of Object.entries(groupedBySuraVerse)) {
-      // Filter out texts with too many asterisks (incomplete texts)
-      const validTexts = group
-        .map(item => item.Text)
-        .filter(text => text && typeof text === 'string')
-        .filter(text => {
-          const asteriskCount = (text.match(/\*/g) || []).length;
-          const textLength = text.length;
-          return asteriskCount < textLength * 0.3; // Less than 30% asterisks
-        });
+    if (comparatorSource === 'uthmani') {
+      // Use Uthmani text as reference
+      Object.assign(refTexts, uthmaniText);
+    } else {
+      // Use selected manuscript from the Excel data as reference
+      for (const row of rawData) {
+        if (row.Manuscript === comparatorSource) {
+          const key = `${row.Sura}:${row.Verse}`;
+          refTexts[key] = row.Text || '';
+        }
+      }
       
-      if (validTexts.length > 0) {
-        // Find the most common text
-        const textCounts = _.countBy(validTexts);
-        const mostCommonText = Object.entries(textCounts)
-          .sort((a, b) => b[1] - a[1])[0][0];
-        
-        refTexts[key] = mostCommonText;
+      // If using a manuscript as comparator, but some verses are missing, 
+      // fill in gaps with most common text from other manuscripts
+      for (const [key, group] of Object.entries(groupedBySuraVerse)) {
+        if (!refTexts[key]) {
+          // Filter out texts with too many asterisks (incomplete texts)
+          const validTexts = group
+            .map(item => item.Text)
+            .filter(text => text && typeof text === 'string')
+            .filter(text => {
+              const asteriskCount = (text.match(/\*/g) || []).length;
+              const textLength = text.length;
+              return asteriskCount < textLength * 0.3; // Less than 30% asterisks
+            });
+          
+          if (validTexts.length > 0) {
+            // Find the most common text
+            const textCounts = _.countBy(validTexts);
+            const mostCommonText = Object.entries(textCounts)
+              .sort((a, b) => b[1] - a[1])[0][0];
+            
+            refTexts[key] = mostCommonText;
+          }
+        }
       }
     }
     
@@ -140,6 +208,7 @@ const QuranManuscriptAnalysis = () => {
         Verse: row.Verse,
         Manuscript: row.Manuscript,
         Text: manuscriptText,
+        ReferenceText: referenceVerseText,
         ManuscriptLetterCount: manuscriptLetterCount,
         ReferenceLetterCount: referenceLetterCount,
         Deviation: deviation,
@@ -227,7 +296,7 @@ const QuranManuscriptAnalysis = () => {
       
       if (letterCounts.length > 0) {
         const avgLetterCount = letterCounts.reduce((sum, count) => sum + count, 0) / letterCounts.length;
-        const referenceLetterCount = verseEntries[0].ReferenceLetterCount;
+        const referenceLetterCount = countArabicLetters(refTexts[key] || '');
         
         // Calculate standard deviation
         const squaredDiffs = letterCounts.map(count => Math.pow(count - avgLetterCount, 2));
@@ -425,9 +494,10 @@ const QuranManuscriptAnalysis = () => {
               <li>File should be named <code className="bg-gray-100 px-1 rounded">quran_manuscript.xlsx</code></li>
               <li>Must contain a worksheet named <code className="bg-gray-100 px-1 rounded">manuscript_data</code></li>
               <li>Worksheet should have columns: Sura, Verse, Manuscript, Text</li>
+              <li>The <code className="bg-gray-100 px-1 rounded">quran-uthmani.txt</code> file should be in the public directory</li>
             </ul>
             <p className="mt-4">
-              Place the file in the <code className="bg-gray-100 px-1 rounded">public</code> folder and refresh the page.
+              Place the files in the <code className="bg-gray-100 px-1 rounded">public</code> folder and refresh the page.
             </p>
           </div>
           <button 
@@ -444,6 +514,36 @@ const QuranManuscriptAnalysis = () => {
   return (
     <div className="p-4 bg-gray-50 rounded-lg shadow">
       <h1 className="text-2xl font-bold mb-4 text-center">Quranic Manuscript Letter Count Analysis</h1>
+      
+      {/* Comparator Selection */}
+      <div className="mb-6 bg-white p-4 rounded shadow">
+        <h2 className="text-lg font-semibold mb-2">Reference Text Selection</h2>
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-grow">
+            <label className="block text-sm font-medium mb-1">Select Comparison Source:</label>
+            <select 
+              className="w-full p-2 border rounded"
+              value={comparatorSource}
+              onChange={(e) => setComparatorSource(e.target.value)}
+            >
+              <option value="uthmani">Uthmani Text (Base)</option>
+              {availableComparators.filter(c => c !== 'uthmani').map(comp => (
+                <option key={comp} value={comp}>
+                  {comp}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-grow">
+            <p className="text-sm font-medium mb-1">Current Reference:</p>
+            <div className="p-2 bg-gray-100 rounded">
+              {comparatorSource === 'uthmani' ? 
+                'Uthmani Text (from quran-uthmani.txt)' : 
+                `Manuscript: ${comparatorSource}`}
+            </div>
+          </div>
+        </div>
+      </div>
       
       {/* Tab navigation */}
       <div className="flex mb-4 border-b overflow-x-auto">
@@ -510,7 +610,7 @@ const QuranManuscriptAnalysis = () => {
           </div>
           
           <div className="bg-white p-4 rounded shadow mb-6">
-            <h2 className="text-lg font-semibold mb-2">Top 10 Manuscripts by Deviation</h2>
+            <h2 className="text-lg font-semibold mb-2">Top 10 Manuscripts by Deviation from {comparatorSource === 'uthmani' ? 'Uthmani Text' : comparatorSource}</h2>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={manuscriptLetterDeviation.slice(0, 10)}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -537,6 +637,96 @@ const QuranManuscriptAnalysis = () => {
                 <Line type="monotone" dataKey="AvgDeviation" name="Average Deviation" stroke="#82ca9d" />
               </LineChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+      
+      {/* Verse Details Tab */}
+      {activeTab === 'verses' && (
+        <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block mb-1 font-medium">Select Sura</label>
+              <select 
+                className="w-full p-2 border rounded"
+                value={selectedSura}
+                onChange={(e) => setSelectedSura(parseInt(e.target.value))}
+              >
+                {data.suraStats.map(sura => (
+                  <option key={sura.Sura} value={sura.Sura}>
+                    Sura {sura.Sura}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block mb-1 font-medium">Select Manuscript</label>
+              <select 
+                className="w-full p-2 border rounded"
+                value={selectedManuscript}
+                onChange={(e) => setSelectedManuscript(e.target.value)}
+              >
+                {data.manuscriptStats.map(ms => (
+                  <option key={ms.Manuscript} value={ms.Manuscript}>
+                    {ms.Manuscript}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          
+          <div className="bg-white p-4 rounded shadow mb-6">
+            <h2 className="text-lg font-semibold mb-2">Verse Comparison in Sura {selectedSura} (compared to {comparatorSource === 'uthmani' ? 'Uthmani Text' : comparatorSource})</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={filteredManuscriptVerses}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="Verse" />
+                <YAxis />
+                <Tooltip formatter={(value, name) => {
+                  if (name === 'ManuscriptLetterCount') return [value, 'Manuscript Letters'];
+                  if (name === 'ReferenceLetterCount') return [value, 'Reference Letters'];
+                  return [value, name];
+                }} />
+                <Legend />
+                <Bar dataKey="ManuscriptLetterCount" name="Manuscript Letters" fill="#8884d8" />
+                <Bar dataKey="ReferenceLetterCount" name="Reference Letters" fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          
+          <div className="bg-white p-4 rounded shadow">
+            <h2 className="text-lg font-semibold mb-2">Detailed Verse Comparison</h2>
+            <div className="max-h-96 overflow-y-auto">
+              <table className="w-full">
+                <thead>
+                  <tr>
+                    <th className="px-2 py-1 border-b">Verse</th>
+                    <th className="px-2 py-1 border-b">Manuscript Text</th>
+                    <th className="px-2 py-1 border-b">Reference Text</th>
+                    <th className="px-2 py-1 border-b">Manuscript Letters</th>
+                    <th className="px-2 py-1 border-b">Reference Letters</th>
+                    <th className="px-2 py-1 border-b">Deviation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredManuscriptVerses.map(verse => {
+                    const refKey = `${verse.Sura}:${verse.Verse}`;
+                    const refText = referenceTexts[refKey] || '';
+                    
+                    return (
+                      <tr key={`${verse.Sura}:${verse.Verse}`}>
+                        <td className="px-2 py-1 text-center">{verse.Verse}</td>
+                        <td className="px-2 py-1 text-right" style={{ direction: 'rtl' }}>{verse.Text}</td>
+                        <td className="px-2 py-1 text-right" style={{ direction: 'rtl' }}>{refText}</td>
+                        <td className="px-2 py-1 text-center">{verse.ManuscriptLetterCount}</td>
+                        <td className="px-2 py-1 text-center">{verse.ReferenceLetterCount}</td>
+                        <td className="px-2 py-1 text-center">{verse.Deviation !== null ? (verse.Deviation > 0 ? `+${verse.Deviation}` : verse.Deviation) : 'N/A'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -799,98 +989,8 @@ const QuranManuscriptAnalysis = () => {
           </div>
         </div>
       )}
-      
-      {/* Verse Details Tab */}
-      {activeTab === 'verses' && (
-        <div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block mb-1 font-medium">Select Sura</label>
-              <select 
-                className="w-full p-2 border rounded"
-                value={selectedSura}
-                onChange={(e) => setSelectedSura(parseInt(e.target.value))}
-              >
-                {data.suraStats.map(sura => (
-                  <option key={sura.Sura} value={sura.Sura}>
-                    Sura {sura.Sura}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block mb-1 font-medium">Select Manuscript</label>
-              <select 
-                className="w-full p-2 border rounded"
-                value={selectedManuscript}
-                onChange={(e) => setSelectedManuscript(e.target.value)}
-              >
-                {data.manuscriptStats.map(ms => (
-                  <option key={ms.Manuscript} value={ms.Manuscript}>
-                    {ms.Manuscript}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          
-          <div className="bg-white p-4 rounded shadow mb-6">
-            <h2 className="text-lg font-semibold mb-2">Verse Comparison in Sura {selectedSura}</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={filteredManuscriptVerses}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Verse" />
-                <YAxis />
-                <Tooltip formatter={(value, name) => {
-                  if (name === 'ManuscriptLetterCount') return [value, 'Manuscript Letters'];
-                  if (name === 'ReferenceLetterCount') return [value, 'Reference Letters'];
-                  return [value, name];
-                }} />
-                <Legend />
-                <Bar dataKey="ManuscriptLetterCount" name="Manuscript Letters" fill="#8884d8" />
-                <Bar dataKey="ReferenceLetterCount" name="Reference Letters" fill="#82ca9d" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          
-          <div className="bg-white p-4 rounded shadow">
-            <h2 className="text-lg font-semibold mb-2">Detailed Verse Comparison</h2>
-            <div className="max-h-96 overflow-y-auto">
-              <table className="w-full">
-                <thead>
-                  <tr>
-                    <th className="px-2 py-1 border-b">Verse</th>
-                    <th className="px-2 py-1 border-b">Manuscript Text</th>
-                    <th className="px-2 py-1 border-b">Reference Text</th>
-                    <th className="px-2 py-1 border-b">Manuscript Letters</th>
-                    <th className="px-2 py-1 border-b">Reference Letters</th>
-                    <th className="px-2 py-1 border-b">Deviation</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredManuscriptVerses.map(verse => {
-                    const refKey = `${verse.Sura}:${verse.Verse}`;
-                    const refText = referenceTexts[refKey] || '';
-                    
-                    return (
-                      <tr key={`${verse.Sura}:${verse.Verse}`}>
-                        <td className="px-2 py-1 text-center">{verse.Verse}</td>
-                        <td className="px-2 py-1 text-right" style={{ direction: 'rtl' }}>{verse.Text}</td>
-                        <td className="px-2 py-1 text-right" style={{ direction: 'rtl' }}>{refText}</td>
-                        <td className="px-2 py-1 text-center">{verse.ManuscriptLetterCount}</td>
-                        <td className="px-2 py-1 text-center">{verse.ReferenceLetterCount}</td>
-                        <td className="px-2 py-1 text-center">{verse.Deviation !== null ? (verse.Deviation > 0 ? `+${verse.Deviation}` : verse.Deviation) : 'N/A'}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-export default QuranManuscriptAnalysis;
+export default QuranManuscriptAnalysis; 
