@@ -21,8 +21,63 @@ const QuranManuscriptAnalysis = () => {
   const [uthmaniText, setUthmaniText] = useState({});
   const [comparatorSource, setComparatorSource] = useState('uthmani'); // Default to Uthmani
   const [availableComparators, setAvailableComparators] = useState(['uthmani']);
+  // New state for disjointed letters tab
+  const [selectedDisjointedLetters, setSelectedDisjointedLetters] = useState('');
+  const [highlightedLetterIndex, setHighlightedLetterIndex] = useState(-1);
+  const [disjointedLetterCounts, setDisjointedLetterCounts] = useState({});
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+  
+  // Define the disjointed letters (Muqatta'at) by Sura
+  const disjointedLettersBySura = {
+    2: "الم", // Alif Lam Meem
+    3: "الم",
+    7: "المص", // Alif Lam Meem Saad
+    10: "الر", // Alif Lam Ra
+    11: "الر",
+    12: "الر",
+    13: "المر", // Alif Lam Meem Ra
+    14: "الر",
+    15: "الر",
+    19: "كهيعص", // Kaf Ha Ya Ain Saad
+    20: "طه", // Ta Ha
+    26: "طسم", // Ta Seen Meem
+    27: "طس", // Ta Seen
+    28: "طسم",
+    29: "الم",
+    30: "الم",
+    31: "الم",
+    32: "الم",
+    36: "يس", // Ya Seen
+    38: "ص", // Saad
+    40: "حم", // Ha Meem
+    41: "حم",
+    42: "حم عسق", // Ha Meem Ain Seen Qaf
+    43: "حم",
+    44: "حم",
+    45: "حم",
+    46: "حم",
+    50: "ق", // Qaf
+    68: "ن" // Noon
+  };
+
+  // Letters to use for coloring
+  const letterColors = {
+    'ا': '#FF5733', // Alif - Red
+    'ل': '#33FF57', // Lam - Green
+    'م': '#3357FF', // Meem - Blue
+    'ص': '#FF33A1', // Saad - Pink
+    'ر': '#A133FF', // Ra - Purple
+    'ك': '#33FFF6', // Kaf - Cyan
+    'ه': '#FFD433', // Ha - Yellow
+    'ي': '#FF8333', // Ya - Orange
+    'ع': '#33FFB7', // Ain - Teal
+    'ط': '#7BFF33', // Ta - Lime
+    'س': '#33B4FF', // Seen - Light Blue
+    'ح': '#FF3357', // Ha - Light Red
+    'ق': '#9A33FF', // Qaf - Violet
+    'ن': '#FF5733'  // Noon - Same as Alif for now
+  };
 
   useEffect(() => {
     loadData();
@@ -36,6 +91,97 @@ const QuranManuscriptAnalysis = () => {
       setData(processedData);
     }
   }, [comparatorSource]);
+
+  useEffect(() => {
+    // When selectedSura changes, update the selected disjointed letters
+    if (disjointedLettersBySura[selectedSura]) {
+      setSelectedDisjointedLetters(disjointedLettersBySura[selectedSura]);
+      // Reset highlighted letter index
+      setHighlightedLetterIndex(-1);
+      // Count the occurrences of each disjointed letter in the selected sura
+      countDisjointedLetters(selectedSura);
+    } else {
+      setSelectedDisjointedLetters('');
+      setDisjointedLetterCounts({});
+    }
+  }, [selectedSura, data.letterStats, referenceTexts]);
+
+  // Function to count occurrences of disjointed letters in a sura
+  const countDisjointedLetters = (sura) => {
+    if (!disjointedLettersBySura[sura]) return;
+    
+    const letters = disjointedLettersBySura[sura].split('');
+    const letterCounts = {};
+    
+    // Initialize the count for each letter
+    letters.forEach(letter => {
+      letterCounts[letter] = 0;
+    });
+    
+    // Get all verses for this sura
+    const suraVerses = Object.keys(referenceTexts)
+      .filter(key => key.startsWith(`${sura}:`))
+      .map(key => referenceTexts[key]);
+    
+    // Count each letter in all verses of the sura
+    suraVerses.forEach(verse => {
+      if (!verse) return;
+      
+      letters.forEach(letter => {
+        // Count occurrences of this letter in the verse (excluding diacritics)
+        const regex = new RegExp(letter, 'g');
+        const matches = verse.match(regex);
+        letterCounts[letter] += matches ? matches.length : 0;
+      });
+    });
+    
+    setDisjointedLetterCounts(letterCounts);
+  };
+
+  // Function to highlight a specific disjointed letter
+  const highlightLetter = (letterIndex) => {
+    setHighlightedLetterIndex(letterIndex);
+  };
+
+  // Function to get the text with highlighted disjointed letters
+  const getHighlightedText = (text, letters) => {
+    if (!text || !letters) return text;
+    
+    // Convert text to array for easier manipulation
+    const textArray = text.split('');
+    
+    // Create a new array with spans for highlighted letters
+    const highlightedText = [];
+    
+    textArray.forEach((char, index) => {
+      if (letters.includes(char)) {
+        // Find the position of this letter in the disjointed letters string
+        const letterIndex = letters.indexOf(char);
+        const isHighlighted = highlightedLetterIndex === letterIndex || highlightedLetterIndex === -1;
+        
+        // Add with appropriate styling
+        highlightedText.push(
+          <span 
+            key={index} 
+            style={{ 
+              color: letterColors[char] || 'inherit',
+              backgroundColor: isHighlighted ? 'rgba(255, 255, 0, 0.3)' : 'transparent',
+              padding: '0 2px',
+              borderRadius: '2px',
+              fontWeight: isHighlighted ? 'bold' : 'normal'
+            }}
+          >
+            {char}
+          </span>
+        );
+      } else {
+        // Regular character
+        highlightedText.push(char);
+      }
+    });
+    
+    return highlightedText;
+  };
 
   const loadData = async () => {
     try {
@@ -587,7 +733,7 @@ const QuranManuscriptAnalysis = () => {
             <p className="text-sm font-medium mb-1">Current Reference:</p>
             <div className="p-2 bg-gray-100 rounded">
               {comparatorSource === 'uthmani' && availableComparators.includes('uthmani') ? 
-                'Uthmani Text (from quran-uthmani.txt)' : 
+                'Manuscript: Uthmani' : 
                 `Manuscript: ${comparatorSource || 'None selected'}`}
             </div>
             {!availableComparators.includes('uthmani') && (
@@ -620,10 +766,16 @@ const QuranManuscriptAnalysis = () => {
           Manuscript Analysis
         </button>
         <button 
-          className={`px-4 py-2 ${activeTab === 'verses' ? 'bg-blue-500 text-white' : 'bg-gray-200'} rounded-t`}
+          className={`px-4 py-2 mr-2 ${activeTab === 'verses' ? 'bg-blue-500 text-white' : 'bg-gray-200'} rounded-t`}
           onClick={() => setActiveTab('verses')}
         >
           Verse Details
+        </button>
+        <button 
+          className={`px-4 py-2 ${activeTab === 'disjointedLetters' ? 'bg-blue-500 text-white' : 'bg-gray-200'} rounded-t`}
+          onClick={() => setActiveTab('disjointedLetters')}
+        >
+          Disjointed Letters
         </button>
       </div>
       
@@ -1039,6 +1191,177 @@ const QuranManuscriptAnalysis = () => {
                   <Line type="monotone" dataKey="AverageDeviation" name="Avg. Deviation" stroke="#8884d8" />
                 </LineChart>
               </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* New Disjointed Letters Tab */}
+      {activeTab === 'disjointedLetters' && (
+        <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block mb-1 font-medium">Select Sura</label>
+              <select 
+                className="w-full p-2 border rounded"
+                value={selectedSura}
+                onChange={(e) => setSelectedSura(parseInt(e.target.value))}
+              >
+                {Object.keys(disjointedLettersBySura).map(suraNumber => (
+                  <option key={suraNumber} value={suraNumber}>
+                    Sura {suraNumber} - {disjointedLettersBySura[suraNumber]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block mb-1 font-medium">Select Manuscript</label>
+              <select 
+                className="w-full p-2 border rounded"
+                value={selectedManuscript}
+                onChange={(e) => setSelectedManuscript(e.target.value)}
+              >
+                {data.manuscriptStats.map(ms => (
+                  <option key={ms.Manuscript} value={ms.Manuscript}>
+                    {ms.Manuscript}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          
+          <div className="bg-white p-4 rounded shadow mb-6">
+            <h2 className="text-lg font-semibold mb-2">
+              Disjointed Letters in Sura {selectedSura}: {selectedDisjointedLetters}
+            </h2>
+            
+            <div className="flex flex-wrap gap-4 mb-4 justify-center">
+              {selectedDisjointedLetters.split('').map((letter, index) => (
+                <button
+                  key={index}
+                  className="px-6 py-3 text-2xl rounded border"
+                  style={{
+                    backgroundColor: highlightedLetterIndex === index ? 'rgba(255, 255, 0, 0.3)' : 'white',
+                    color: letterColors[letter] || 'black',
+                    borderColor: letterColors[letter] || 'black',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => highlightLetter(index)}
+                >
+                  {letter}
+                  <span className="block text-sm mt-1">
+                    {disjointedLetterCounts[letter] || 0} occurrences
+                  </span>
+                </button>
+              ))}
+              {selectedDisjointedLetters && (
+                <button
+                  className="px-6 py-3 text-lg rounded border"
+                  style={{
+                    backgroundColor: highlightedLetterIndex === -1 ? 'rgba(255, 255, 0, 0.3)' : 'white',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => highlightLetter(-1)}
+                >
+                  Show All
+                </button>
+              )}
+            </div>
+            
+            <div className="bg-gray-100 p-3 rounded mb-4 text-center">
+              <p className="text-sm">
+                Click on a letter above to highlight all occurrences of that letter in the text below.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold mb-2">Reference Text (Uthmani)</h3>
+                <div
+                  className="p-4 bg-gray-50 rounded shadow max-h-96 overflow-y-auto"
+                  style={{ direction: 'rtl' }}
+                >
+                  {filteredVerseStats.map(verse => {
+                    const refKey = `${verse.Sura}:${verse.Verse}`;
+                    const refText = referenceTexts[refKey] || '';
+                    
+                    return (
+                      <div key={`ref-${verse.Sura}:${verse.Verse}`} className="mb-3 pb-2 border-b">
+                        <div className="text-gray-600 mb-1 text-sm">{verse.Verse}:</div>
+                        <div className="text-lg">
+                          {getHighlightedText(refText, selectedDisjointedLetters)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold mb-2">Manuscript: {selectedManuscript}</h3>
+                <div
+                  className="p-4 bg-gray-50 rounded shadow max-h-96 overflow-y-auto"
+                  style={{ direction: 'rtl' }}
+                >
+                  {filteredManuscriptVerses.map(verse => (
+                    <div key={`ms-${verse.Sura}:${verse.Verse}`} className="mb-3 pb-2 border-b">
+                      <div className="text-gray-600 mb-1 text-sm">{verse.Verse}:</div>
+                      <div className="text-lg">
+                        {getHighlightedText(verse.Text, selectedDisjointedLetters)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6">
+              <h3 className="font-semibold mb-2">Color Legend</h3>
+              <div className="flex flex-wrap gap-3">
+                {selectedDisjointedLetters.split('').map((letter, index) => (
+                  <div 
+                    key={index}
+                    className="px-3 py-1 rounded"
+                    style={{ backgroundColor: letterColors[letter] + '30', color: letterColors[letter] }}
+                  >
+                    {letter} - {letterColors[letter]}
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="mt-6">
+              <h3 className="font-semibold mb-2">Statistics</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p><span className="font-medium">Total Disjointed Letters:</span> {selectedDisjointedLetters.length}</p>
+                  <p><span className="font-medium">Total Occurrences:</span> {
+                    Object.values(disjointedLetterCounts).reduce((total, count) => total + count, 0)
+                  }</p>
+                </div>
+                <div>
+                  <ResponsiveContainer width="100%" height={150}>
+                    <BarChart data={
+                      Object.entries(disjointedLetterCounts).map(([letter, count]) => ({
+                        letter,
+                        count
+                      }))
+                    }>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="letter" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="count" name="Occurrences">
+                        {
+                          Object.entries(disjointedLetterCounts).map(([letter, _], index) => (
+                            <Cell key={`cell-${index}`} fill={letterColors[letter]} />
+                          ))
+                        }
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </div>
           </div>
         </div>
