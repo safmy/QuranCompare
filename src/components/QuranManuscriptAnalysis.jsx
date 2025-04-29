@@ -1335,44 +1335,51 @@ const QuranManuscriptAnalysis = () => {
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-semibold mb-2">Reference Text ({comparatorSource})</h3>
-                <div
-                  className="p-4 bg-gray-50 rounded shadow max-h-96 overflow-y-auto"
-                  style={{ direction: 'rtl' }}
-                >
-                  {filteredVerseStats.map(verse => {
-                    const refKey = `${verse.Sura}:${verse.Verse}`;
-                    const refText = referenceTexts[refKey] || '';
-                    
-                    return (
-                      <div key={`ref-${verse.Sura}:${verse.Verse}`} className="mb-3 pb-2 border-b">
-                        <div className="text-gray-600 mb-1 text-sm">{verse.Verse}:</div>
-                        <div className="text-lg">
-                          {getHighlightedText(refText, selectedDisjointedLetters)}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="font-semibold mb-2">Manuscript: {selectedManuscript}</h3>
-                <div
-                  className="p-4 bg-gray-50 rounded shadow max-h-96 overflow-y-auto"
-                  style={{ direction: 'rtl' }}
-                >
-                  {filteredManuscriptVerses.map(verse => (
-                    <div key={`ms-${verse.Sura}:${verse.Verse}`} className="mb-3 pb-2 border-b">
-                      <div className="text-gray-600 mb-1 text-sm">{verse.Verse}:</div>
-                      <div className="text-lg">
-                        {getHighlightedText(verse.Text, selectedDisjointedLetters)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            <div className="bg-white p-4 rounded shadow">
+              <h3 className="font-semibold mb-2">Verse by Verse Comparison</h3>
+              <div
+                className="overflow-y-auto max-h-[30rem]"
+                style={{ direction: 'rtl' }}
+              >
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="px-2 py-1 text-center" style={{ width: '5%' }}>Verse</th>
+                      <th className="px-2 py-1" style={{ width: '47.5%' }}>Reference Text ({comparatorSource})</th>
+                      <th className="px-2 py-1" style={{ width: '47.5%' }}>Manuscript: {selectedManuscript}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredVerseStats.map(verse => {
+                      const refKey = `${verse.Sura}:${verse.Verse}`;
+                      const refText = referenceTexts[refKey] || '';
+                      
+                      // Find the corresponding manuscript verse
+                      const manuscriptVerse = filteredManuscriptVerses.find(
+                        mv => mv.Verse === verse.Verse
+                      );
+                      const manuscriptText = manuscriptVerse ? manuscriptVerse.Text : '';
+                      
+                      return (
+                        <tr key={`verse-${verse.Sura}:${verse.Verse}`} className="border-b">
+                          <td className="px-2 py-3 text-center align-top">
+                            <div className="text-gray-600">{verse.Verse}</div>
+                          </td>
+                          <td className="px-2 py-3 text-right align-top border-r">
+                            <div className="text-lg">
+                              {getHighlightedText(refText, selectedDisjointedLetters)}
+                            </div>
+                          </td>
+                          <td className="px-2 py-3 text-right align-top">
+                            <div className="text-lg">
+                              {getHighlightedText(manuscriptText, selectedDisjointedLetters)}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
             
