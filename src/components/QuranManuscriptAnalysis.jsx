@@ -145,7 +145,7 @@ const QuranManuscriptAnalysis = () => {
 
   // Function to count disjointed letters across all manuscripts
   const countDisjointedLettersAcrossManuscripts = (sura) => {
-    if (!disjointedLettersBySura[sura]) return [];
+    if (!disjointedLettersBySura[sura]) return { chartData: [], manuscripts: [] };
     
     const letters = disjointedLettersBySura[sura].split('');
     const manuscriptLetterCounts = {};
@@ -174,7 +174,9 @@ const QuranManuscriptAnalysis = () => {
         letters.forEach(letter => {
           const regex = new RegExp(letter, 'g');
           const matches = entry.Text.match(regex);
-          manuscriptLetterCounts[entry.Manuscript][letter] += matches ? matches.length : 0;
+          if (manuscriptLetterCounts[entry.Manuscript]) {
+            manuscriptLetterCounts[entry.Manuscript][letter] += matches ? matches.length : 0;
+          }
         });
       });
     
@@ -186,7 +188,11 @@ const QuranManuscriptAnalysis = () => {
       };
       
       uniqueManuscripts.forEach(manuscript => {
-        letterData[manuscript] = manuscriptLetterCounts[manuscript][letter];
+        if (manuscriptLetterCounts[manuscript]) {
+          letterData[manuscript] = manuscriptLetterCounts[manuscript][letter];
+        } else {
+          letterData[manuscript] = 0;
+        }
       });
       
       chartData.push(letterData);
@@ -1396,28 +1402,39 @@ const QuranManuscriptAnalysis = () => {
                 </div>
                 <div>
                   <h4 className="font-medium mb-2">Letter Distribution Across Manuscripts</h4>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart 
-                      data={countDisjointedLettersAcrossManuscripts(selectedSura).chartData}
-                      layout="vertical"
-                      margin={{left: 50}}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis type="category" dataKey="letter" width={50} />
-                      <Tooltip />
-                      <Legend />
-                      {countDisjointedLettersAcrossManuscripts(selectedSura).manuscripts.map((manuscript, index) => (
-                        <Bar 
-                          key={manuscript} 
-                          dataKey={manuscript} 
-                          name={manuscript.length > 20 ? manuscript.substring(0, 20) + '...' : manuscript}
-                          fill={COLORS[index % COLORS.length]} 
-                          stackId="stack" 
-                        />
-                      ))}
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {(() => {
+                    // Calculate data only once
+                    const manuscriptData = countDisjointedLettersAcrossManuscripts(selectedSura);
+                    
+                    return (
+                      manuscriptData.chartData.length > 0 && manuscriptData.manuscripts.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                          <BarChart 
+                            data={manuscriptData.chartData}
+                            layout="vertical"
+                            margin={{left: 50}}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" />
+                            <YAxis type="category" dataKey="letter" width={50} />
+                            <Tooltip />
+                            <Legend />
+                            {manuscriptData.manuscripts.map((manuscript, index) => (
+                              <Bar 
+                                key={manuscript} 
+                                dataKey={manuscript} 
+                                name={manuscript.length > 20 ? manuscript.substring(0, 20) + '...' : manuscript}
+                                fill={COLORS[index % COLORS.length]} 
+                                stackId="stack" 
+                              />
+                            ))}
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <p>No manuscript data available for this sura.</p>
+                      )
+                    );
+                  })()}
                 </div>
               </div>
             </div>
