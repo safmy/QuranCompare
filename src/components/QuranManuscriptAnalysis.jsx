@@ -143,6 +143,61 @@ const QuranManuscriptAnalysis = () => {
     setHighlightedLetterIndex(letterIndex);
   };
 
+  // Function to count disjointed letters across all manuscripts
+  const countDisjointedLettersAcrossManuscripts = (sura) => {
+    if (!disjointedLettersBySura[sura]) return [];
+    
+    const letters = disjointedLettersBySura[sura].split('');
+    const manuscriptLetterCounts = {};
+    
+    // Get all manuscripts that have verses from this sura
+    const manuscriptsWithSura = data.letterStats
+      .filter(entry => entry.Sura === sura)
+      .map(entry => entry.Manuscript);
+    
+    const uniqueManuscripts = [...new Set(manuscriptsWithSura)];
+    
+    // Initialize counts for each manuscript
+    uniqueManuscripts.forEach(manuscript => {
+      manuscriptLetterCounts[manuscript] = {};
+      letters.forEach(letter => {
+        manuscriptLetterCounts[manuscript][letter] = 0;
+      });
+    });
+    
+    // Count each letter in each manuscript's verses for this sura
+    data.letterStats
+      .filter(entry => entry.Sura === sura)
+      .forEach(entry => {
+        if (!entry.Text) return;
+        
+        letters.forEach(letter => {
+          const regex = new RegExp(letter, 'g');
+          const matches = entry.Text.match(regex);
+          manuscriptLetterCounts[entry.Manuscript][letter] += matches ? matches.length : 0;
+        });
+      });
+    
+    // Format the data for the chart
+    const chartData = [];
+    letters.forEach(letter => {
+      const letterData = {
+        letter,
+      };
+      
+      uniqueManuscripts.forEach(manuscript => {
+        letterData[manuscript] = manuscriptLetterCounts[manuscript][letter];
+      });
+      
+      chartData.push(letterData);
+    });
+    
+    return {
+      chartData,
+      manuscripts: uniqueManuscripts
+    };
+  };
+
   // Function to get the text with highlighted disjointed letters
   const getHighlightedText = (text, letters) => {
     if (!text || !letters) return text;
@@ -1276,7 +1331,7 @@ const QuranManuscriptAnalysis = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h3 className="font-semibold mb-2">Reference Text (Uthmani)</h3>
+                <h3 className="font-semibold mb-2">Reference Text ({comparatorSource})</h3>
                 <div
                   className="p-4 bg-gray-50 rounded shadow max-h-96 overflow-y-auto"
                   style={{ direction: 'rtl' }}
@@ -1332,32 +1387,35 @@ const QuranManuscriptAnalysis = () => {
             
             <div className="mt-6">
               <h3 className="font-semibold mb-2">Statistics</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <p><span className="font-medium">Total Disjointed Letters:</span> {selectedDisjointedLetters.length}</p>
-                  <p><span className="font-medium">Total Occurrences:</span> {
+                  <p><span className="font-medium">Total Occurrences in Reference Text:</span> {
                     Object.values(disjointedLetterCounts).reduce((total, count) => total + count, 0)
                   }</p>
                 </div>
                 <div>
-                  <ResponsiveContainer width="100%" height={150}>
-                    <BarChart data={
-                      Object.entries(disjointedLetterCounts).map(([letter, count]) => ({
-                        letter,
-                        count
-                      }))
-                    }>
+                  <h4 className="font-medium mb-2">Letter Distribution Across Manuscripts</h4>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart 
+                      data={countDisjointedLettersAcrossManuscripts(selectedSura).chartData}
+                      layout="vertical"
+                      margin={{left: 50}}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="letter" />
-                      <YAxis />
+                      <XAxis type="number" />
+                      <YAxis type="category" dataKey="letter" width={50} />
                       <Tooltip />
-                      <Bar dataKey="count" name="Occurrences">
-                        {
-                          Object.entries(disjointedLetterCounts).map(([letter, _], index) => (
-                            <Cell key={`cell-${index}`} fill={letterColors[letter]} />
-                          ))
-                        }
-                      </Bar>
+                      <Legend />
+                      {countDisjointedLettersAcrossManuscripts(selectedSura).manuscripts.map((manuscript, index) => (
+                        <Bar 
+                          key={manuscript} 
+                          dataKey={manuscript} 
+                          name={manuscript.length > 20 ? manuscript.substring(0, 20) + '...' : manuscript}
+                          fill={COLORS[index % COLORS.length]} 
+                          stackId="stack" 
+                        />
+                      ))}
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
