@@ -25,6 +25,8 @@ const QuranManuscriptAnalysis = () => {
   const [selectedDisjointedLetters, setSelectedDisjointedLetters] = useState('');
   const [highlightedLetterIndex, setHighlightedLetterIndex] = useState(-1);
   const [disjointedLetterCounts, setDisjointedLetterCounts] = useState({});
+  // Add a toggle for letter counts source
+  const [showManuscriptCounts, setShowManuscriptCounts] = useState(true);
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
   
@@ -728,6 +730,87 @@ const QuranManuscriptAnalysis = () => {
   const deviationStats = calculateStatistics(allDeviations);
   const absDeviationStats = calculateStatistics(allAbsDeviations);
 
+  // Function to count the occurrences of a specific letter in a text
+  const countLetterInText = (text, letter) => {
+    if (!text || !letter) return 0;
+    const regex = new RegExp(letter, 'g');
+    const matches = text.match(regex);
+    return matches ? matches.length : 0;
+  };
+
+  // Function to calculate statistical measures for letter distributions
+  const calculateLetterStats = (sura) => {
+    if (!disjointedLettersBySura[sura]) return {};
+    
+    const letters = disjointedLettersBySura[sura].split('');
+    const stats = {};
+    
+    // Initialize stats object for each letter
+    letters.forEach(letter => {
+      stats[letter] = {
+        mean: 0,
+        mode: 0,
+        modeCount: 0,
+        counts: []
+      };
+    });
+    
+    // Collect counts for each manuscript
+    const manuscriptsWithSura = data.letterStats
+      .filter(entry => entry.Sura === sura)
+      .map(entry => entry.Manuscript);
+    
+    const uniqueManuscripts = [...new Set(manuscriptsWithSura)];
+    
+    // For each manuscript, calculate the total count of each letter
+    uniqueManuscripts.forEach(manuscript => {
+      const manuscriptVerses = data.letterStats
+        .filter(entry => entry.Sura === sura && entry.Manuscript === manuscript);
+      
+      letters.forEach(letter => {
+        let totalCount = 0;
+        
+        manuscriptVerses.forEach(verse => {
+          if (!verse.Text) return;
+          totalCount += countLetterInText(verse.Text, letter);
+        });
+        
+        // Add this count to our collection for this letter
+        stats[letter].counts.push(totalCount);
+      });
+    });
+    
+    // Calculate mean and mode for each letter
+    letters.forEach(letter => {
+      const counts = stats[letter].counts;
+      
+      if (counts.length > 0) {
+        // Calculate mean
+        const sum = counts.reduce((acc, count) => acc + count, 0);
+        stats[letter].mean = parseFloat((sum / counts.length).toFixed(2));
+        
+        // Calculate mode (most frequent value)
+        const countFrequency = {};
+        let maxFrequency = 0;
+        let mode = 0;
+        
+        counts.forEach(count => {
+          countFrequency[count] = (countFrequency[count] || 0) + 1;
+          
+          if (countFrequency[count] > maxFrequency) {
+            maxFrequency = countFrequency[count];
+            mode = count;
+          }
+        });
+        
+        stats[letter].mode = mode;
+        stats[letter].modeCount = maxFrequency;
+      }
+    });
+    
+    return stats;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -1337,6 +1420,25 @@ const QuranManuscriptAnalysis = () => {
             
             <div className="bg-white p-4 rounded shadow">
               <h3 className="font-semibold mb-2">Verse by Verse Comparison</h3>
+              
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="mr-2">Letter counts for:</span>
+                  <button
+                    className={`px-3 py-1 rounded-l border ${showManuscriptCounts ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
+                    onClick={() => setShowManuscriptCounts(true)}
+                  >
+                    Manuscript
+                  </button>
+                  <button
+                    className={`px-3 py-1 rounded-r border ${!showManuscriptCounts ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
+                    onClick={() => setShowManuscriptCounts(false)}
+                  >
+                    Reference
+                  </button>
+                </div>
+              </div>
+              
               <div
                 className="overflow-y-auto max-h-[30rem]"
                 style={{ direction: 'rtl' }}
@@ -1344,9 +1446,18 @@ const QuranManuscriptAnalysis = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="px-2 py-1 text-center" style={{ width: '5%' }}>Verse</th>
-                      <th className="px-2 py-1" style={{ width: '47.5%' }}>Reference Text ({comparatorSource})</th>
-                      <th className="px-2 py-1" style={{ width: '47.5%' }}>Manuscript: {selectedManuscript}</th>
+                      <th className="px-2 py-1 text-center">Verse</th>
+                      <th className="px-2 py-1">Reference Text ({comparatorSource})</th>
+                      <th className="px-2 py-1">Manuscript: {selectedManuscript}</th>
+                      {selectedDisjointedLetters.split('').map((letter, index) => (
+                        <th 
+                          key={`header-letter-${letter}`} 
+                          className="px-2 py-1 text-center"
+                          style={{ color: letterColors[letter] || 'inherit' }}
+                        >
+                          {letter}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
@@ -1370,11 +1481,29 @@ const QuranManuscriptAnalysis = () => {
                               {getHighlightedText(refText, selectedDisjointedLetters)}
                             </div>
                           </td>
-                          <td className="px-2 py-3 text-right align-top">
+                          <td className="px-2 py-3 text-right align-top border-r">
                             <div className="text-lg">
                               {getHighlightedText(manuscriptText, selectedDisjointedLetters)}
                             </div>
                           </td>
+                          {selectedDisjointedLetters.split('').map((letter, index) => {
+                            // Count the occurrences of this letter
+                            const textToCount = showManuscriptCounts ? manuscriptText : refText;
+                            const count = countLetterInText(textToCount, letter);
+                            
+                            return (
+                              <td 
+                                key={`letter-count-${letter}-${verse.Verse}`} 
+                                className="px-2 py-3 text-center align-top border-r"
+                                style={{ 
+                                  color: letterColors[letter] || 'inherit',
+                                  backgroundColor: count > 0 ? `${letterColors[letter]}20` : 'transparent'
+                                }}
+                              >
+                                {count}
+                              </td>
+                            );
+                          })}
                         </tr>
                       );
                     })}
@@ -1406,6 +1535,37 @@ const QuranManuscriptAnalysis = () => {
                   <p><span className="font-medium">Total Occurrences in Reference Text:</span> {
                     Object.values(disjointedLetterCounts).reduce((total, count) => total + count, 0)
                   }</p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Letter Distribution Statistics</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="px-3 py-2 text-center">Letter</th>
+                          <th className="px-3 py-2 text-center">Mean</th>
+                          <th className="px-3 py-2 text-center">Mode</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(() => {
+                          const letterStats = calculateLetterStats(selectedSura);
+                          return Object.entries(letterStats).map(([letter, stats]) => (
+                            <tr key={`letter-stats-${letter}`} className="border-b">
+                              <td 
+                                className="px-3 py-2 text-center font-bold"
+                                style={{ color: letterColors[letter] || 'inherit' }}
+                              >
+                                {letter}
+                              </td>
+                              <td className="px-3 py-2 text-center">{stats.mean}</td>
+                              <td className="px-3 py-2 text-center">{stats.mode} (occurs {stats.modeCount} times)</td>
+                            </tr>
+                          ));
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
                 <div>
                   <h4 className="font-medium mb-2">Letter Distribution Across Manuscripts</h4>
