@@ -753,6 +753,8 @@ const QuranManuscriptAnalysis = () => {
         mean: 0,
         mode: 0,
         modeCount: 0,
+        max: 0,
+        maxManuscript: '',
         counts: []
       };
     });
@@ -779,6 +781,12 @@ const QuranManuscriptAnalysis = () => {
         
         // Add this count to our collection for this letter
         stats[letter].counts.push(totalCount);
+        
+        // Check if this is the maximum count
+        if (totalCount > stats[letter].max) {
+          stats[letter].max = totalCount;
+          stats[letter].maxManuscript = manuscript;
+        }
       });
     });
     
@@ -1506,6 +1514,7 @@ const QuranManuscriptAnalysis = () => {
                             // Count the occurrences of this letter
                             const refCount = countLetterInText(refText, letter);
                             const msCount = countLetterInText(manuscriptText, letter);
+                            const hasDifference = refCount !== msCount;
                             
                             return (
                               <React.Fragment key={`letter-counts-${letter}-${verse.Verse}`}>
@@ -1513,7 +1522,8 @@ const QuranManuscriptAnalysis = () => {
                                   className="px-2 py-3 text-center align-top"
                                   style={{ 
                                     color: letterColors[letter] || 'inherit',
-                                    backgroundColor: refCount > 0 ? `${letterColors[letter]}20` : 'transparent'
+                                    backgroundColor: hasDifference ? `${letterColors[letter]}20` : 'transparent',
+                                    fontWeight: hasDifference ? 'bold' : 'normal'
                                   }}
                                 >
                                   {refCount}
@@ -1522,7 +1532,8 @@ const QuranManuscriptAnalysis = () => {
                                   className="px-2 py-3 text-center align-top border-r"
                                   style={{ 
                                     color: letterColors[letter] || 'inherit',
-                                    backgroundColor: msCount > 0 ? `${letterColors[letter]}20` : 'transparent'
+                                    backgroundColor: hasDifference ? `${letterColors[letter]}20` : 'transparent',
+                                    fontWeight: hasDifference ? 'bold' : 'normal'
                                   }}
                                 >
                                   {msCount}
@@ -1609,7 +1620,8 @@ const QuranManuscriptAnalysis = () => {
                         <tr className="border-b">
                           <th className="px-6 py-3 text-center border-r">Letter</th>
                           <th className="px-6 py-3 text-center border-r">Mean</th>
-                          <th className="px-6 py-3 text-center">Mode</th>
+                          <th className="px-6 py-3 text-center border-r">Mode</th>
+                          <th className="px-6 py-3 text-center">Max Value (Manuscript)</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1624,7 +1636,17 @@ const QuranManuscriptAnalysis = () => {
                                 {letter}
                               </td>
                               <td className="px-6 py-3 text-center border-r">{stats.mean}</td>
-                              <td className="px-6 py-3 text-center">{stats.mode} <span className="text-gray-500 text-sm">(occurs {stats.modeCount} times)</span></td>
+                              <td className="px-6 py-3 text-center border-r">
+                                {stats.mode} <span className="text-gray-500 text-sm">(occurs {stats.modeCount} times)</span>
+                              </td>
+                              <td className="px-6 py-3 text-center">
+                                <span className="font-bold">{stats.max}</span> 
+                                <span className="text-gray-500 text-sm ml-2">
+                                  ({stats.maxManuscript && stats.maxManuscript.length > 15 
+                                    ? `${stats.maxManuscript.substring(0, 15)}...` 
+                                    : stats.maxManuscript})
+                                </span>
+                              </td>
                             </tr>
                           ));
                         })()}
