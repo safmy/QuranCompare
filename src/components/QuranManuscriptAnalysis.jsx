@@ -27,6 +27,8 @@ const QuranManuscriptAnalysis = () => {
   const [disjointedLetterCounts, setDisjointedLetterCounts] = useState({});
   // Add a toggle for letter counts source
   const [showManuscriptCounts, setShowManuscriptCounts] = useState(true);
+  // Add a toggle for no highlighting
+  const [showHighlighting, setShowHighlighting] = useState(true);
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
   
@@ -208,7 +210,7 @@ const QuranManuscriptAnalysis = () => {
 
   // Function to get the text with highlighted disjointed letters
   const getHighlightedText = (text, letters) => {
-    if (!text || !letters) return text;
+    if (!text || !letters || !showHighlighting) return text;
     
     // Convert text to array for easier manipulation
     const textArray = text.split('');
@@ -1399,45 +1401,39 @@ const QuranManuscriptAnalysis = () => {
                 </button>
               ))}
               {selectedDisjointedLetters && (
-                <button
-                  className="px-6 py-3 text-lg rounded border"
-                  style={{
-                    backgroundColor: highlightedLetterIndex === -1 ? 'rgba(255, 255, 0, 0.3)' : 'white',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => highlightLetter(-1)}
-                >
-                  Show All
-                </button>
+                <>
+                  <button
+                    className="px-6 py-3 text-lg rounded border"
+                    style={{
+                      backgroundColor: highlightedLetterIndex === -1 ? 'rgba(255, 255, 0, 0.3)' : 'white',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => highlightLetter(-1)}
+                  >
+                    Show All
+                  </button>
+                  <button
+                    className="px-6 py-3 text-lg rounded border"
+                    style={{
+                      backgroundColor: !showHighlighting ? 'rgba(255, 255, 0, 0.3)' : 'white',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setShowHighlighting(!showHighlighting)}
+                  >
+                    {showHighlighting ? 'Hide Highlighting' : 'Show Highlighting'}
+                  </button>
+                </>
               )}
             </div>
             
             <div className="bg-gray-100 p-3 rounded mb-4 text-center">
               <p className="text-sm">
-                Click on a letter above to highlight all occurrences of that letter in the text below.
+                Click on a letter above to highlight its occurrences. Use "Show All" to highlight all letters, or "Hide Highlighting" to view text without highlighting.
               </p>
             </div>
             
             <div className="bg-white p-4 rounded shadow">
               <h3 className="font-semibold mb-2">Verse by Verse Comparison</h3>
-              
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="mr-2">Letter counts for:</span>
-                  <button
-                    className={`px-3 py-1 rounded-l border ${showManuscriptCounts ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
-                    onClick={() => setShowManuscriptCounts(true)}
-                  >
-                    Manuscript
-                  </button>
-                  <button
-                    className={`px-3 py-1 rounded-r border ${!showManuscriptCounts ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
-                    onClick={() => setShowManuscriptCounts(false)}
-                  >
-                    Reference
-                  </button>
-                </div>
-              </div>
               
               <div
                 className="overflow-y-auto max-h-[30rem]"
@@ -1445,18 +1441,38 @@ const QuranManuscriptAnalysis = () => {
               >
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b">
-                      <th className="px-2 py-1 text-center">Verse</th>
-                      <th className="px-2 py-1">Reference Text ({comparatorSource})</th>
-                      <th className="px-2 py-1">Manuscript: {selectedManuscript}</th>
+                    <tr className="border-b bg-gray-100">
+                      <th className="px-2 py-1 text-center border-r" rowSpan="2">Verse</th>
+                      <th className="px-2 py-1 text-center border-r" colSpan="2">Text</th>
                       {selectedDisjointedLetters.split('').map((letter, index) => (
                         <th 
                           key={`header-letter-${letter}`} 
-                          className="px-2 py-1 text-center"
+                          className="px-2 py-1 text-center border-r"
                           style={{ color: letterColors[letter] || 'inherit' }}
+                          colSpan="2"
                         >
                           {letter}
                         </th>
+                      ))}
+                    </tr>
+                    <tr className="border-b bg-gray-100">
+                      <th className="px-2 py-1 text-center border-r">Reference</th>
+                      <th className="px-2 py-1 text-center border-r">Manuscript</th>
+                      {selectedDisjointedLetters.split('').map((letter) => (
+                        <React.Fragment key={`header-counts-${letter}`}>
+                          <th 
+                            className="px-2 py-1 text-center"
+                            style={{ color: letterColors[letter] || 'inherit' }}
+                          >
+                            Ref
+                          </th>
+                          <th 
+                            className="px-2 py-1 text-center border-r"
+                            style={{ color: letterColors[letter] || 'inherit' }}
+                          >
+                            Ms
+                          </th>
+                        </React.Fragment>
                       ))}
                     </tr>
                   </thead>
@@ -1473,7 +1489,7 @@ const QuranManuscriptAnalysis = () => {
                       
                       return (
                         <tr key={`verse-${verse.Sura}:${verse.Verse}`} className="border-b">
-                          <td className="px-2 py-3 text-center align-top">
+                          <td className="px-2 py-3 text-center align-top border-r">
                             <div className="text-gray-600">{verse.Verse}</div>
                           </td>
                           <td className="px-2 py-3 text-right align-top border-r">
@@ -1486,27 +1502,76 @@ const QuranManuscriptAnalysis = () => {
                               {getHighlightedText(manuscriptText, selectedDisjointedLetters)}
                             </div>
                           </td>
-                          {selectedDisjointedLetters.split('').map((letter, index) => {
+                          {selectedDisjointedLetters.split('').map((letter) => {
                             // Count the occurrences of this letter
-                            const textToCount = showManuscriptCounts ? manuscriptText : refText;
-                            const count = countLetterInText(textToCount, letter);
+                            const refCount = countLetterInText(refText, letter);
+                            const msCount = countLetterInText(manuscriptText, letter);
                             
                             return (
-                              <td 
-                                key={`letter-count-${letter}-${verse.Verse}`} 
-                                className="px-2 py-3 text-center align-top border-r"
-                                style={{ 
-                                  color: letterColors[letter] || 'inherit',
-                                  backgroundColor: count > 0 ? `${letterColors[letter]}20` : 'transparent'
-                                }}
-                              >
-                                {count}
-                              </td>
+                              <React.Fragment key={`letter-counts-${letter}-${verse.Verse}`}>
+                                <td 
+                                  className="px-2 py-3 text-center align-top"
+                                  style={{ 
+                                    color: letterColors[letter] || 'inherit',
+                                    backgroundColor: refCount > 0 ? `${letterColors[letter]}20` : 'transparent'
+                                  }}
+                                >
+                                  {refCount}
+                                </td>
+                                <td 
+                                  className="px-2 py-3 text-center align-top border-r"
+                                  style={{ 
+                                    color: letterColors[letter] || 'inherit',
+                                    backgroundColor: msCount > 0 ? `${letterColors[letter]}20` : 'transparent'
+                                  }}
+                                >
+                                  {msCount}
+                                </td>
+                              </React.Fragment>
                             );
                           })}
                         </tr>
                       );
                     })}
+                    {/* Add sum row at the bottom */}
+                    <tr className="border-b bg-gray-100 font-bold">
+                      <td className="px-2 py-3 text-center align-top border-r">
+                        Total
+                      </td>
+                      <td className="px-2 py-3 text-center align-top border-r" colSpan="2">
+                        Letter Counts
+                      </td>
+                      {selectedDisjointedLetters.split('').map((letter) => {
+                        // Calculate sum of all reference counts for this letter
+                        const refSum = filteredVerseStats.reduce((sum, verse) => {
+                          const refKey = `${verse.Sura}:${verse.Verse}`;
+                          const refText = referenceTexts[refKey] || '';
+                          return sum + countLetterInText(refText, letter);
+                        }, 0);
+                        
+                        // Calculate sum of all manuscript counts for this letter
+                        const msSum = filteredManuscriptVerses.reduce((sum, verse) => {
+                          return sum + countLetterInText(verse.Text || '', letter);
+                        }, 0);
+                        
+                        return (
+                          <React.Fragment key={`letter-sums-${letter}`}>
+                            <td 
+                              className="px-2 py-3 text-center align-top"
+                              style={{ color: letterColors[letter] || 'inherit' }}
+                            >
+                              {refSum}
+                            </td>
+                            <td 
+                              className="px-2 py-3 text-center align-top border-r"
+                              style={{ color: letterColors[letter] || 'inherit' }}
+                            >
+                              {msSum}
+                            </td>
+                          </React.Fragment>
+                        );
+                      })}
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -1536,15 +1601,15 @@ const QuranManuscriptAnalysis = () => {
                     Object.values(disjointedLetterCounts).reduce((total, count) => total + count, 0)
                   }</p>
                 </div>
-                <div>
-                  <h4 className="font-medium mb-2">Letter Distribution Statistics</h4>
+                <div className="border rounded-lg overflow-hidden">
+                  <h4 className="font-medium p-3 bg-gray-100 border-b">Letter Distribution Statistics</h4>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          <th className="px-3 py-2 text-center">Letter</th>
-                          <th className="px-3 py-2 text-center">Mean</th>
-                          <th className="px-3 py-2 text-center">Mode</th>
+                          <th className="px-6 py-3 text-center border-r">Letter</th>
+                          <th className="px-6 py-3 text-center border-r">Mean</th>
+                          <th className="px-6 py-3 text-center">Mode</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1553,13 +1618,13 @@ const QuranManuscriptAnalysis = () => {
                           return Object.entries(letterStats).map(([letter, stats]) => (
                             <tr key={`letter-stats-${letter}`} className="border-b">
                               <td 
-                                className="px-3 py-2 text-center font-bold"
+                                className="px-6 py-3 text-center font-bold border-r"
                                 style={{ color: letterColors[letter] || 'inherit' }}
                               >
                                 {letter}
                               </td>
-                              <td className="px-3 py-2 text-center">{stats.mean}</td>
-                              <td className="px-3 py-2 text-center">{stats.mode} (occurs {stats.modeCount} times)</td>
+                              <td className="px-6 py-3 text-center border-r">{stats.mean}</td>
+                              <td className="px-6 py-3 text-center">{stats.mode} <span className="text-gray-500 text-sm">(occurs {stats.modeCount} times)</span></td>
                             </tr>
                           ));
                         })()}
@@ -1567,38 +1632,40 @@ const QuranManuscriptAnalysis = () => {
                     </table>
                   </div>
                 </div>
-                <div>
-                  <h4 className="font-medium mb-2">Letter Distribution Across Manuscripts</h4>
+                <div className="border rounded-lg overflow-hidden">
+                  <h4 className="font-medium p-3 bg-gray-100 border-b">Letter Distribution Across Manuscripts</h4>
                   {(() => {
                     // Calculate data only once
                     const manuscriptData = countDisjointedLettersAcrossManuscripts(selectedSura);
                     
                     return (
                       manuscriptData.chartData.length > 0 && manuscriptData.manuscripts.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                          <BarChart 
-                            data={manuscriptData.chartData}
-                            layout="vertical"
-                            margin={{left: 50}}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis type="number" />
-                            <YAxis type="category" dataKey="letter" width={50} />
-                            <Tooltip />
-                            <Legend />
-                            {manuscriptData.manuscripts.map((manuscript, index) => (
-                              <Bar 
-                                key={manuscript} 
-                                dataKey={manuscript} 
-                                name={manuscript.length > 20 ? manuscript.substring(0, 20) + '...' : manuscript}
-                                fill={COLORS[index % COLORS.length]} 
-                                stackId="stack" 
-                              />
-                            ))}
-                          </BarChart>
-                        </ResponsiveContainer>
+                        <div className="p-3">
+                          <ResponsiveContainer width="100%" height={300}>
+                            <BarChart 
+                              data={manuscriptData.chartData}
+                              layout="vertical"
+                              margin={{left: 50}}
+                            >
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis type="number" />
+                              <YAxis type="category" dataKey="letter" width={50} />
+                              <Tooltip />
+                              <Legend />
+                              {manuscriptData.manuscripts.map((manuscript, index) => (
+                                <Bar 
+                                  key={manuscript} 
+                                  dataKey={manuscript} 
+                                  name={manuscript.length > 20 ? manuscript.substring(0, 20) + '...' : manuscript}
+                                  fill={COLORS[index % COLORS.length]} 
+                                  stackId="stack" 
+                                />
+                              ))}
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
                       ) : (
-                        <p>No manuscript data available for this sura.</p>
+                        <p className="p-3">No manuscript data available for this sura.</p>
                       )
                     );
                   })()}
