@@ -90,22 +90,34 @@ def load_vector_collections():
             index = collection["index"]
             metadata = collection["metadata"]
             
+            logger.info(f"Processing {name}: {index.ntotal} vectors, {len(metadata)} metadata entries")
+            
             # Extract embeddings for combined index
             embeddings = []
-            for i in range(index.ntotal):
-                embedding = index.reconstruct(i)
-                embeddings.append(embedding)
-                COMBINED_METADATA.append({
-                    "collection": name,
-                    "original_index": i,
-                    "metadata": metadata[i]
-                })
+            for i in range(min(index.ntotal, len(metadata))):
+                try:
+                    embedding = index.reconstruct(i)
+                    embeddings.append(embedding)
+                    COMBINED_METADATA.append({
+                        "collection": name,
+                        "original_index": i,
+                        "metadata": metadata[i] if i < len(metadata) else {}
+                    })
+                except Exception as e:
+                    logger.error(f"Error reconstructing vector {i} from {name}: {e}")
+                    continue
             
             if embeddings:
                 all_embeddings.extend(embeddings)
+                logger.info(f"Successfully processed {len(embeddings)} vectors from {name}")
+            else:
+                logger.warning(f"No embeddings extracted from {name}")
                 
         except Exception as e:
             logger.error(f"❌ Error processing {name}: {e}")
+            logger.error(f"Error type: {type(e).__name__}")
+            import traceback
+            logger.error(traceback.format_exc())
     
     # Create combined index
     if all_embeddings:
@@ -113,6 +125,8 @@ def load_vector_collections():
         COMBINED_INDEX = faiss.IndexFlatL2(dimension)
         COMBINED_INDEX.add(np.array(all_embeddings).astype('float32'))
         logger.info(f"✅ Created combined index with {COMBINED_INDEX.ntotal} vectors")
+    else:
+        logger.error("❌ No embeddings to create combined index")
 
 def create_embedding(text: str) -> np.ndarray:
     """Create embedding for text using OpenAI"""
@@ -240,6 +254,28 @@ async def debug_info():
             for name in ["RashadAllMedia", "FinalTestament", "QuranTalkArticles"]
         }
     }
+
+@app.get("/test-download")
+async def test_download():
+    """Test if we can download files from GitHub"""
+    import requests
+    
+    test_url = "https://github.com/safmy/QuranCompare/releases/download/v1.0-vectors/RashadAllMedia.json"
+    
+    try:
+        response = requests.head(test_url, allow_redirects=True)
+        return {
+            "url": test_url,
+            "status_code": response.status_code,
+            "headers": dict(response.headers),
+            "accessible": response.status_code == 200
+        }
+    except Exception as e:
+        return {
+            "url": test_url,
+            "error": str(e),
+            "accessible": False
+        }
 
 @app.post("/search", response_model=SearchResponse)
 async def vector_search(request: SearchRequest):
