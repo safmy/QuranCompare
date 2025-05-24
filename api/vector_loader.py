@@ -80,7 +80,14 @@ def download_file(url: str, destination: str) -> bool:
                 if downloaded % (1024 * 1024) == 0:  # Log every MB
                     logger.info(f"Downloaded {downloaded / (1024*1024):.1f} MB / {total_size / (1024*1024):.1f} MB")
         
-        logger.info(f"Successfully downloaded {destination}")
+        # Verify download completed
+        actual_size = os.path.getsize(destination)
+        if actual_size != total_size:
+            logger.error(f"Download incomplete! Expected {total_size} bytes, got {actual_size} bytes")
+            os.remove(destination)
+            return False
+            
+        logger.info(f"Successfully downloaded {destination} ({actual_size / (1024*1024):.1f} MB)")
         return True
     except Exception as e:
         logger.error(f"Failed to download {url}: {e}")
@@ -131,20 +138,60 @@ def load_vectors_from_cloud(cache_dir: str = "./vector_cache") -> Dict:
             if faiss_path.exists() and json_path.exists():
                 logger.info(f"  Loading FAISS index...")
                 index = faiss.read_index(str(faiss_path))
-                logger.info(f"  Loading metadata...")
+                logger.info(f"  Loading metadata from {json_path}")
+                logger.info(f"  JSON file size: {os.path.getsize(json_path) / (1024*1024):.2f} MB")
+                
                 with open(json_path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
+                    # Read raw content first to check
+                    content = f.read()
+                    logger.info(f"  JSON content length: {len(content)} characters")
+                    
+                    # Parse JSON
+                    data = json.loads(content)
                 
                 # Handle different JSON structures
                 if isinstance(data, dict) and "texts" in data:
-                    # RashadAllMedia format
+                    # Handle different collection formats
+                    texts = data.get("texts", [])
                     metadata = []
-                    for i, text in enumerate(data.get("texts", [])):
-                        metadata.append({
-                            "content": text,
-                            "title": f"Text {i}",
-                            "youtube_id": data.get("youtube_ids", [None])[i] if "youtube_ids" in data and i < len(data.get("youtube_ids", [])) else None
-                        })
+                    
+                    if name == "QuranTalkArticles" and "metadata" in data:
+                        # QuranTalkArticles has separate metadata
+                        meta_list = data.get("metadata", [])
+                        for i, text in enumerate(texts):
+                            if i < len(meta_list):
+                                meta = meta_list[i]
+                                metadata.append({
+                                    "content": text,
+                                    "title": meta.get("title", f"Article {i}"),
+                                    "url": meta.get("url", ""),
+                                    "source": "QuranTalk"
+                                })
+                            else:
+                                metadata.append({
+                                    "content": text,
+                                    "title": f"Article {i}",
+                                    "source": "QuranTalk"
+                                })
+                    elif name == "FinalTestament":
+                        # FinalTestament contains verses
+                        for i, text in enumerate(texts):
+                            # Try to extract verse reference from text
+                            metadata.append({
+                                "content": text,
+                                "text": text,
+                                "verse_ref": f"Verse {i}",
+                                "title": f"Verse {i}"
+                            })
+                    else:
+                        # RashadAllMedia or default format
+                        for i, text in enumerate(texts):
+                            metadata.append({
+                                "content": text,
+                                "title": f"{name} - Item {i+1}",
+                                "id": i
+                            })
+                            
                 elif isinstance(data, list):
                     metadata = data
                 else:
