@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: quran-vector-search-api
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn vector_search_api:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: USE_CLOUD_VECTORS
+        value: true
+      - key: RASHAD_FAISS_URL
+        value: https://github.com/safmy/QuranCompare/releases/download/v1.0-vectors/RashadAllMedia.faiss
+      - key: RASHAD_JSON_URL
+        value: https://github.com/safmy/QuranCompare/releases/download/v1.0-vectors/RashadAllMedia.json
+      - key: FINAL_TESTAMENT_FAISS_URL
+        value: https://github.com/safmy/QuranCompare/releases/download/v1.0-vectors/FinalTestament.faiss
+      - key: FINAL_TESTAMENT_JSON_URL  
+        value: https://github.com/safmy/QuranCompare/releases/download/v1.0-vectors/FinalTestament.json
+      - key: QURANTALK_FAISS_URL
+        value: https://github.com/safmy/QuranCompare/releases/download/v1.0-vectors/qurantalk_articles_1744655632.faiss
+      - key: QURANTALK_JSON_URL
+        value: https://github.com/safmy/QuranCompare/releases/download/v1.0-vectors/qurantalk_articles_1744655632.json
