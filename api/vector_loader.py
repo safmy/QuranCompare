@@ -14,18 +14,21 @@ from pathlib import Path
 logger = logging.getLogger("VectorLoader")
 
 # Configuration for cloud storage URLs
+# Default to GitHub Releases format
+GITHUB_RELEASE_BASE = "https://github.com/safmy/QuranCompare/releases/download/v1.0-vectors"
+
 VECTOR_URLS = {
     "RashadAllMedia": {
-        "faiss": "https://your-storage.com/RashadAllMedia.faiss",
-        "json": "https://your-storage.com/RashadAllMedia.json"
+        "faiss": f"{GITHUB_RELEASE_BASE}/RashadAllMedia.faiss",
+        "json": f"{GITHUB_RELEASE_BASE}/RashadAllMedia.json"
     },
     "FinalTestament": {
-        "faiss": "https://your-storage.com/FinalTestament.faiss",
-        "json": "https://your-storage.com/FinalTestament.json"
+        "faiss": f"{GITHUB_RELEASE_BASE}/FinalTestament.faiss",
+        "json": f"{GITHUB_RELEASE_BASE}/FinalTestament.json"
     },
     "QuranTalkArticles": {
-        "faiss": "https://your-storage.com/qurantalk_articles_1744655632.faiss",
-        "json": "https://your-storage.com/qurantalk_articles_1744655632.json"
+        "faiss": f"{GITHUB_RELEASE_BASE}/qurantalk_articles_1744655632.faiss",
+        "json": f"{GITHUB_RELEASE_BASE}/qurantalk_articles_1744655632.json"
     }
 }
 
