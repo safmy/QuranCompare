@@ -143,8 +143,24 @@ async def startup_event():
     if not api_key:
         logger.warning("⚠️ OPENAI_API_KEY not found in environment variables")
     else:
-        client = OpenAI(api_key=api_key)
-        logger.info("✅ OpenAI client initialized")
+        try:
+            # Try to initialize without proxy settings
+            client = OpenAI(
+                api_key=api_key,
+                timeout=30.0,
+                max_retries=3
+            )
+            logger.info("✅ OpenAI client initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize OpenAI client: {e}")
+            # Try simpler initialization
+            try:
+                import openai
+                openai.api_key = api_key
+                client = OpenAI(api_key=api_key)
+                logger.info("✅ OpenAI client initialized (fallback method)")
+            except Exception as e2:
+                logger.error(f"❌ Failed to initialize OpenAI client (fallback): {e2}")
     
     # Load vector collections
     load_vector_collections()
