@@ -1,0 +1,27 @@
+# Vector files (too large for git)
+*.faiss
+*.json
+!requirements.txt
+!package.json
+!package-lock.json
+
+# Vector cache
+vector_cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

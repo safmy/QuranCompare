@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './App.css';
 import QuranLookup from './components/QuranLookup';
 import QuranSearch from './components/QuranSearch';
+import QuranVectorSearch from './components/QuranVectorSearch';
 import QuranCompare from './components/QuranCompare';
 import QuranManuscriptAnalysis from './components/QuranManuscriptAnalysis';
 
@@ -10,7 +11,8 @@ function App() {
 
   const tabs = [
     { id: 'lookup', label: 'Verse Lookup', component: <QuranLookup /> },
-    { id: 'search', label: 'Search', component: <QuranSearch /> },
+    { id: 'search', label: 'Text Search', component: <QuranSearch /> },
+    { id: 'vectorsearch', label: 'Semantic Search', component: <QuranVectorSearch /> },
     { id: 'compare', label: 'Compare', component: <QuranCompare /> },
     { id: 'manuscript', label: 'Manuscript Analysis', component: <QuranManuscriptAnalysis /> }
   ];

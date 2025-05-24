@@ -1,0 +1,245 @@
+"""
+Vector data loader with cloud storage support
+Downloads and caches vector files from cloud storage
+"""
+
+import os
+import json
+import requests
+import logging
+from typing import Dict, Optional
+import faiss
+from pathlib import Path
+
+logger = logging.getLogger("VectorLoader")
+
+# Configuration for cloud storage URLs
+VECTOR_URLS = {
+    "RashadAllMedia": {
+        "faiss": "https://your-storage.com/RashadAllMedia.faiss",
+        "json": "https://your-storage.com/RashadAllMedia.json"
+    },
+    "FinalTestament": {
+        "faiss": "https://your-storage.com/FinalTestament.faiss",
+        "json": "https://your-storage.com/FinalTestament.json"
+    },
+    "QuranTalkArticles": {
+        "faiss": "https://your-storage.com/qurantalk_articles_1744655632.faiss",
+        "json": "https://your-storage.com/qurantalk_articles_1744655632.json"
+    }
+}
+
+# Alternative: Use environment variables for URLs
+def get_vector_urls():
+    """Get vector URLs from environment variables or defaults"""
+    return {
+        "RashadAllMedia": {
+            "faiss": os.getenv("RASHAD_FAISS_URL", VECTOR_URLS["RashadAllMedia"]["faiss"]),
+            "json": os.getenv("RASHAD_JSON_URL", VECTOR_URLS["RashadAllMedia"]["json"])
+        },
+        "FinalTestament": {
+            "faiss": os.getenv("FINAL_TESTAMENT_FAISS_URL", VECTOR_URLS["FinalTestament"]["faiss"]),
+            "json": os.getenv("FINAL_TESTAMENT_JSON_URL", VECTOR_URLS["FinalTestament"]["json"])
+        },
+        "QuranTalkArticles": {
+            "faiss": os.getenv("QURANTALK_FAISS_URL", VECTOR_URLS["QuranTalkArticles"]["faiss"]),
+            "json": os.getenv("QURANTALK_JSON_URL", VECTOR_URLS["QuranTalkArticles"]["json"])
+        }
+    }
+
+def download_file(url: str, destination: str) -> bool:
+    """Download a file from URL to destination"""
+    try:
+        logger.info(f"Downloading {url} to {destination}")
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+        
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
+        
+        # Write file in chunks
+        with open(destination, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        
+        logger.info(f"Successfully downloaded {destination}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to download {url}: {e}")
+        return False
+
+def load_vectors_from_cloud(cache_dir: str = "./vector_cache") -> Dict:
+    """Load vector collections, downloading from cloud if necessary"""
+    vector_collections = {}
+    vector_urls = get_vector_urls()
+    
+    # Create cache directory
+    cache_path = Path(cache_dir)
+    cache_path.mkdir(exist_ok=True)
+    
+    for name, urls in vector_urls.items():
+        try:
+            # Define local cache paths
+            faiss_path = cache_path / f"{name}.faiss"
+            json_path = cache_path / f"{name}.json"
+            
+            # Download if not cached
+            if not faiss_path.exists():
+                if not download_file(urls["faiss"], str(faiss_path)):
+                    logger.warning(f"Failed to download {name} FAISS index")
+                    continue
+            
+            if not json_path.exists():
+                if not download_file(urls["json"], str(json_path)):
+                    logger.warning(f"Failed to download {name} metadata")
+                    continue
+            
+            # Load from cache
+            if faiss_path.exists() and json_path.exists():
+                index = faiss.read_index(str(faiss_path))
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    metadata = json.load(f)
+                
+                vector_collections[name] = {
+                    "index": index,
+                    "metadata": metadata,
+                    "size": index.ntotal
+                }
+                logger.info(f"✅ Loaded {name}: {index.ntotal} vectors")
+            
+        except Exception as e:
+            logger.error(f"Error loading {name}: {e}")
+    
+    return vector_collections
+
+def load_vectors_from_local(base_dir: str = "../..") -> Dict:
+    """Load vector collections from local files (fallback)"""
+    vector_collections = {}
+    
+    local_paths = {
+        "RashadAllMedia": {
+            "faiss": os.path.join(base_dir, "data/RashadAllMedia.faiss"),
+            "json": os.path.join(base_dir, "data/RashadAllMedia.json")
+        },
+        "FinalTestament": {
+            "faiss": os.path.join(base_dir, "FinalTestament.faiss"),
+            "json": os.path.join(base_dir, "FinalTestament.json")
+        },
+        "QuranTalkArticles": {
+            "faiss": os.path.join(base_dir, "qurantalk_articles_1744655632.faiss"),
+            "json": os.path.join(base_dir, "qurantalk_articles_1744655632.json")
+        }
+    }
+    
+    for name, paths in local_paths.items():
+        try:
+            if os.path.exists(paths["faiss"]) and os.path.exists(paths["json"]):
+                index = faiss.read_index(paths["faiss"])
+                with open(paths["json"], 'r', encoding='utf-8') as f:
+                    metadata = json.load(f)
+                
+                vector_collections[name] = {
+                    "index": index,
+                    "metadata": metadata,
+                    "size": index.ntotal
+                }
+                logger.info(f"✅ Loaded {name} from local: {index.ntotal} vectors")
+        except Exception as e:
+            logger.error(f"Error loading local {name}: {e}")
+    
+    return vector_collections
+
+# Cloud storage options:
+# 1. AWS S3: Use boto3 to download from S3
+# 2. Google Cloud Storage: Use google-cloud-storage
+# 3. Cloudflare R2: S3-compatible, use boto3
+# 4. GitHub Releases: Store as release assets (up to 2GB per file)
+# 5. Hugging Face Hub: Great for ML models/embeddings
+
+def load_from_s3(bucket: str, cache_dir: str = "./vector_cache") -> Dict:
+    """Example: Load vectors from AWS S3"""
+    import boto3
+    
+    s3 = boto3.client('s3')
+    vector_collections = {}
+    cache_path = Path(cache_dir)
+    cache_path.mkdir(exist_ok=True)
+    
+    s3_files = {
+        "RashadAllMedia": {
+            "faiss": "vectors/RashadAllMedia.faiss",
+            "json": "vectors/RashadAllMedia.json"
+        },
+        "FinalTestament": {
+            "faiss": "vectors/FinalTestament.faiss",
+            "json": "vectors/FinalTestament.json"
+        },
+        "QuranTalkArticles": {
+            "faiss": "vectors/qurantalk_articles_1744655632.faiss",
+            "json": "vectors/qurantalk_articles_1744655632.json"
+        }
+    }
+    
+    for name, files in s3_files.items():
+        try:
+            faiss_path = cache_path / f"{name}.faiss"
+            json_path = cache_path / f"{name}.json"
+            
+            # Download from S3 if not cached
+            if not faiss_path.exists():
+                s3.download_file(bucket, files["faiss"], str(faiss_path))
+            
+            if not json_path.exists():
+                s3.download_file(bucket, files["json"], str(json_path))
+            
+            # Load from cache
+            index = faiss.read_index(str(faiss_path))
+            with open(json_path, 'r', encoding='utf-8') as f:
+                metadata = json.load(f)
+            
+            vector_collections[name] = {
+                "index": index,
+                "metadata": metadata,
+                "size": index.ntotal
+            }
+            
+        except Exception as e:
+            logger.error(f"Error loading {name} from S3: {e}")
+    
+    return vector_collections
+
+def load_from_huggingface(repo_id: str = "your-username/quran-vectors", cache_dir: str = "./vector_cache") -> Dict:
+    """Example: Load vectors from Hugging Face Hub"""
+    from huggingface_hub import hf_hub_download
+    
+    vector_collections = {}
+    cache_path = Path(cache_dir)
+    cache_path.mkdir(exist_ok=True)
+    
+    hf_files = {
+        "RashadAllMedia": ["RashadAllMedia.faiss", "RashadAllMedia.json"],
+        "FinalTestament": ["FinalTestament.faiss", "FinalTestament.json"],
+        "QuranTalkArticles": ["qurantalk_articles_1744655632.faiss", "qurantalk_articles_1744655632.json"]
+    }
+    
+    for name, files in hf_files.items():
+        try:
+            # Download from Hugging Face
+            faiss_path = hf_hub_download(repo_id, files[0], cache_dir=cache_dir)
+            json_path = hf_hub_download(repo_id, files[1], cache_dir=cache_dir)
+            
+            # Load files
+            index = faiss.read_index(faiss_path)
+            with open(json_path, 'r', encoding='utf-8') as f:
+                metadata = json.load(f)
+            
+            vector_collections[name] = {
+                "index": index,
+                "metadata": metadata,
+                "size": index.ntotal
+            }
+            
+        except Exception as e:
+            logger.error(f"Error loading {name} from Hugging Face: {e}")
+    
+    return vector_collections

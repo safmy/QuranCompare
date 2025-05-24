@@ -1,0 +1,14 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+numpy==1.24.3
+faiss-cpu==1.7.4
+openai==1.3.7
+python-multipart==0.0.6
+python-dotenv==1.0.0
+requests==2.31.0
+
+# Optional cloud storage libraries (uncomment as needed)
+# boto3==1.29.0  # For AWS S3
+# google-cloud-storage==2.10.0  # For Google Cloud Storage
+# huggingface-hub==0.19.0  # For Hugging Face Hub
