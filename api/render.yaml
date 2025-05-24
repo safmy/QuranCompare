@@ -3,7 +3,7 @@ services:
     name: quran-vector-search-api
     env: python
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "uvicorn vector_search_api:app --host 0.0.0.0 --port $PORT"
+    startCommand: "uvicorn vector_search_api:app --host 0.0.0.0 --port ${PORT:-8000}"
     envVars:
       - key: OPENAI_API_KEY
         sync: false
