@@ -133,14 +133,32 @@ def load_vectors_from_cloud(cache_dir: str = "./vector_cache") -> Dict:
                 index = faiss.read_index(str(faiss_path))
                 logger.info(f"  Loading metadata...")
                 with open(json_path, 'r', encoding='utf-8') as f:
-                    metadata = json.load(f)
+                    data = json.load(f)
+                
+                # Handle different JSON structures
+                if isinstance(data, dict) and "texts" in data:
+                    # RashadAllMedia format
+                    metadata = []
+                    for i, text in enumerate(data.get("texts", [])):
+                        metadata.append({
+                            "content": text,
+                            "title": f"Text {i}",
+                            "youtube_id": data.get("youtube_ids", [None])[i] if "youtube_ids" in data and i < len(data.get("youtube_ids", [])) else None
+                        })
+                elif isinstance(data, list):
+                    metadata = data
+                else:
+                    logger.warning(f"  Unexpected JSON structure for {name}: {type(data)}")
+                    metadata = []
+                
+                logger.info(f"  Parsed {len(metadata)} metadata entries")
                 
                 vector_collections[name] = {
                     "index": index,
                     "metadata": metadata,
                     "size": index.ntotal
                 }
-                logger.info(f"✅ Loaded {name}: {index.ntotal} vectors")
+                logger.info(f"✅ Loaded {name}: {index.ntotal} vectors, {len(metadata)} metadata")
             else:
                 logger.error(f"  Files not found after download attempt")
             

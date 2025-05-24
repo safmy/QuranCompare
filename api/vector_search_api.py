@@ -94,14 +94,26 @@ def load_vector_collections():
             
             # Extract embeddings for combined index
             embeddings = []
-            for i in range(min(index.ntotal, len(metadata))):
+            for i in range(index.ntotal):
                 try:
                     embedding = index.reconstruct(i)
                     embeddings.append(embedding)
+                    
+                    # Handle missing metadata gracefully
+                    if i < len(metadata):
+                        meta = metadata[i]
+                    else:
+                        # Create placeholder metadata for missing entries
+                        meta = {
+                            "content": f"Vector {i} from {name}",
+                            "title": f"{name} Item {i}",
+                            "id": i
+                        }
+                    
                     COMBINED_METADATA.append({
                         "collection": name,
                         "original_index": i,
-                        "metadata": metadata[i] if i < len(metadata) else {}
+                        "metadata": meta
                     })
                 except Exception as e:
                     logger.error(f"Error reconstructing vector {i} from {name}: {e}")
