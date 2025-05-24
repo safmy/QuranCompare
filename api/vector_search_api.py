@@ -191,6 +191,56 @@ async def health_check():
         "openai_configured": client is not None
     }
 
+@app.get("/debug")
+async def debug_info():
+    """Debug endpoint to check vector loading"""
+    import platform
+    
+    # Check environment variables
+    env_vars = {
+        "USE_CLOUD_VECTORS": os.getenv("USE_CLOUD_VECTORS", "not set"),
+        "OPENAI_API_KEY": "***" + os.getenv("OPENAI_API_KEY", "not set")[-4:] if os.getenv("OPENAI_API_KEY") else "not set",
+    }
+    
+    # Check vector URLs
+    from vector_loader import get_vector_urls
+    vector_urls = get_vector_urls()
+    
+    # Check cache directory
+    cache_dir = "./vector_cache"
+    cache_exists = os.path.exists(cache_dir)
+    cache_files = []
+    if cache_exists:
+        cache_files = os.listdir(cache_dir)
+    
+    return {
+        "system": {
+            "platform": platform.system(),
+            "python_version": platform.python_version(),
+            "working_directory": os.getcwd()
+        },
+        "environment": env_vars,
+        "vector_urls": {
+            name: {
+                "faiss": urls["faiss"][:100] + "..." if len(urls["faiss"]) > 100 else urls["faiss"],
+                "json": urls["json"][:100] + "..." if len(urls["json"]) > 100 else urls["json"]
+            }
+            for name, urls in vector_urls.items()
+        },
+        "cache": {
+            "directory": cache_dir,
+            "exists": cache_exists,
+            "files": cache_files
+        },
+        "collections_status": {
+            name: {
+                "loaded": name in VECTOR_COLLECTIONS,
+                "vectors": VECTOR_COLLECTIONS[name]["size"] if name in VECTOR_COLLECTIONS else 0
+            }
+            for name in ["RashadAllMedia", "FinalTestament", "QuranTalkArticles"]
+        }
+    }
+
 @app.post("/search", response_model=SearchResponse)
 async def vector_search(request: SearchRequest):
     """Perform vector similarity search across all collections"""

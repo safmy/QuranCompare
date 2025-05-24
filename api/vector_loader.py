@@ -54,21 +54,37 @@ def download_file(url: str, destination: str) -> bool:
     """Download a file from URL to destination"""
     try:
         logger.info(f"Downloading {url} to {destination}")
-        response = requests.get(url, stream=True)
+        
+        # Check if URL is accessible
+        head_response = requests.head(url, allow_redirects=True)
+        if head_response.status_code == 404:
+            logger.error(f"File not found at {url}")
+            return False
+        
+        response = requests.get(url, stream=True, allow_redirects=True)
         response.raise_for_status()
+        
+        # Get file size
+        total_size = int(response.headers.get('content-length', 0))
+        logger.info(f"File size: {total_size / (1024*1024):.1f} MB")
         
         # Create directory if it doesn't exist
         os.makedirs(os.path.dirname(destination), exist_ok=True)
         
         # Write file in chunks
+        downloaded = 0
         with open(destination, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
+                downloaded += len(chunk)
+                if downloaded % (1024 * 1024) == 0:  # Log every MB
+                    logger.info(f"Downloaded {downloaded / (1024*1024):.1f} MB / {total_size / (1024*1024):.1f} MB")
         
         logger.info(f"Successfully downloaded {destination}")
         return True
     except Exception as e:
         logger.error(f"Failed to download {url}: {e}")
+        logger.error(f"Error type: {type(e).__name__}")
         return False
 
 def load_vectors_from_cloud(cache_dir: str = "./vector_cache") -> Dict:
@@ -76,11 +92,19 @@ def load_vectors_from_cloud(cache_dir: str = "./vector_cache") -> Dict:
     vector_collections = {}
     vector_urls = get_vector_urls()
     
+    logger.info(f"Loading vectors from cloud with cache directory: {cache_dir}")
+    logger.info(f"Current working directory: {os.getcwd()}")
+    
     # Create cache directory
     cache_path = Path(cache_dir)
-    cache_path.mkdir(exist_ok=True)
+    cache_path.mkdir(exist_ok=True, parents=True)
+    logger.info(f"Cache directory created/verified: {cache_path.absolute()}")
     
     for name, urls in vector_urls.items():
+        logger.info(f"\nProcessing {name}...")
+        logger.info(f"  FAISS URL: {urls['faiss']}")
+        logger.info(f"  JSON URL: {urls['json']}")
+        
         try:
             # Define local cache paths
             faiss_path = cache_path / f"{name}.faiss"
@@ -88,18 +112,26 @@ def load_vectors_from_cloud(cache_dir: str = "./vector_cache") -> Dict:
             
             # Download if not cached
             if not faiss_path.exists():
+                logger.info(f"  FAISS file not in cache, downloading...")
                 if not download_file(urls["faiss"], str(faiss_path)):
                     logger.warning(f"Failed to download {name} FAISS index")
                     continue
+            else:
+                logger.info(f"  FAISS file found in cache: {faiss_path}")
             
             if not json_path.exists():
+                logger.info(f"  JSON file not in cache, downloading...")
                 if not download_file(urls["json"], str(json_path)):
                     logger.warning(f"Failed to download {name} metadata")
                     continue
+            else:
+                logger.info(f"  JSON file found in cache: {json_path}")
             
             # Load from cache
             if faiss_path.exists() and json_path.exists():
+                logger.info(f"  Loading FAISS index...")
                 index = faiss.read_index(str(faiss_path))
+                logger.info(f"  Loading metadata...")
                 with open(json_path, 'r', encoding='utf-8') as f:
                     metadata = json.load(f)
                 
@@ -109,10 +141,16 @@ def load_vectors_from_cloud(cache_dir: str = "./vector_cache") -> Dict:
                     "size": index.ntotal
                 }
                 logger.info(f"✅ Loaded {name}: {index.ntotal} vectors")
+            else:
+                logger.error(f"  Files not found after download attempt")
             
         except Exception as e:
             logger.error(f"Error loading {name}: {e}")
+            logger.error(f"Error type: {type(e).__name__}")
+            import traceback
+            logger.error(traceback.format_exc())
     
+    logger.info(f"\nTotal collections loaded: {len(vector_collections)}")
     return vector_collections
 
 def load_vectors_from_local(base_dir: str = "../..") -> Dict:
