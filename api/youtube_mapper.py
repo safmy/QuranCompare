@@ -111,10 +111,11 @@ class YouTubeMapper:
         
         self.content_loaded = True
     
-    def find_title_for_content_simple(self, content_text: str) -> Tuple[Optional[str], Optional[str]]:
+    def find_title_for_content_simple(self, content_text: str) -> Tuple[Optional[str], Optional[str], bool]:
         """
         Find title and link for content by matching it to the correct video transcript
         in the RashadAllMedia texts array.
+        Returns: (title, link, is_exact_match)
         """
         if not self.loaded:
             self.load_mappings()
@@ -122,7 +123,7 @@ class YouTubeMapper:
             self.load_rashad_content()
             
         if not self.rashad_texts or not content_text or len(content_text.strip()) < 20:
-            return None, None
+            return None, None, False
         
         # Clean the content text for better matching
         clean_content = ' '.join(content_text.split())
@@ -131,7 +132,7 @@ class YouTubeMapper:
         found_index = None
         for idx, text in enumerate(self.rashad_texts):
             if clean_content[:100] in text or clean_content[-100:] in text:
-                # Found the text that contains this content
+                # Found the exact text that contains this content
                 found_index = idx
                 break
         
@@ -185,7 +186,7 @@ class YouTubeMapper:
         if found_index is not None:
             # First check if this exact index has a mapping
             if found_index in self.index_to_title_map:
-                return (self.index_to_title_map[found_index], self.index_to_link_map[found_index])
+                return (self.index_to_title_map[found_index], self.index_to_link_map[found_index], True)
             
             # Otherwise, find the closest preceding mapped index
             # This handles the sparse mapping issue (only 6.3% coverage)
@@ -209,9 +210,10 @@ class YouTubeMapper:
                     print(f"⚠️  Note: Content at index {found_index} mapped to video at index {closest_mapped_index} (distance: {distance})")
                     print(f"   This mapping may be approximate due to sparse video index coverage.")
                 
-                return (title, link)
+                # Return with is_exact_match=False since this is an approximate mapping
+                return (title, link, False)
         
-        return None, None
+        return None, None, False
     
     def extract_title_from_content(self, content: str) -> str:
         """Extract title from Rashad media content"""
@@ -269,19 +271,25 @@ class YouTubeMapper:
     
     def get_youtube_link_for_content(self, content: str) -> Optional[str]:
         """Get YouTube link with timestamp for Rashad media content"""
-        # First try the line-based mapping approach (most accurate)
-        title, base_link = self.find_title_for_content_simple(content)
+        # First try the index-based mapping approach (most accurate)
+        title, base_link, is_exact_match = self.find_title_for_content_simple(content)
         
         if base_link:
-            # Add timestamp to the link
-            return self.add_timestamp_to_youtube_link(base_link, content)
+            # Only add timestamp if this is an exact match
+            # For approximate matches, the timestamp would be for a different video
+            if is_exact_match:
+                return self.add_timestamp_to_youtube_link(base_link, content)
+            else:
+                # Return link without timestamp for approximate matches
+                return base_link
         
-        # Fallback to title matching if line-based approach fails
+        # Fallback to title matching if index-based approach fails
         extracted_title = self.extract_title_from_content(content)
         base_link = self.match_title_to_youtube(extracted_title)
         
         if base_link:
-            return self.add_timestamp_to_youtube_link(base_link, content)
+            # Don't add timestamp for title-based matches as they're unreliable
+            return base_link
         
         return None
     

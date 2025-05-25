@@ -376,14 +376,17 @@ async def vector_search(request: SearchRequest):
             if collection == "RashadAllMedia":
                 content = metadata.get("content", "")
                 
-                # Use YouTube mapper to get proper title and link with timestamp
-                # This uses the same line-based mapping as Discord bot
-                mapped_title, youtube_link = youtube_mapper.find_title_for_content_simple(content)
+                # Use YouTube mapper to get proper title and link
+                # This now properly handles exact vs approximate matches
+                mapped_title, youtube_link, is_exact_match = youtube_mapper.find_title_for_content_simple(content)
                 
                 # If we found a mapped title, use it
                 if mapped_title:
                     title = mapped_title
-                    # YouTube link already has timestamp added by mapper
+                    # For exact matches, add timestamp. For approximate, don't.
+                    if is_exact_match:
+                        youtube_link = youtube_mapper.add_timestamp_to_youtube_link(youtube_link, content)
+                    # youtube_link already set for approximate matches without timestamp
                 else:
                     # Fallback: extract title from content
                     title = youtube_mapper.extract_title_from_content(content)
