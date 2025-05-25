@@ -22,6 +22,18 @@ from youtube_mapper import youtube_mapper
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("VectorSearchAPI")
 
+# Load Quran verse mapping
+QURAN_VERSE_MAPPING = None
+try:
+    mapping_path = os.path.join(os.path.dirname(__file__), 'quran_verse_mapping.json')
+    if os.path.exists(mapping_path):
+        with open(mapping_path, 'r', encoding='utf-8') as f:
+            mapping_data = json.load(f)
+            QURAN_VERSE_MAPPING = mapping_data['verse_mapping']
+            logger.info(f"Loaded Quran verse mapping with {len(QURAN_VERSE_MAPPING)} verses")
+except Exception as e:
+    logger.warning(f"Could not load Quran verse mapping: {e}")
+
 # Initialize FastAPI
 app = FastAPI(
     title="Quran Vector Search API",
@@ -408,29 +420,15 @@ async def vector_search(request: SearchRequest):
                 verse_text = metadata.get("content", "").strip()
                 verse_index = combined_meta.get("original_index", 0)
                 
-                # Map verse index to Quran verse reference
-                def get_verse_reference(index):
-                    """Map verse index to [Chapter:Verse] format"""
-                    # This is a simplified mapping based on known Quran structure
-                    # Chapter 1 (Al-Fatiha) has 7 verses (indices 0-6)
-                    if index <= 6:
-                        return f"[1:{index + 1}]"
-                    
-                    # Chapter 2 starts at index 7
-                    # For a complete mapping, you'd need the full Quran structure
-                    # For now, we'll estimate based on common patterns
-                    
-                    # Rough estimation for Chapter 2 (has 286 verses)
-                    if index <= 292:  # 7 + 286 - 1
-                        chapter2_verse = index - 6
-                        return f"[2:{chapter2_verse}]"
-                    
-                    # For other chapters, show generic reference
-                    return f"[Verse {index + 1}]"
+                # Get proper verse reference from mapping
+                if QURAN_VERSE_MAPPING and str(verse_index) in QURAN_VERSE_MAPPING:
+                    verse_ref = f"[{QURAN_VERSE_MAPPING[str(verse_index)]}]"
+                else:
+                    # Fallback if mapping not available
+                    verse_ref = f"[Verse {verse_index + 1}]"
                 
-                verse_ref = get_verse_reference(verse_index)
-                
-                # Create properly formatted title with verse reference
+                # Format the title to match the expected format
+                # Just show the verse reference and truncated content
                 title = f"{verse_ref} {verse_text[:50]}{'...' if len(verse_text) > 50 else ''}"
                 
                 content = verse_text
