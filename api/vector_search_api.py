@@ -345,11 +345,18 @@ async def vector_search(request: SearchRequest):
             if collection == "RashadAllMedia":
                 content = metadata.get("content", "")
                 
-                # Use YouTube mapper to get proper title and link
-                extracted_title = youtube_mapper.extract_title_from_content(content)
-                youtube_link = youtube_mapper.get_youtube_link_for_content(content)
+                # Use YouTube mapper to get proper title and link with timestamp
+                # This uses the same line-based mapping as Discord bot
+                mapped_title, youtube_link = youtube_mapper.find_title_for_content_simple(content)
                 
-                title = extracted_title
+                # If we found a mapped title, use it
+                if mapped_title:
+                    title = mapped_title
+                    # YouTube link already has timestamp added by mapper
+                else:
+                    # Fallback: extract title from content
+                    title = youtube_mapper.extract_title_from_content(content)
+                    youtube_link = youtube_mapper.get_youtube_link_for_content(content)
                 
                 # Truncate content for display
                 truncated_content = content[:500] + "..." if len(content) > 500 else content
@@ -357,7 +364,7 @@ async def vector_search(request: SearchRequest):
                 
                 # If no direct YouTube link found, provide search link
                 if not youtube_link:
-                    search_query = extracted_title.replace(" ", "+")
+                    search_query = title.replace(" ", "+")
                     youtube_link = f"https://www.youtube.com/results?search_query=rashad+khalifa+{search_query}"
                 
                 source = "Rashad Khalifa Media"
