@@ -6,6 +6,9 @@ const QuranVectorSearch = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [numResults, setNumResults] = useState(5);
+  const [includeRashadMedia, setIncludeRashadMedia] = useState(true);
+  const [includeFinalTestament, setIncludeFinalTestament] = useState(true);
+  const [includeQuranTalk, setIncludeQuranTalk] = useState(true);
 
   // API endpoint - change this to your deployed API URL in production
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8001';
@@ -45,7 +48,10 @@ const QuranVectorSearch = () => {
         },
         body: JSON.stringify({
           query: searchTerm,
-          num_results: numResults
+          num_results: numResults,
+          include_rashad_media: includeRashadMedia,
+          include_final_testament: includeFinalTestament,
+          include_qurantalk: includeQuranTalk
         })
       });
 
@@ -147,6 +153,46 @@ const QuranVectorSearch = () => {
         </button>
       </div>
 
+      {/* Collection Filters */}
+      <div style={{ 
+        marginBottom: '20px',
+        padding: '15px',
+        backgroundColor: '#f5f5f5',
+        borderRadius: '8px',
+        border: '1px solid #ddd'
+      }}>
+        <h4 style={{ marginBottom: '10px', color: '#333' }}>Search In:</h4>
+        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={includeRashadMedia}
+              onChange={(e) => setIncludeRashadMedia(e.target.checked)}
+              style={{ marginRight: '8px' }}
+            />
+            <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>🎥 Rashad Khalifa Media</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={includeFinalTestament}
+              onChange={(e) => setIncludeFinalTestament(e.target.checked)}
+              style={{ marginRight: '8px' }}
+            />
+            <span style={{ color: '#2196F3', fontWeight: 'bold' }}>📖 Final Testament</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={includeQuranTalk}
+              onChange={(e) => setIncludeQuranTalk(e.target.checked)}
+              style={{ marginRight: '8px' }}
+            />
+            <span style={{ color: '#FF9800', fontWeight: 'bold' }}>📄 QuranTalk Articles</span>
+          </label>
+        </div>
+      </div>
+
       {error && (
         <div style={{
           padding: '10px',
@@ -197,7 +243,23 @@ const QuranVectorSearch = () => {
                     marginBottom: '5px',
                     fontSize: '18px'
                   }}>
-                    {result.title}
+                    {result.collection === 'QuranTalkArticles' && result.source && result.source.startsWith('http') ? (
+                      <a 
+                        href={result.source}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: '#FF9800',
+                          textDecoration: 'none'
+                        }}
+                        onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+                        onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+                      >
+                        {result.title}
+                      </a>
+                    ) : (
+                      result.title
+                    )}
                   </h3>
                 </div>
                 <div style={{

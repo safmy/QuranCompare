@@ -16,6 +16,7 @@ import openai
 from openai import OpenAI
 import logging
 from vector_loader import load_vectors_from_cloud, load_vectors_from_local
+from youtube_mapper import youtube_mapper
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -48,6 +49,9 @@ client = None
 class SearchRequest(BaseModel):
     query: str
     num_results: int = 5
+    include_rashad_media: bool = True
+    include_final_testament: bool = True  
+    include_qurantalk: bool = True
 
 class SearchResult(BaseModel):
     collection: str
@@ -308,17 +312,30 @@ async def vector_search(request: SearchRequest):
         query_embedding = create_embedding(request.query)
         query_embedding = query_embedding.reshape(1, -1)
         
-        # Search in combined index
-        distances, indices = COMBINED_INDEX.search(query_embedding, request.num_results)
+        # Filter collections based on request
+        collection_filter = {
+            "RashadAllMedia": request.include_rashad_media,
+            "FinalTestament": request.include_final_testament,
+            "QuranTalkArticles": request.include_qurantalk
+        }
+        
+        # Search more results than needed to account for filtering
+        search_count = min(request.num_results * 3, COMBINED_INDEX.ntotal)
+        distances, indices = COMBINED_INDEX.search(query_embedding, search_count)
         
         results = []
         for i, (distance, idx) in enumerate(zip(distances[0], indices[0])):
-            if idx < 0:
+            if idx < 0 or len(results) >= request.num_results:
                 continue
                 
             # Get metadata
             combined_meta = COMBINED_METADATA[idx]
             collection = combined_meta["collection"]
+            
+            # Skip if collection is filtered out
+            if not collection_filter.get(collection, True):
+                continue
+                
             metadata = combined_meta["metadata"]
             
             # Calculate similarity score (1 - normalized distance)
@@ -328,18 +345,9 @@ async def vector_search(request: SearchRequest):
             if collection == "RashadAllMedia":
                 content = metadata.get("content", "")
                 
-                # Extract title from the first line (before the first timestamp)
-                import re
-                lines = content.split('\n')
-                
-                # Look for title in first few lines before timestamps
-                extracted_title = "Rashad Khalifa Media"
-                for line in lines[:3]:
-                    line = line.strip()
-                    if line and not re.search(r'\(\d+:\d+\)', line):
-                        # This line doesn't have timestamps, likely a title
-                        extracted_title = line
-                        break
+                # Use YouTube mapper to get proper title and link
+                extracted_title = youtube_mapper.extract_title_from_content(content)
+                youtube_link = youtube_mapper.get_youtube_link_for_content(content)
                 
                 title = extracted_title
                 
@@ -347,10 +355,11 @@ async def vector_search(request: SearchRequest):
                 truncated_content = content[:500] + "..." if len(content) > 500 else content
                 content = truncated_content
                 
-                # For now, provide a search link to YouTube since we don't have direct video mapping
-                # This matches what your Discord bot would do for unmapped content
-                search_query = extracted_title.replace(" ", "+")
-                youtube_link = f"https://www.youtube.com/results?search_query=rashad+khalifa+{search_query}"
+                # If no direct YouTube link found, provide search link
+                if not youtube_link:
+                    search_query = extracted_title.replace(" ", "+")
+                    youtube_link = f"https://www.youtube.com/results?search_query=rashad+khalifa+{search_query}"
+                
                 source = "Rashad Khalifa Media"
                 
             elif collection == "FinalTestament":
@@ -390,7 +399,8 @@ async def vector_search(request: SearchRequest):
             else:  # QuranTalkArticles
                 title = metadata.get("title", "Unknown Article")
                 content = metadata.get("content", "")[:500] + "..." if len(metadata.get("content", "")) > 500 else metadata.get("content", "")
-                source = metadata.get("url", "QuranTalk")
+                article_url = metadata.get("url", "")
+                source = article_url if article_url else "QuranTalk"
                 youtube_link = None
             
             results.append(SearchResult(
