@@ -272,6 +272,35 @@ async def debug_info():
         }
     }
 
+@app.get("/debug-youtube")
+async def debug_youtube():
+    """Debug YouTube mapper status"""
+    mapper_status = {
+        "loaded": youtube_mapper.loaded,
+        "content_loaded": youtube_mapper.content_loaded,
+        "video_links_count": len(youtube_mapper.video_links),
+        "line_mappings_count": len(youtube_mapper.line_to_title_map),
+        "rashad_content_size": len(youtube_mapper.rashad_content) if youtube_mapper.rashad_content else 0
+    }
+    
+    # Try to load if not loaded
+    if not youtube_mapper.loaded:
+        youtube_mapper.load_mappings()
+        mapper_status["after_load_attempt"] = {
+            "loaded": youtube_mapper.loaded,
+            "video_links_count": len(youtube_mapper.video_links),
+            "line_mappings_count": len(youtube_mapper.line_to_title_map)
+        }
+    
+    if not youtube_mapper.content_loaded:
+        youtube_mapper.load_rashad_content()
+        mapper_status["after_content_load"] = {
+            "content_loaded": youtube_mapper.content_loaded,
+            "rashad_content_size": len(youtube_mapper.rashad_content) if youtube_mapper.rashad_content else 0
+        }
+    
+    return mapper_status
+
 @app.get("/test-download")
 async def test_download():
     """Test if we can download files from GitHub"""
@@ -319,11 +348,13 @@ async def vector_search(request: SearchRequest):
             "QuranTalkArticles": request.include_qurantalk
         }
         
-        # Search more results than needed to account for filtering
-        search_count = min(request.num_results * 3, COMBINED_INDEX.ntotal)
+        # Search more results than needed to account for filtering and deduplication
+        search_count = min(request.num_results * 5, COMBINED_INDEX.ntotal)
         distances, indices = COMBINED_INDEX.search(query_embedding, search_count)
         
         results = []
+        seen_content = set()  # Track unique content to avoid duplicates
+        
         for i, (distance, idx) in enumerate(zip(distances[0], indices[0])):
             if idx < 0 or len(results) >= request.num_results:
                 continue
@@ -409,6 +440,22 @@ async def vector_search(request: SearchRequest):
                 article_url = metadata.get("url", "")
                 source = article_url if article_url else "QuranTalk"
                 youtube_link = None
+            
+            # Create unique identifier for deduplication
+            if collection == "QuranTalkArticles":
+                # For articles, deduplicate by URL or title
+                content_key = article_url if article_url else title
+            elif collection == "RashadAllMedia":
+                # For videos, deduplicate by title
+                content_key = title
+            else:
+                # For verses, deduplicate by content
+                content_key = content[:100]
+            
+            # Skip if we've already seen this content
+            if content_key in seen_content:
+                continue
+            seen_content.add(content_key)
             
             results.append(SearchResult(
                 collection=collection,

@@ -26,17 +26,27 @@ class YouTubeMapper:
             # Load YouTube mappings
             possible_paths = [
                 'youtube_search_results_updated.json',
+                './youtube_search_results_updated.json',
                 '../youtube_search_results_updated.json', 
                 '../../youtube_search_results_updated.json',
+                os.path.join(os.path.dirname(__file__), 'youtube_search_results_updated.json'),
                 os.path.join(os.path.dirname(__file__), '../../youtube_search_results_updated.json')
             ]
             
             youtube_results = []
+            youtube_path_found = None
             for path in possible_paths:
                 if os.path.exists(path):
+                    youtube_path_found = path
                     with open(path, 'r', encoding='utf-8') as f:
                         youtube_results = json.load(f)
+                    print(f"✅ Found youtube_search_results_updated.json at: {path}")
                     break
+            
+            if not youtube_results:
+                print(f"⚠️ Could not find youtube_search_results_updated.json in any of these paths:")
+                for path in possible_paths:
+                    print(f"   - {path}")
             
             # Build direct title->link mapping
             for result in youtube_results:
@@ -65,23 +75,33 @@ class YouTubeMapper:
             return
             
         try:
-            # Try to find RashadAllMedia.json
+            # Try to find RashadAllMedia.json (from vector cache)
             possible_paths = [
+                './vector_cache/RashadAllMedia.json',
+                'vector_cache/RashadAllMedia.json',
                 '../../data/RashadAllMedia.json',
                 '../../../data/RashadAllMedia.json',
+                os.path.join(os.path.dirname(__file__), 'vector_cache/RashadAllMedia.json'),
                 os.path.join(os.path.dirname(__file__), '../../../data/RashadAllMedia.json')
             ]
             
+            content_path_found = None
             for path in possible_paths:
                 if os.path.exists(path):
+                    content_path_found = path
                     with open(path, 'r', encoding='utf-8') as f:
                         data = json.load(f)
                         if 'texts' in data:
                             # Join all texts with newlines to create the full content
                             self.rashad_content = '\n'.join(data['texts'])
                             self.content_loaded = True
-                            print(f"✅ Loaded RashadAllMedia content ({len(data['texts'])} texts)")
+                            print(f"✅ Loaded RashadAllMedia content from {path} ({len(data['texts'])} texts)")
                             return
+            
+            if not content_path_found:
+                print(f"⚠️ Could not find RashadAllMedia.json in any of these paths:")
+                for path in possible_paths:
+                    print(f"   - {path}")
                             
         except Exception as e:
             print(f"⚠️ Failed to load RashadAllMedia content: {e}")
