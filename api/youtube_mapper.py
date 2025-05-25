@@ -13,8 +13,9 @@ class YouTubeMapper:
         self.video_links = {}
         self.loaded = False
         self.rashad_content = None
-        self.line_to_title_map = {}
-        self.line_to_link_map = {}
+        self.rashad_texts = []  # Array of texts from RashadAllMedia.json
+        self.index_to_title_map = {}  # Maps array index to video title
+        self.index_to_link_map = {}   # Maps array index to video link
         self.content_loaded = False
     
     def load_mappings(self):
@@ -55,15 +56,15 @@ class YouTubeMapper:
                 if 'video_title' in result and 'video_link' in result:
                     self.video_links[result['video_title'].lower()] = result['video_link']
             
-            # Build line-based mappings
+            # Build index-based mappings (text_index refers to array index in RashadAllMedia texts)
             for result in youtube_results:
                 if 'text_index' in result and 'video_title' in result and 'video_link' in result:
-                    line_num = result['text_index'] + 3  # Add +3 offset as per Discord bot
-                    self.line_to_title_map[line_num] = result['video_title']
-                    self.line_to_link_map[line_num] = result['video_link']
+                    text_idx = result['text_index']  # This is the array index in RashadAllMedia.json
+                    self.index_to_title_map[text_idx] = result['video_title']
+                    self.index_to_link_map[text_idx] = result['video_link']
             
             self.loaded = True
-            print(f"✅ Loaded {len(self.video_links)} YouTube mappings and {len(self.line_to_title_map)} line mappings")
+            print(f"✅ Loaded {len(self.video_links)} YouTube mappings and {len(self.index_to_title_map)} index mappings")
             
         except Exception as e:
             print(f"⚠️ Failed to load YouTube mappings: {e}")
@@ -92,7 +93,9 @@ class YouTubeMapper:
                     with open(path, 'r', encoding='utf-8') as f:
                         data = json.load(f)
                         if 'texts' in data:
-                            # Join all texts with newlines to create the full content
+                            # Store the texts array for index-based lookup
+                            self.rashad_texts = data['texts']
+                            # Also join for backward compatibility
                             self.rashad_content = '\n'.join(data['texts'])
                             self.content_loaded = True
                             print(f"✅ Loaded RashadAllMedia content from {path} ({len(data['texts'])} texts)")
@@ -110,86 +113,103 @@ class YouTubeMapper:
     
     def find_title_for_content_simple(self, content_text: str) -> Tuple[Optional[str], Optional[str]]:
         """
-        Find title and link for content using the Discord bot's approach:
-        1. Extract 4-5 word phrases from content
-        2. Search for these phrases in the full content
-        3. Find the line number
-        4. Match to the closest preceding title
+        Find title and link for content by matching it to the correct video transcript
+        in the RashadAllMedia texts array.
         """
         if not self.loaded:
             self.load_mappings()
         if not self.content_loaded:
             self.load_rashad_content()
             
-        if not self.rashad_content or not content_text or len(content_text.strip()) < 20:
+        if not self.rashad_texts or not content_text or len(content_text.strip()) < 20:
             return None, None
         
-        # Extract words and create overlapping 4-5 word phrases
-        words = content_text.split()
-        if len(words) < 4:
-            return None, None
+        # Clean the content text for better matching
+        clean_content = ' '.join(content_text.split())
         
-        # Create phrases of 4-5 consecutive words
-        phrases = []
-        for i in range(len(words) - 3):
-            if i + 5 <= len(words):
-                phrases.append(' '.join(words[i:i+5]))
-            else:
-                phrases.append(' '.join(words[i:i+4]))
+        # Method 1: Try to find which text index contains this content
+        found_index = None
+        for idx, text in enumerate(self.rashad_texts):
+            if clean_content[:100] in text or clean_content[-100:] in text:
+                # Found the text that contains this content
+                found_index = idx
+                break
         
-        # Try with phrases from different parts of content
-        test_phrases = []
-        if len(phrases) >= 1:
-            test_phrases.append(phrases[0])  # First phrase
-        if len(phrases) >= 3:
-            test_phrases.append(phrases[len(phrases)//2])  # Middle phrase
-        if len(phrases) >= 2:
-            test_phrases.append(phrases[-1])  # Last phrase
-        
-        # Search for these phrases in the content
-        for phrase in test_phrases:
-            try:
-                search_phrase = ' '.join(phrase.split())
-                index = self.rashad_content.find(search_phrase)
+        # Method 2: If not found, extract distinctive phrases and search
+        if found_index is None:
+            words = content_text.split()
+            if len(words) >= 4:
+                # Create phrases of 4-5 consecutive words
+                phrases = []
+                for i in range(len(words) - 3):
+                    if i + 5 <= len(words):
+                        phrases.append(' '.join(words[i:i+5]))
+                    else:
+                        phrases.append(' '.join(words[i:i+4]))
                 
-                if index >= 0:
-                    # Count lines up to this point
-                    line_number = self.rashad_content[:index].count('\n') + 1
-                    
-                    # Find the closest title that comes before this line
-                    closest_title_line = None
-                    for title_line in sorted(self.line_to_title_map.keys(), reverse=True):
-                        if title_line <= line_number:
-                            closest_title_line = title_line
+                # Try with phrases from different parts of content
+                test_phrases = []
+                if len(phrases) >= 1:
+                    test_phrases.append(phrases[0])  # First phrase
+                if len(phrases) >= 3:
+                    test_phrases.append(phrases[len(phrases)//2])  # Middle phrase  
+                if len(phrases) >= 2:
+                    test_phrases.append(phrases[-1])  # Last phrase
+                
+                # Search for these phrases in each text
+                for phrase in test_phrases:
+                    search_phrase = ' '.join(phrase.split())
+                    for idx, text in enumerate(self.rashad_texts):
+                        if search_phrase in text:
+                            # Found the text containing this phrase
+                            found_index = idx
                             break
-                    
-                    if closest_title_line:
-                        return (self.line_to_title_map[closest_title_line], 
-                               self.line_to_link_map[closest_title_line])
-            except:
-                continue
+                    if found_index is not None:
+                        break
         
-        # Try with timestamps if present
-        timestamp_matches = re.findall(r'\((\d+:\d+:\d+|\d+:\d+)\)', content_text)
-        if timestamp_matches:
-            for timestamp in timestamp_matches[:3]:
-                try:
+        # Method 3: If still not found, try with timestamps
+        if found_index is None:
+            timestamp_matches = re.findall(r'\((\d+:\d+:\d+|\d+:\d+)\)', content_text)
+            if timestamp_matches:
+                for timestamp in timestamp_matches[:3]:
                     timestamp_pattern = f"({timestamp})"
-                    index = self.rashad_content.find(timestamp_pattern)
-                    if index >= 0:
-                        line_number = self.rashad_content[:index].count('\n') + 1
-                        
-                        closest_title_line = None
-                        for title_line in sorted(self.line_to_title_map.keys(), reverse=True):
-                            if title_line <= line_number:
-                                closest_title_line = title_line
-                                break
-                        
-                        if closest_title_line:
-                            return (self.line_to_title_map[closest_title_line],
-                                   self.line_to_link_map[closest_title_line])
-                except:
-                    continue
+                    for idx, text in enumerate(self.rashad_texts):
+                        if timestamp_pattern in text:
+                            # Found the text containing this timestamp
+                            found_index = idx
+                            break
+                    if found_index is not None:
+                        break
+        
+        # Now that we have found_index, find the appropriate video
+        if found_index is not None:
+            # First check if this exact index has a mapping
+            if found_index in self.index_to_title_map:
+                return (self.index_to_title_map[found_index], self.index_to_link_map[found_index])
+            
+            # Otherwise, find the closest preceding mapped index
+            # This handles the sparse mapping issue (only 6.3% coverage)
+            closest_mapped_index = None
+            for mapped_idx in sorted(self.index_to_title_map.keys(), reverse=True):
+                if mapped_idx <= found_index:
+                    closest_mapped_index = mapped_idx
+                    break
+            
+            if closest_mapped_index is not None:
+                # Check how far away the mapping is
+                distance = found_index - closest_mapped_index
+                
+                # If the mapping is too far away (more than 10 indices), it might be inaccurate
+                # but we'll still return it since it's the best we have
+                title = self.index_to_title_map[closest_mapped_index]
+                link = self.index_to_link_map[closest_mapped_index]
+                
+                # Log a warning if the mapping distance is large
+                if distance > 10:
+                    print(f"⚠️  Note: Content at index {found_index} mapped to video at index {closest_mapped_index} (distance: {distance})")
+                    print(f"   This mapping may be approximate due to sparse video index coverage.")
+                
+                return (title, link)
         
         return None, None
     
