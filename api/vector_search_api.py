@@ -29,9 +29,10 @@ app = FastAPI(
 )
 
 # Add CORS middleware
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",") if os.getenv("ALLOWED_ORIGINS") != "*" else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://phenomenal-cuchufli-e6cece.netlify.app"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
