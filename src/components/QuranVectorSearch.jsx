@@ -242,7 +242,7 @@ const QuranVectorSearch = () => {
                     fontSize: '14px'
                   }}
                 >
-                  🎥 Watch on YouTube
+                  🎥 {result.youtube_link.includes('search_query') ? 'Search on YouTube' : 'Watch on YouTube'}
                 </a>
               )}
             </div>

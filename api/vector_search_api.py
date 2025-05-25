@@ -325,15 +325,67 @@ async def vector_search(request: SearchRequest):
             
             # Format result based on collection type
             if collection == "RashadAllMedia":
-                title = metadata.get("title", "Unknown Title")
-                content = metadata.get("content", "")[:500] + "..." if len(metadata.get("content", "")) > 500 else metadata.get("content", "")
-                youtube_link = f"https://www.youtube.com/watch?v={metadata.get('youtube_id')}" if metadata.get('youtube_id') else None
+                content = metadata.get("content", "")
+                
+                # Extract title from the first line (before the first timestamp)
+                import re
+                lines = content.split('\n')
+                
+                # Look for title in first few lines before timestamps
+                extracted_title = "Rashad Khalifa Media"
+                for line in lines[:3]:
+                    line = line.strip()
+                    if line and not re.search(r'\(\d+:\d+\)', line):
+                        # This line doesn't have timestamps, likely a title
+                        extracted_title = line
+                        break
+                
+                title = extracted_title
+                
+                # Truncate content for display
+                truncated_content = content[:500] + "..." if len(content) > 500 else content
+                content = truncated_content
+                
+                # For now, provide a search link to YouTube since we don't have direct video mapping
+                # This matches what your Discord bot would do for unmapped content
+                search_query = extracted_title.replace(" ", "+")
+                youtube_link = f"https://www.youtube.com/results?search_query=rashad+khalifa+{search_query}"
                 source = "Rashad Khalifa Media"
+                
             elif collection == "FinalTestament":
-                title = f"Verse {metadata.get('verse_ref', 'Unknown')}"
-                content = metadata.get("text", "")
+                # Extract verse reference from content
+                verse_text = metadata.get("content", "").strip()
+                verse_index = combined_meta.get("original_index", 0)
+                
+                # Map verse index to Quran verse reference
+                def get_verse_reference(index):
+                    """Map verse index to [Chapter:Verse] format"""
+                    # This is a simplified mapping based on known Quran structure
+                    # Chapter 1 (Al-Fatiha) has 7 verses (indices 0-6)
+                    if index <= 6:
+                        return f"[1:{index + 1}]"
+                    
+                    # Chapter 2 starts at index 7
+                    # For a complete mapping, you'd need the full Quran structure
+                    # For now, we'll estimate based on common patterns
+                    
+                    # Rough estimation for Chapter 2 (has 286 verses)
+                    if index <= 292:  # 7 + 286 - 1
+                        chapter2_verse = index - 6
+                        return f"[2:{chapter2_verse}]"
+                    
+                    # For other chapters, show generic reference
+                    return f"[Verse {index + 1}]"
+                
+                verse_ref = get_verse_reference(verse_index)
+                
+                # Create properly formatted title with verse reference
+                title = f"{verse_ref} {verse_text[:50]}{'...' if len(verse_text) > 50 else ''}"
+                
+                content = verse_text
                 source = "Final Testament"
                 youtube_link = None
+                
             else:  # QuranTalkArticles
                 title = metadata.get("title", "Unknown Article")
                 content = metadata.get("content", "")[:500] + "..." if len(metadata.get("content", "")) > 500 else metadata.get("content", "")
