@@ -1,6 +1,14 @@
 # Vector files (too large for git)
 *.faiss
-*.json
+
+# Only ignore large JSON vector files
+RashadAllMedia.json
+FinalTestament.json
+qurantalk_articles_*.json
+how*.json
+
+# But keep the YouTube mapping file
+!youtube_search_results_updated.json
 !requirements.txt
 !package.json
 !package-lock.json
