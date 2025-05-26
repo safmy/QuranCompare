@@ -22,8 +22,9 @@ from youtube_mapper import youtube_mapper
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("VectorSearchAPI")
 
-# Load Quran verse mapping
+# Load Quran verse mapping and verses data
 QURAN_VERSE_MAPPING = None
+QURAN_VERSES_DATA = None
 try:
     mapping_path = os.path.join(os.path.dirname(__file__), 'quran_verse_mapping.json')
     if os.path.exists(mapping_path):
@@ -33,6 +34,16 @@ try:
             logger.info(f"Loaded Quran verse mapping with {len(QURAN_VERSE_MAPPING)} verses")
 except Exception as e:
     logger.warning(f"Could not load Quran verse mapping: {e}")
+
+try:
+    # Load verses with roots and meanings
+    verses_path = os.path.join(os.path.dirname(__file__), '../../verses_array_roots_meanings_subtitles_footnotes.json')
+    if os.path.exists(verses_path):
+        with open(verses_path, 'r', encoding='utf-8') as f:
+            QURAN_VERSES_DATA = json.load(f)
+            logger.info(f"Loaded verses data with {len(QURAN_VERSES_DATA)} verses")
+except Exception as e:
+    logger.warning(f"Could not load verses data: {e}")
 
 # Initialize FastAPI
 app = FastAPI(
@@ -65,6 +76,9 @@ class SearchRequest(BaseModel):
     include_final_testament: bool = True  
     include_qurantalk: bool = True
 
+class VerseRangeRequest(BaseModel):
+    verse_range: str  # Format: "1:1-7" or "2:5-10" or "3:15"
+
 class SearchResult(BaseModel):
     collection: str
     title: str
@@ -73,10 +87,23 @@ class SearchResult(BaseModel):
     source: Optional[str] = None
     youtube_link: Optional[str] = None
 
+class VerseResult(BaseModel):
+    sura_verse: str
+    english: str
+    arabic: str
+    roots: str
+    meanings: str
+    footnote: Optional[str] = None
+
 class SearchResponse(BaseModel):
     results: List[SearchResult]
     query: str
     total_results: int
+
+class VerseRangeResponse(BaseModel):
+    verses: List[VerseResult]
+    total_verses: int
+    range_requested: str
 
 def load_vector_collections():
     """Load all vector collections from disk or cloud"""
@@ -334,6 +361,77 @@ async def test_download():
             "error": str(e),
             "accessible": False
         }
+
+@app.post("/verses", response_model=VerseRangeResponse)
+async def get_verse_range(request: VerseRangeRequest):
+    """Get verses by range (e.g., '1:1-7' or '2:5-10' or '3:15')"""
+    
+    if not QURAN_VERSES_DATA:
+        raise HTTPException(status_code=503, detail="Verses data not loaded")
+    
+    try:
+        # Parse the verse range
+        verse_range = request.verse_range.strip()
+        
+        # Handle single verse (e.g., "1:5")
+        if '-' not in verse_range:
+            chapter, verse = map(int, verse_range.split(':'))
+            start_verse = end_verse = verse
+        else:
+            # Handle range (e.g., "1:1-7")
+            start_ref, end_ref = verse_range.split('-')
+            
+            # Parse start
+            if ':' in start_ref:
+                start_chapter, start_verse = map(int, start_ref.split(':'))
+            else:
+                # Just verse number, assume same chapter as end
+                start_verse = int(start_ref)
+                # Need to get chapter from end_ref
+                if ':' not in end_ref:
+                    raise HTTPException(status_code=400, detail="Invalid range format")
+                start_chapter = int(end_ref.split(':')[0])
+            
+            # Parse end
+            if ':' in end_ref:
+                end_chapter, end_verse = map(int, end_ref.split(':'))
+            else:
+                end_chapter = start_chapter
+                end_verse = int(end_ref)
+            
+            # For now, only support single chapter ranges
+            if start_chapter != end_chapter:
+                raise HTTPException(status_code=400, detail="Cross-chapter ranges not supported yet")
+            
+            chapter = start_chapter
+        
+        # Find matching verses
+        verses = []
+        for verse_data in QURAN_VERSES_DATA:
+            sura_verse = verse_data['sura_verse']
+            verse_chapter, verse_num = map(int, sura_verse.split(':'))
+            
+            if verse_chapter == chapter and start_verse <= verse_num <= end_verse:
+                verses.append(VerseResult(
+                    sura_verse=sura_verse,
+                    english=verse_data.get('english', ''),
+                    arabic=verse_data.get('arabic', ''),
+                    roots=verse_data.get('roots', ''),
+                    meanings=verse_data.get('meanings', ''),
+                    footnote=verse_data.get('footnote')
+                ))
+        
+        return VerseRangeResponse(
+            verses=verses,
+            total_verses=len(verses),
+            range_requested=verse_range
+        )
+        
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid verse range format. Use format like '1:1-7' or '2:5'")
+    except Exception as e:
+        logger.error(f"Error in verse range lookup: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/search", response_model=SearchResponse)
 async def vector_search(request: SearchRequest):
