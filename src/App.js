@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import QuranSearch from './components/QuranSearch';
 import QuranVectorSearch from './components/QuranVectorSearch';
@@ -8,9 +8,25 @@ import QuranManuscriptAnalysis from './components/QuranManuscriptAnalysis';
 
 function App() {
   const [activeTab, setActiveTab] = useState('lookup');
+  const [verseRangeForLookup, setVerseRangeForLookup] = useState('');
+  const verseLookupRef = useRef(null);
+  
+  useEffect(() => {
+    // Listen for verse range events from other components
+    const handleOpenVerseRange = (event) => {
+      setVerseRangeForLookup(event.detail.range);
+      setActiveTab('lookup');
+    };
+    
+    window.addEventListener('openVerseRange', handleOpenVerseRange);
+    
+    return () => {
+      window.removeEventListener('openVerseRange', handleOpenVerseRange);
+    };
+  }, []);
 
   const tabs = [
-    { id: 'lookup', label: 'Verse Lookup', component: <QuranVerseLookup /> },
+    { id: 'lookup', label: 'Verse Lookup', component: <QuranVerseLookup key={verseRangeForLookup} initialRange={verseRangeForLookup} /> },
     { id: 'vectorsearch', label: 'Semantic Search', component: <QuranVectorSearch /> },
     { id: 'compare', label: 'Compare', component: <QuranCompare /> },
     { id: 'manuscript', label: 'Manuscript Analysis', component: <QuranManuscriptAnalysis /> }

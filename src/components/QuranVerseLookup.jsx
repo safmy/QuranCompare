@@ -3,14 +3,48 @@ import './QuranVerseLookup.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://vector-search-api-production.up.railway.app';
 
-const QuranVerseLookup = () => {
-    const [verseRange, setVerseRange] = useState('1:1-7');
+const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
+    const [verseRange, setVerseRange] = useState(initialRange || '1:1-7');
     const [verses, setVerses] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [hoveredWord, setHoveredWord] = useState(null);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
     const [searchMode, setSearchMode] = useState('range'); // 'range' or 'text'
+    
+    const handleVerseClick = async (verseRef) => {
+        try {
+            // Get the subtitle range for this verse
+            const response = await fetch(`${API_BASE_URL}/verse-range-for-subtitle`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    verse_ref: verseRef
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                // Update the verse range input and switch to range mode
+                setVerseRange(data.subtitle_range);
+                setSearchMode('range');
+                // Trigger a new search with the subtitle range
+                setTimeout(() => {
+                    fetchVerses();
+                }, 100);
+            }
+        } catch (err) {
+            console.error('Failed to get verse range:', err);
+            // Fallback: just search for the single verse
+            setVerseRange(verseRef);
+            setSearchMode('range');
+            setTimeout(() => {
+                fetchVerses();
+            }, 100);
+        }
+    };
 
     const fetchVerses = async () => {
         if (!verseRange.trim()) return;
@@ -130,9 +164,20 @@ const QuranVerseLookup = () => {
     };
 
     useEffect(() => {
-        // Load default verses on component mount
+        // Load verses when component mounts or when initialRange changes
+        if (initialRange && initialRange !== verseRange) {
+            setVerseRange(initialRange);
+            setSearchMode('range');
+        }
         fetchVerses();
-    }, []);
+    }, [initialRange]);
+    
+    useEffect(() => {
+        // Fetch verses when verseRange changes
+        if (verseRange) {
+            fetchVerses();
+        }
+    }, [verseRange, searchMode]);
 
     return (
         <div className="verse-lookup-container">
@@ -187,7 +232,13 @@ const QuranVerseLookup = () => {
                 {verses.map((verse, index) => (
                     <div key={verse.sura_verse} className="verse-card">
                         <div className="verse-header">
-                            <span className="verse-ref">[{verse.sura_verse}]</span>
+                            <span 
+                                className="verse-ref"
+                                onClick={() => handleVerseClick(verse.sura_verse)}
+                                title={`Click to view subtitle section for ${verse.sura_verse}`}
+                            >
+                                [{verse.sura_verse}]
+                            </span>
                         </div>
                         
                         <div className="verse-content">

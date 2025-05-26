@@ -9,6 +9,105 @@ const QuranVectorSearch = () => {
   const [includeRashadMedia, setIncludeRashadMedia] = useState(true);
   const [includeFinalTestament, setIncludeFinalTestament] = useState(true);
   const [includeQuranTalk, setIncludeQuranTalk] = useState(true);
+  
+  const handleVerseClick = async (verseRef) => {
+    try {
+      // Get the subtitle range for this verse
+      const response = await fetch(`${API_URL}/verse-range-for-subtitle`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          verse_ref: verseRef
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Open the verse lookup tab with the subtitle range
+        // We'll need to communicate with the parent App component
+        window.openVerseRange = data.subtitle_range;
+        // Trigger a custom event that the App component can listen to
+        window.dispatchEvent(new CustomEvent('openVerseRange', { 
+          detail: { range: data.subtitle_range } 
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to get verse range:', err);
+      // Fallback: trigger event with single verse
+      window.dispatchEvent(new CustomEvent('openVerseRange', { 
+        detail: { range: verseRef } 
+      }));
+    }
+  };
+  
+  const renderTitle = (result) => {
+    if (result.collection === 'FinalTestament') {
+      // Extract verse reference and make it clickable
+      const verseMatch = result.title.match(/\[(\d+:\d+)\]/);
+      if (verseMatch) {
+        const verseRef = verseMatch[1];
+        const beforeVerse = result.title.substring(0, verseMatch.index);
+        const afterVerse = result.title.substring(verseMatch.index + verseMatch[0].length);
+        
+        return (
+          <span>
+            {beforeVerse}
+            <span 
+              style={{
+                backgroundColor: '#2196F3',
+                color: 'white',
+                padding: '3px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '13px',
+                transition: 'all 0.2s',
+                border: '2px solid #2196F3'
+              }}
+              onClick={() => handleVerseClick(verseRef)}
+              onMouseOver={(e) => {
+                e.target.style.backgroundColor = '#1976D2';
+                e.target.style.borderColor = '#1976D2';
+                e.target.style.transform = 'translateY(-1px)';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.backgroundColor = '#2196F3';
+                e.target.style.borderColor = '#2196F3';
+                e.target.style.transform = 'translateY(0)';
+              }}
+              title={`Click to view subtitle section for ${verseRef}`}
+            >
+              [{verseRef}]
+            </span>
+            {afterVerse}
+          </span>
+        );
+      }
+    }
+    
+    // For other collections or if no verse match found
+    if (result.collection === 'QuranTalkArticles' && result.source && result.source.startsWith('http')) {
+      return (
+        <a 
+          href={result.source}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            color: '#FF9800',
+            textDecoration: 'none'
+          }}
+          onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+          onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+        >
+          {result.title}
+        </a>
+      );
+    }
+    
+    return result.title;
+  };
 
   // API endpoint - change this to your deployed API URL in production
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8001';
@@ -243,23 +342,7 @@ const QuranVectorSearch = () => {
                     marginBottom: '5px',
                     fontSize: '18px'
                   }}>
-                    {result.collection === 'QuranTalkArticles' && result.source && result.source.startsWith('http') ? (
-                      <a 
-                        href={result.source}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          color: '#FF9800',
-                          textDecoration: 'none'
-                        }}
-                        onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
-                        onMouseOut={(e) => e.target.style.textDecoration = 'none'}
-                      >
-                        {result.title}
-                      </a>
-                    ) : (
-                      result.title
-                    )}
+                    {renderTitle(result)}
                   </h3>
                 </div>
                 <div style={{

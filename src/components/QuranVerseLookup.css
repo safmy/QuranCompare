@@ -137,10 +137,25 @@
 .verse-ref {
     background: #2c5aa0;
     color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 6px 12px;
+    border-radius: 6px;
     font-weight: bold;
     font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid #2c5aa0;
+    display: inline-block;
+}
+
+.verse-ref:hover {
+    background: #1e3d72;
+    border-color: #1e3d72;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.verse-ref:active {
+    transform: translateY(0);
 }
 
 .verse-content {
@@ -174,8 +189,13 @@
 .english-text {
     font-size: 18px;
     line-height: 1.6;
-    color: #333;
+    color: #1a1a1a;
     padding: 10px 0;
+    font-weight: 400;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 3px solid #e1e5e9;
 }
 
 .footnote {
@@ -285,6 +305,12 @@
         color: #fff;
     }
 
+    .english-text {
+        color: #e0e0e0;
+        background: rgba(45, 45, 45, 0.9);
+        border-left: 3px solid #404040;
+    }
+
     .verse-input {
         background: #2d2d2d;
         border-color: #404040;
@@ -293,5 +319,16 @@
 
     .verse-input:focus {
         border-color: #4a90e2;
+    }
+
+    .mode-button {
+        background: #2d2d2d;
+        border-color: #404040;
+        color: #e0e0e0;
+    }
+    
+    .mode-button:hover {
+        border-color: #4a90e2;
+        color: #4a90e2;
     }
 }

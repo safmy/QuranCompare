@@ -18,6 +18,7 @@ import logging
 from vector_loader import load_vectors_from_cloud, load_vectors_from_local
 from youtube_mapper import youtube_mapper
 from verses_loader import load_verses_data
+from subtitle_ranges import get_cached_verse_range
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -98,6 +99,14 @@ class VerseRangeResponse(BaseModel):
     verses: List[VerseResult]
     total_verses: int
     range_requested: str
+
+class VerseRangeForSubtitleRequest(BaseModel):
+    verse_ref: str  # Format: "2:3"
+
+class VerseRangeForSubtitleResponse(BaseModel):
+    verse_ref: str
+    subtitle_range: str
+    message: str
 
 def load_vector_collections():
     """Load all vector collections from disk or cloud"""
@@ -425,6 +434,24 @@ async def get_verse_range(request: VerseRangeRequest):
         raise HTTPException(status_code=400, detail="Invalid verse range format. Use format like '1:1-7' or '2:5'")
     except Exception as e:
         logger.error(f"Error in verse range lookup: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/verse-range-for-subtitle", response_model=VerseRangeForSubtitleResponse)
+async def get_verse_range_for_subtitle(request: VerseRangeForSubtitleRequest):
+    """Get the subtitle range for a given verse (e.g., 2:3 -> 2:3-5)"""
+    
+    try:
+        verse_ref = request.verse_ref.strip()
+        subtitle_range = get_cached_verse_range(verse_ref)
+        
+        return VerseRangeForSubtitleResponse(
+            verse_ref=verse_ref,
+            subtitle_range=subtitle_range,
+            message=f"Verse {verse_ref} belongs to subtitle range {subtitle_range}"
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in verse range for subtitle lookup: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/search", response_model=SearchResponse)
