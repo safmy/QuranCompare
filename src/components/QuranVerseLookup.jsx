@@ -254,6 +254,13 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                 </div>
             )}
 
+            {/* Display subtitle at the top if available */}
+            {currentSubtitle && verses.length > 0 && (
+                <div className="subtitle-header">
+                    <h3 className="subtitle-text">{currentSubtitle}</h3>
+                </div>
+            )}
+            
             <div className="verses-container">
                 {verses.map((verse, index) => (
                     <div key={verse.sura_verse} className="verse-card">
@@ -325,11 +332,6 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
             {verses.length > 0 && (
                 <div className="verse-info">
                     📊 Showing {verses.length} verse{verses.length !== 1 ? 's' : ''} for range: {verseRange}
-                    {currentSubtitle && (
-                        <div className="subtitle-display">
-                            📋 <strong>Subtitle:</strong> {currentSubtitle}
-                        </div>
-                    )}
                 </div>
             )}
         </div>

@@ -118,12 +118,13 @@
 }
 
 .verse-card {
-    background: white;
-    border: 1px solid #e1e5e9;
-    border-radius: 12px;
+    background: #fafbfc;
+    border: 1px solid #e8ecf0;
+    border-radius: 10px;
     padding: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     transition: box-shadow 0.2s;
+    margin-bottom: 15px;
 }
 
 .verse-card:hover {
@@ -166,13 +167,14 @@
 
 .arabic-text {
     font-family: 'Amiri', 'Scheherazade', 'Arabic Typesetting', serif;
-    font-size: 28px;
-    line-height: 1.8;
+    font-size: 26px;
+    line-height: 1.9;
     text-align: right;
-    padding: 15px;
+    padding: 20px;
     background: #f8f9fa;
     border-radius: 8px;
     border-right: 4px solid #2c5aa0;
+    margin-bottom: 15px;
 }
 
 .arabic-word {
@@ -187,15 +189,16 @@
 }
 
 .english-text {
-    font-size: 18px;
-    line-height: 1.6;
-    color: #1a1a1a;
-    padding: 10px 0;
+    font-size: 17px;
+    line-height: 1.7;
+    color: #2c3e50;
+    padding: 18px;
     font-weight: 400;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 15px;
-    border-radius: 6px;
-    border-left: 3px solid #e1e5e9;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e8ecf0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    margin: 10px 0;
 }
 
 .footnote {
@@ -244,26 +247,30 @@
 .verse-info {
     text-align: center;
     margin-top: 20px;
-    padding: 15px;
-    background: #e8f4f8;
-    border-radius: 8px;
-    color: #0c5460;
-    font-size: 14px;
-}
-
-.subtitle-display {
-    margin-top: 10px;
     padding: 12px;
-    background: #fff3cd;
+    background: #f8f9fa;
     border-radius: 6px;
-    border-left: 4px solid #ffc107;
-    color: #856404;
-    font-size: 15px;
-    text-align: left;
+    color: #6c757d;
+    font-size: 13px;
+    border: 1px solid #e9ecef;
 }
 
-.subtitle-display strong {
-    color: #6c4f00;
+.subtitle-header {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.subtitle-text {
+    background: linear-gradient(135deg, #2c5aa0, #4a90e2);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    box-shadow: 0 2px 8px rgba(44, 90, 160, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    font-style: italic;
 }
 
 .search-note {
@@ -318,12 +325,13 @@
     .arabic-text {
         background: #333;
         color: #fff;
+        border-right-color: #4a90e2;
     }
 
     .english-text {
-        color: #e0e0e0;
-        background: rgba(45, 45, 45, 0.9);
-        border-left: 3px solid #404040;
+        color: #e8e8e8;
+        background: #333;
+        border-color: #404040;
     }
 
     .verse-input {
@@ -345,5 +353,15 @@
     .mode-button:hover {
         border-color: #4a90e2;
         color: #4a90e2;
+    }
+    
+    .subtitle-text {
+        background: linear-gradient(135deg, #4a90e2, #6bb6ff);
+    }
+    
+    .verse-info {
+        background: #333;
+        border-color: #404040;
+        color: #b0b0b0;
     }
 }
