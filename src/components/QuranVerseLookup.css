@@ -244,11 +244,26 @@
 .verse-info {
     text-align: center;
     margin-top: 20px;
-    padding: 10px;
+    padding: 15px;
     background: #e8f4f8;
     border-radius: 8px;
     color: #0c5460;
     font-size: 14px;
+}
+
+.subtitle-display {
+    margin-top: 10px;
+    padding: 12px;
+    background: #fff3cd;
+    border-radius: 6px;
+    border-left: 4px solid #ffc107;
+    color: #856404;
+    font-size: 15px;
+    text-align: left;
+}
+
+.subtitle-display strong {
+    color: #6c4f00;
 }
 
 .search-note {

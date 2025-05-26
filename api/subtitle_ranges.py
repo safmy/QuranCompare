@@ -18,62 +18,77 @@ def load_subtitle_ranges():
         return {}
     
     subtitle_ranges = {}
-    current_subtitle_start = None
-    current_chapter = None
     
-    for i, verse in enumerate(verses_data):
+    # Group verses by chapter
+    chapters = {}
+    for verse in verses_data:
         sura_verse = verse['sura_verse']
         chapter, verse_num = map(int, sura_verse.split(':'))
         
-        # Check if this verse has a subtitle
-        has_subtitle = 'subtitle' in verse and verse['subtitle']
+        if chapter not in chapters:
+            chapters[chapter] = []
+        chapters[chapter].append((verse_num, verse))
+    
+    # Process each chapter
+    for chapter, verses_list in chapters.items():
+        # Sort by verse number
+        verses_list.sort(key=lambda x: x[0])
         
-        # If we're starting a new chapter, reset
-        if current_chapter != chapter:
-            current_chapter = chapter
-            current_subtitle_start = None
+        # Find all verses with subtitles
+        subtitle_verses = []
+        for verse_num, verse in verses_list:
+            if 'subtitle' in verse and verse['subtitle']:
+                subtitle_verses.append(verse_num)
         
-        # If this verse has a subtitle, it starts a new section
-        if has_subtitle:
-            # Close the previous section if it exists
-            if current_subtitle_start is not None:
-                # Find the end of the previous section (verse before this one)
-                prev_verse_idx = i - 1
-                while prev_verse_idx >= 0:
-                    prev_verse = verses_data[prev_verse_idx]
-                    prev_sura_verse = prev_verse['sura_verse']
-                    prev_chapter, prev_verse_num = map(int, prev_sura_verse.split(':'))
-                    
-                    if prev_chapter == current_chapter:
-                        # Map all verses in the previous section
-                        start_chapter, start_verse = map(int, current_subtitle_start.split(':'))
-                        if start_chapter == prev_chapter:
-                            if start_verse == prev_verse_num:
-                                range_str = current_subtitle_start
-                            else:
-                                range_str = f"{current_subtitle_start}-{prev_verse_num}"
-                            
-                            # Map all verses in this range
-                            for v in range(start_verse, prev_verse_num + 1):
-                                subtitle_ranges[f"{start_chapter}:{v}"] = range_str
-                        break
-                    prev_verse_idx -= 1
-            
-            # Start new section
-            current_subtitle_start = sura_verse
-        
-        # If we're at the end of the data, close the last section
-        if i == len(verses_data) - 1 and current_subtitle_start is not None:
-            start_chapter, start_verse = map(int, current_subtitle_start.split(':'))
-            if start_chapter == chapter:
-                if start_verse == verse_num:
-                    range_str = current_subtitle_start
+        if not subtitle_verses:
+            # No subtitles in this chapter - map all verses to full chapter range
+            if verses_list:
+                first_verse = max(1, verses_list[0][0])  # Start from verse 1, not verse 0
+                last_verse = verses_list[-1][0]
+                if first_verse == last_verse:
+                    range_str = f"{chapter}:{first_verse}"
                 else:
-                    range_str = f"{current_subtitle_start}-{verse_num}"
+                    range_str = f"{chapter}:{first_verse}-{last_verse}"
                 
-                # Map all verses in this range
-                for v in range(start_verse, verse_num + 1):
-                    subtitle_ranges[f"{start_chapter}:{v}"] = range_str
+                for verse_num, _ in verses_list:
+                    if verse_num >= 1:  # Only map numbered verses, not verse 0
+                        subtitle_ranges[f"{chapter}:{verse_num}"] = range_str
+        else:
+            # Process subtitle sections
+            for i, subtitle_start in enumerate(subtitle_verses):
+                # Determine the end of this subtitle section
+                if i + 1 < len(subtitle_verses):
+                    # Next subtitle exists - end is the verse before it
+                    subtitle_end = subtitle_verses[i + 1] - 1
+                else:
+                    # Last subtitle - goes to end of chapter
+                    subtitle_end = verses_list[-1][0]
+                
+                # Create range string
+                if subtitle_start == subtitle_end:
+                    range_str = f"{chapter}:{subtitle_start}"
+                else:
+                    range_str = f"{chapter}:{subtitle_start}-{subtitle_end}"
+                
+                # Map all verses in this subtitle section
+                for verse_num, _ in verses_list:
+                    if subtitle_start <= verse_num <= subtitle_end:
+                        subtitle_ranges[f"{chapter}:{verse_num}"] = range_str
+            
+            # Handle verses before the first subtitle (if first subtitle is not verse 1)
+            if subtitle_verses[0] > 1:
+                first_verse = max(1, verses_list[0][0])  # Start from verse 1, not verse 0
+                last_before_subtitle = subtitle_verses[0] - 1
+                
+                if first_verse == last_before_subtitle:
+                    range_str = f"{chapter}:{first_verse}"
+                else:
+                    range_str = f"{chapter}:{first_verse}-{last_before_subtitle}"
+                
+                # Map verses before first subtitle
+                for verse_num, _ in verses_list:
+                    if first_verse <= verse_num <= last_before_subtitle:
+                        subtitle_ranges[f"{chapter}:{verse_num}"] = range_str
     
     return subtitle_ranges
 
@@ -99,3 +114,36 @@ def get_cached_verse_range(verse_ref):
         _SUBTITLE_RANGES_CACHE = load_subtitle_ranges()
     
     return _SUBTITLE_RANGES_CACHE.get(verse_ref, verse_ref)
+
+def get_subtitle_for_range(verse_range):
+    """
+    Get the subtitle text for a given verse range
+    Returns: subtitle text or None
+    """
+    from verses_loader import load_verses_data
+    
+    verses_data = load_verses_data()
+    if not verses_data:
+        return None
+    
+    # Parse the range to find the first verse with a subtitle
+    if '-' in verse_range:
+        start_ref = verse_range.split('-')[0]
+    else:
+        start_ref = verse_range
+    
+    try:
+        start_chapter, start_verse = map(int, start_ref.split(':'))
+        
+        # Find verses in this range and look for subtitle
+        for verse in verses_data:
+            sura_verse = verse['sura_verse']
+            chapter, verse_num = map(int, sura_verse.split(':'))
+            
+            if chapter == start_chapter and verse_num >= start_verse:
+                if 'subtitle' in verse and verse['subtitle']:
+                    return verse['subtitle']
+                    
+        return None
+    except:
+        return None

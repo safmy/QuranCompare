@@ -18,7 +18,7 @@ import logging
 from vector_loader import load_vectors_from_cloud, load_vectors_from_local
 from youtube_mapper import youtube_mapper
 from verses_loader import load_verses_data
-from subtitle_ranges import get_cached_verse_range
+from subtitle_ranges import get_cached_verse_range, get_subtitle_for_range
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -106,6 +106,7 @@ class VerseRangeForSubtitleRequest(BaseModel):
 class VerseRangeForSubtitleResponse(BaseModel):
     verse_ref: str
     subtitle_range: str
+    subtitle_text: Optional[str] = None
     message: str
 
 def load_vector_collections():
@@ -443,10 +444,12 @@ async def get_verse_range_for_subtitle(request: VerseRangeForSubtitleRequest):
     try:
         verse_ref = request.verse_ref.strip()
         subtitle_range = get_cached_verse_range(verse_ref)
+        subtitle_text = get_subtitle_for_range(subtitle_range)
         
         return VerseRangeForSubtitleResponse(
             verse_ref=verse_ref,
             subtitle_range=subtitle_range,
+            subtitle_text=subtitle_text,
             message=f"Verse {verse_ref} belongs to subtitle range {subtitle_range}"
         )
         

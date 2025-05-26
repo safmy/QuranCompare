@@ -11,6 +11,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     const [hoveredWord, setHoveredWord] = useState(null);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
     const [searchMode, setSearchMode] = useState('range'); // 'range' or 'text'
+    const [currentSubtitle, setCurrentSubtitle] = useState('');
     
     const handleVerseClick = async (verseRef) => {
         try {
@@ -72,6 +73,31 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                 
                 const data = await response.json();
                 setVerses(data.verses);
+                
+                // Get subtitle for this range
+                if (data.verses.length > 0) {
+                    try {
+                        const subtitleResponse = await fetch(`${API_BASE_URL}/verse-range-for-subtitle`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                verse_ref: data.verses[0].sura_verse
+                            })
+                        });
+                        
+                        if (subtitleResponse.ok) {
+                            const subtitleData = await subtitleResponse.json();
+                            setCurrentSubtitle(subtitleData.subtitle_text || '');
+                        }
+                    } catch (err) {
+                        console.error('Failed to get subtitle:', err);
+                        setCurrentSubtitle('');
+                    }
+                } else {
+                    setCurrentSubtitle('');
+                }
             } else {
                 // Text search mode - search through verse content
                 const response = await fetch(`${API_BASE_URL}/search`, {
@@ -299,6 +325,11 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
             {verses.length > 0 && (
                 <div className="verse-info">
                     📊 Showing {verses.length} verse{verses.length !== 1 ? 's' : ''} for range: {verseRange}
+                    {currentSubtitle && (
+                        <div className="subtitle-display">
+                            📋 <strong>Subtitle:</strong> {currentSubtitle}
+                        </div>
+                    )}
                 </div>
             )}
         </div>
