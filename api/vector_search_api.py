@@ -17,6 +17,7 @@ from openai import OpenAI
 import logging
 from vector_loader import load_vectors_from_cloud, load_vectors_from_local
 from youtube_mapper import youtube_mapper
+from verses_loader import load_verses_data
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -35,15 +36,8 @@ try:
 except Exception as e:
     logger.warning(f"Could not load Quran verse mapping: {e}")
 
-try:
-    # Load verses with roots and meanings
-    verses_path = os.path.join(os.path.dirname(__file__), '../../verses_array_roots_meanings_subtitles_footnotes.json')
-    if os.path.exists(verses_path):
-        with open(verses_path, 'r', encoding='utf-8') as f:
-            QURAN_VERSES_DATA = json.load(f)
-            logger.info(f"Loaded verses data with {len(QURAN_VERSES_DATA)} verses")
-except Exception as e:
-    logger.warning(f"Could not load verses data: {e}")
+# Load verses data using the dedicated loader
+QURAN_VERSES_DATA = load_verses_data()
 
 # Initialize FastAPI
 app = FastAPI(

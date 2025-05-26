@@ -21,3 +21,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Large data files
+verses_array_roots_meanings_subtitles_footnotes.json

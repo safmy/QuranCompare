@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import './App.css';
-import QuranLookup from './components/QuranLookup';
 import QuranSearch from './components/QuranSearch';
 import QuranVectorSearch from './components/QuranVectorSearch';
 import QuranVerseLookup from './components/QuranVerseLookup';
@@ -11,9 +10,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('lookup');
 
   const tabs = [
-    { id: 'lookup', label: 'Verse Lookup', component: <QuranLookup /> },
-    { id: 'verselookup', label: 'Range Lookup', component: <QuranVerseLookup /> },
-    { id: 'search', label: 'Text Search', component: <QuranSearch /> },
+    { id: 'lookup', label: 'Verse Lookup', component: <QuranVerseLookup /> },
     { id: 'vectorsearch', label: 'Semantic Search', component: <QuranVectorSearch /> },
     { id: 'compare', label: 'Compare', component: <QuranCompare /> },
     { id: 'manuscript', label: 'Manuscript Analysis', component: <QuranManuscriptAnalysis /> }

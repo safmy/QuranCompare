@@ -10,6 +10,7 @@ const QuranVerseLookup = () => {
     const [error, setError] = useState(null);
     const [hoveredWord, setHoveredWord] = useState(null);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+    const [searchMode, setSearchMode] = useState('range'); // 'range' or 'text'
 
     const fetchVerses = async () => {
         if (!verseRange.trim()) return;
@@ -18,23 +19,64 @@ const QuranVerseLookup = () => {
         setError(null);
         
         try {
-            const response = await fetch(`${API_BASE_URL}/verses`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    verse_range: verseRange
-                })
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Failed to fetch verses');
+            if (searchMode === 'range') {
+                // Range lookup (e.g., 1:1-7)
+                const response = await fetch(`${API_BASE_URL}/verses`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        verse_range: verseRange
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to fetch verses');
+                }
+                
+                const data = await response.json();
+                setVerses(data.verses);
+            } else {
+                // Text search mode - search through verse content
+                const response = await fetch(`${API_BASE_URL}/search`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: verseRange,
+                        num_results: 10,
+                        include_rashad_media: false,
+                        include_final_testament: true,
+                        include_qurantalk: false
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to search verses');
+                }
+                
+                const searchData = await response.json();
+                // Convert search results to verse format
+                const convertedVerses = searchData.results.filter(r => r.collection === 'FinalTestament').map(result => {
+                    // Extract verse reference from title
+                    const match = result.title.match(/\[(\d+:\d+)\]/);
+                    const sura_verse = match ? match[1] : 'Unknown';
+                    
+                    return {
+                        sura_verse: sura_verse,
+                        english: result.content,
+                        arabic: '', // Not available in search results
+                        roots: '',
+                        meanings: '',
+                        footnote: null
+                    };
+                });
+                setVerses(convertedVerses);
             }
-            
-            const data = await response.json();
-            setVerses(data.verses);
         } catch (err) {
             setError(err.message);
             setVerses([]);
@@ -96,7 +138,22 @@ const QuranVerseLookup = () => {
         <div className="verse-lookup-container">
             <div className="verse-lookup-header">
                 <h2>📖 Quran Verse Lookup</h2>
-                <p>Enter a verse range (e.g., 1:1-7, 2:5-10, or 3:15)</p>
+                <p>{searchMode === 'range' ? 'Enter a verse range (e.g., 1:1-7, 2:5-10, or 3:15)' : 'Search for text within verses'}</p>
+                
+                <div className="search-mode-toggle">
+                    <button 
+                        className={`mode-button ${searchMode === 'range' ? 'active' : ''}`}
+                        onClick={() => setSearchMode('range')}
+                    >
+                        📍 Range Lookup
+                    </button>
+                    <button 
+                        className={`mode-button ${searchMode === 'text' ? 'active' : ''}`}
+                        onClick={() => setSearchMode('text')}
+                    >
+                        🔍 Text Search
+                    </button>
+                </div>
             </div>
 
             <form onSubmit={handleSubmit} className="verse-lookup-form">
@@ -105,7 +162,7 @@ const QuranVerseLookup = () => {
                         type="text"
                         value={verseRange}
                         onChange={(e) => setVerseRange(e.target.value)}
-                        placeholder="1:1-7"
+                        placeholder={searchMode === 'range' ? '1:1-7' : 'Search text...'}
                         className="verse-input"
                     />
                     <button type="submit" disabled={loading} className="lookup-button">
@@ -134,13 +191,21 @@ const QuranVerseLookup = () => {
                         </div>
                         
                         <div className="verse-content">
-                            <div className="arabic-text" dir="rtl">
-                                {parseArabicText(verse.arabic, verse.roots, verse.meanings)}
-                            </div>
+                            {verse.arabic && (
+                                <div className="arabic-text" dir="rtl">
+                                    {parseArabicText(verse.arabic, verse.roots, verse.meanings)}
+                                </div>
+                            )}
                             
                             <div className="english-text">
                                 {verse.english}
                             </div>
+                            
+                            {searchMode === 'text' && !verse.arabic && (
+                                <div className="search-note">
+                                    <small>💡 Use Range Lookup mode to see Arabic text with word meanings</small>
+                                </div>
+                            )}
                             
                             {verse.footnote && (
                                 <div className="footnote">
