@@ -9,7 +9,9 @@ const QuranCompare = ({ initialVerses = [] }) => {
   const [quranData, setQuranData] = useState(null);
   const [hoveredWord, setHoveredWord] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-  const [highlightedRoot, setHighlightedRoot] = useState(null); // Single root highlighted across all verses
+  const [highlightedRoot, setHighlightedRoot] = useState(null); // Root to highlight
+  const [lockedRoot, setLockedRoot] = useState(null); // Locked root (click mode)
+  const [hoveredRoot, setHoveredRoot] = useState(null); // Hovered root (hover mode)
 
   useEffect(() => {
     // Load Quran data
@@ -40,6 +42,15 @@ const QuranCompare = ({ initialVerses = [] }) => {
       }, 100);
     }
   }, [initialVerses, quranData]);
+  
+  useEffect(() => {
+    // Determine which root to highlight
+    if (lockedRoot) {
+      setHighlightedRoot(lockedRoot);
+    } else {
+      setHighlightedRoot(hoveredRoot);
+    }
+  }, [lockedRoot, hoveredRoot]);
 
   const formatVerse = (verseData) => {
     if (!verseData) return null;
@@ -173,6 +184,14 @@ const QuranCompare = ({ initialVerses = [] }) => {
           key={`${verseIndex}-${index}`}
           className={`arabic-word ${isHighlighted ? 'highlighted' : ''} ${root && root !== '-' ? 'clickable' : ''}`}
           onMouseEnter={(e) => {
+            // Only allow hover if no root is locked
+            if (!lockedRoot) {
+              if (root && root !== '-') {
+                setHoveredRoot(root);
+              }
+            }
+            
+            // Always show tooltip
             if (root || meaning) {
               const rect = e.target.getBoundingClientRect();
               setTooltipPosition({
@@ -188,11 +207,22 @@ const QuranCompare = ({ initialVerses = [] }) => {
           }}
           onMouseLeave={() => {
             setHoveredWord(null);
+            if (!lockedRoot) {
+              setHoveredRoot(null);
+            }
           }}
           onClick={() => {
             if (root && root !== '-') {
-              // Toggle highlighting across all verses
-              setHighlightedRoot(prevRoot => prevRoot === root ? null : root);
+              // Toggle lock mode
+              if (lockedRoot === root) {
+                // Unlock - go back to hover mode
+                setLockedRoot(null);
+                setHoveredRoot(null);
+              } else {
+                // Lock this root
+                setLockedRoot(root);
+                setHoveredRoot(null);
+              }
             }
           }}
         >
@@ -312,6 +342,11 @@ const QuranCompare = ({ initialVerses = [] }) => {
         <div className="comparison-results">
           <h3 className="results-header">
             Comparison Results ({verses.length} verses)
+            {lockedRoot && (
+              <span className="locked-indicator">
+                {' '}— Locked on root: "{lockedRoot}" (click any word with this root to unlock)
+              </span>
+            )}
           </h3>
           
           <div className="verses-grid" style={{

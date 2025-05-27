@@ -10,6 +10,13 @@
     text-align: center;
 }
 
+.locked-indicator {
+    font-size: 14px;
+    color: #d9534f;
+    font-weight: normal;
+    font-style: italic;
+}
+
 .verses-grid {
     margin-bottom: 30px;
 }
