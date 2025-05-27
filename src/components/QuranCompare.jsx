@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './QuranCompare.css';
 
-const QuranCompare = () => {
+const QuranCompare = ({ initialVerses = [] }) => {
   const [verses, setVerses] = useState([]);
   const [verseInputs, setVerseInputs] = useState(['']);
   const [loading, setLoading] = useState(false);
@@ -29,6 +29,17 @@ const QuranCompare = () => {
 
     loadQuranData();
   }, []);
+  
+  useEffect(() => {
+    // Handle initial verses from navigation
+    if (initialVerses.length > 0 && quranData) {
+      setVerseInputs(initialVerses);
+      // Auto-load these verses
+      setTimeout(() => {
+        handleCompare();
+      }, 100);
+    }
+  }, [initialVerses, quranData]);
 
   const formatVerse = (verseData) => {
     if (!verseData) return null;

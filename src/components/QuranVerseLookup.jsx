@@ -30,6 +30,9 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     const [showArabic, setShowArabic] = useState(true); // New state for show/hide Arabic
     const [exactMatch, setExactMatch] = useState(true); // New state for exact vs regex match
     const [allVersesData, setAllVersesData] = useState([]); // Store all verses for text search
+    const [showRootAnalysis, setShowRootAnalysis] = useState(false);
+    const [rootAnalysisData, setRootAnalysisData] = useState(null);
+    const [showAllRootVerses, setShowAllRootVerses] = useState(false);
     
     const handleVerseClick = async (verseRef) => {
         try {
@@ -165,6 +168,67 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     const isChapterInput = () => {
         // Check if input looks like a chapter number (e.g., "2" or "2:")
         return /^\d+:?\s*$/.test(verseRange);
+    };
+    
+    const analyzeVerseRoots = (verse) => {
+        if (!verse.roots || !allVersesData.length) return;
+        
+        // Extract unique roots from the verse
+        const roots = verse.roots.split(',').map(r => r.trim()).filter(r => r && r !== '-');
+        const uniqueRoots = [...new Set(roots)];
+        
+        // Find all verses containing any of these roots
+        const relatedVerses = [];
+        const rootCounts = {};
+        
+        uniqueRoots.forEach(root => {
+            rootCounts[root] = 0;
+            allVersesData.forEach(v => {
+                if (v.sura_verse !== verse.sura_verse && v.roots && v.roots.includes(root)) {
+                    rootCounts[root]++;
+                    if (!relatedVerses.find(rv => rv.sura_verse === v.sura_verse)) {
+                        relatedVerses.push({
+                            ...v,
+                            matchingRoots: [root]
+                        });
+                    } else {
+                        const existing = relatedVerses.find(rv => rv.sura_verse === v.sura_verse);
+                        if (existing && !existing.matchingRoots.includes(root)) {
+                            existing.matchingRoots.push(root);
+                        }
+                    }
+                }
+            });
+        });
+        
+        // Sort by number of matching roots, then by verse reference
+        relatedVerses.sort((a, b) => {
+            if (b.matchingRoots.length !== a.matchingRoots.length) {
+                return b.matchingRoots.length - a.matchingRoots.length;
+            }
+            return a.sura_verse.localeCompare(b.sura_verse);
+        });
+        
+        setRootAnalysisData({
+            sourceVerse: verse,
+            uniqueRoots: uniqueRoots,
+            rootCounts: rootCounts,
+            relatedVerses: relatedVerses,
+            totalRelated: relatedVerses.length
+        });
+        setShowRootAnalysis(true);
+        setShowAllRootVerses(false);
+    };
+    
+    const navigateToCompare = (verses) => {
+        // Store verses in sessionStorage to pass to Compare tab
+        sessionStorage.setItem('compareVerses', JSON.stringify(verses.map(v => v.sura_verse)));
+        
+        // Trigger navigation to Compare tab
+        const event = new CustomEvent('navigateToCompare', { 
+            detail: { verses: verses.map(v => v.sura_verse) } 
+        });
+        window.dispatchEvent(event);
     };
 
     // Parse Arabic text with roots and meanings for hover functionality
@@ -355,6 +419,15 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                 >
                                     [{verse.sura_verse}]
                                 </span>
+                                {verse.roots && verse.roots !== '-' && (
+                                    <button
+                                        className="root-analysis-btn"
+                                        onClick={() => analyzeVerseRoots(verse)}
+                                        title="Analyze roots and find related verses"
+                                    >
+                                        🔍 Analyze Roots
+                                    </button>
+                                )}
                             </div>
                             
                             <div className="verse-content">
@@ -409,6 +482,97 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                 <strong>Meaning:</strong> {hoveredWord.meaning}
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+            
+            {/* Root Analysis Modal */}
+            {showRootAnalysis && rootAnalysisData && (
+                <div className="root-analysis-modal">
+                    <div className="root-analysis-content">
+                        <div className="root-analysis-header">
+                            <h3>Root Analysis for {rootAnalysisData.sourceVerse.sura_verse}</h3>
+                            <button 
+                                className="close-btn"
+                                onClick={() => setShowRootAnalysis(false)}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        
+                        <div className="root-info">
+                            <p><strong>Unique roots found:</strong> {rootAnalysisData.uniqueRoots.join(', ')}</p>
+                            <p><strong>Total related verses:</strong> {rootAnalysisData.totalRelated}</p>
+                            
+                            <div className="root-counts">
+                                {Object.entries(rootAnalysisData.rootCounts).map(([root, count]) => (
+                                    <span key={root} className="root-count-badge">
+                                        {root}: {count} verses
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        <div className="related-verses-section">
+                            <h4>Related Verses (showing {showAllRootVerses ? rootAnalysisData.relatedVerses.length : Math.min(10, rootAnalysisData.relatedVerses.length)})</h4>
+                            
+                            <div className="related-verses-list">
+                                {rootAnalysisData.relatedVerses
+                                    .slice(0, showAllRootVerses ? undefined : 10)
+                                    .map((verse, index) => (
+                                        <div key={verse.sura_verse} className="related-verse-item">
+                                            <div className="related-verse-header">
+                                                <span className="verse-number">{index + 1}.</span>
+                                                <span className="verse-ref-small">[{verse.sura_verse}]</span>
+                                                <span className="matching-roots">
+                                                    Matching roots: {verse.matchingRoots.join(', ')}
+                                                </span>
+                                            </div>
+                                            <div className="related-verse-text">
+                                                {verse.english}
+                                            </div>
+                                        </div>
+                                    ))}
+                            </div>
+                            
+                            {rootAnalysisData.relatedVerses.length > 10 && (
+                                <div className="show-more-section">
+                                    <label className="toggle-label">
+                                        <input
+                                            type="checkbox"
+                                            checked={showAllRootVerses}
+                                            onChange={(e) => setShowAllRootVerses(e.target.checked)}
+                                            className="toggle-checkbox"
+                                        />
+                                        <span className="toggle-text">
+                                            Show all {rootAnalysisData.relatedVerses.length} verses
+                                        </span>
+                                    </label>
+                                </div>
+                            )}
+                            
+                            <div className="action-buttons">
+                                <button
+                                    className="compare-btn"
+                                    onClick={() => {
+                                        const versesToCompare = [
+                                            rootAnalysisData.sourceVerse,
+                                            ...rootAnalysisData.relatedVerses.slice(0, showAllRootVerses ? 10 : 5)
+                                        ];
+                                        navigateToCompare(versesToCompare);
+                                        setShowRootAnalysis(false);
+                                    }}
+                                >
+                                    📊 Compare in Compare Tab
+                                </button>
+                                <button
+                                    className="cancel-btn"
+                                    onClick={() => setShowRootAnalysis(false)}
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

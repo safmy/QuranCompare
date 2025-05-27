@@ -9,7 +9,9 @@ import QuranManuscriptAnalysis from './components/QuranManuscriptAnalysis';
 function App() {
   const [activeTab, setActiveTab] = useState('lookup');
   const [verseRangeForLookup, setVerseRangeForLookup] = useState('');
+  const [compareVerses, setCompareVerses] = useState([]);
   const verseLookupRef = useRef(null);
+  const compareRef = useRef(null);
   
   useEffect(() => {
     // Listen for verse range events from other components
@@ -18,17 +20,26 @@ function App() {
       setActiveTab('lookup');
     };
     
+    // Listen for navigate to compare events
+    const handleNavigateToCompare = (event) => {
+      const verses = event.detail.verses || JSON.parse(sessionStorage.getItem('compareVerses') || '[]');
+      setCompareVerses(verses);
+      setActiveTab('compare');
+    };
+    
     window.addEventListener('openVerseRange', handleOpenVerseRange);
+    window.addEventListener('navigateToCompare', handleNavigateToCompare);
     
     return () => {
       window.removeEventListener('openVerseRange', handleOpenVerseRange);
+      window.removeEventListener('navigateToCompare', handleNavigateToCompare);
     };
   }, []);
 
   const tabs = [
     { id: 'lookup', label: 'Verse Lookup', component: <QuranVerseLookup key={verseRangeForLookup} initialRange={verseRangeForLookup} /> },
     { id: 'vectorsearch', label: 'Semantic Search', component: <QuranVectorSearch /> },
-    { id: 'compare', label: 'Compare', component: <QuranCompare /> },
+    { id: 'compare', label: 'Compare', component: <QuranCompare key={compareVerses.join(',')} initialVerses={compareVerses} /> },
     { id: 'manuscript', label: 'Manuscript Analysis', component: <QuranManuscriptAnalysis /> }
   ];
 
