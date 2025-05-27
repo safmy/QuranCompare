@@ -170,49 +170,33 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
         return /^\d+:?\s*$/.test(verseRange);
     };
     
-    const analyzeVerseRoots = (verse) => {
-        if (!verse.roots || !allVersesData.length) return;
+    const analyzeWordRoot = (word, root, verse) => {
+        if (!root || root === '-' || !allVersesData.length) return;
         
-        // Extract unique roots from the verse
-        const roots = verse.roots.split(',').map(r => r.trim()).filter(r => r && r !== '-');
-        const uniqueRoots = [...new Set(roots)];
-        
-        // Find all verses containing any of these roots
+        // Find all verses containing this specific root
         const relatedVerses = [];
-        const rootCounts = {};
+        let totalCount = 0;
         
-        uniqueRoots.forEach(root => {
-            rootCounts[root] = 0;
-            allVersesData.forEach(v => {
-                if (v.sura_verse !== verse.sura_verse && v.roots && v.roots.includes(root)) {
-                    rootCounts[root]++;
-                    if (!relatedVerses.find(rv => rv.sura_verse === v.sura_verse)) {
-                        relatedVerses.push({
-                            ...v,
-                            matchingRoots: [root]
-                        });
-                    } else {
-                        const existing = relatedVerses.find(rv => rv.sura_verse === v.sura_verse);
-                        if (existing && !existing.matchingRoots.includes(root)) {
-                            existing.matchingRoots.push(root);
-                        }
-                    }
+        allVersesData.forEach(v => {
+            if (v.roots && v.roots.includes(root)) {
+                totalCount++;
+                if (v.sura_verse !== verse.sura_verse) {
+                    relatedVerses.push({
+                        ...v,
+                        matchingRoots: [root]
+                    });
                 }
-            });
+            }
         });
         
-        // Sort by number of matching roots, then by verse reference
-        relatedVerses.sort((a, b) => {
-            if (b.matchingRoots.length !== a.matchingRoots.length) {
-                return b.matchingRoots.length - a.matchingRoots.length;
-            }
-            return a.sura_verse.localeCompare(b.sura_verse);
-        });
+        // Sort by verse reference
+        relatedVerses.sort((a, b) => a.sura_verse.localeCompare(b.sura_verse));
         
         setRootAnalysisData({
             sourceVerse: verse,
-            uniqueRoots: uniqueRoots,
-            rootCounts: rootCounts,
+            clickedWord: word,
+            selectedRoot: root,
+            totalCount: totalCount,
             relatedVerses: relatedVerses,
             totalRelated: relatedVerses.length
         });
@@ -232,7 +216,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     };
 
     // Parse Arabic text with roots and meanings for hover functionality
-    const parseArabicText = (arabic, roots, meanings) => {
+    const parseArabicText = (arabic, roots, meanings, verse) => {
         if (!arabic || !roots || !meanings) return arabic;
 
         const arabicWords = arabic.split(/\s+/);
@@ -242,11 +226,12 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
         return arabicWords.map((word, index) => {
             const root = rootsArray[index] || '';
             const meaning = meaningsArray[index] || '';
+            const isClickable = root && root !== '-';
             
             return (
                 <span
                     key={index}
-                    className="arabic-word"
+                    className={`arabic-word ${isClickable ? 'clickable' : ''}`}
                     onMouseEnter={(e) => {
                         if (root || meaning) {
                             const rect = e.target.getBoundingClientRect();
@@ -262,6 +247,11 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                         }
                     }}
                     onMouseLeave={() => setHoveredWord(null)}
+                    onClick={() => {
+                        if (isClickable) {
+                            analyzeWordRoot(word, root, verse);
+                        }
+                    }}
                 >
                     {word}
                     {index < arabicWords.length - 1 && ' '}
@@ -419,21 +409,12 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                 >
                                     [{verse.sura_verse}]
                                 </span>
-                                {verse.roots && verse.roots !== '-' && (
-                                    <button
-                                        className="root-analysis-btn"
-                                        onClick={() => analyzeVerseRoots(verse)}
-                                        title="Analyze roots and find related verses"
-                                    >
-                                        🔍 Analyze Roots
-                                    </button>
-                                )}
                             </div>
                             
                             <div className="verse-content">
                             {verse.arabic && showArabic && (
                                 <div className="arabic-text" dir="rtl">
-                                    {parseArabicText(verse.arabic, verse.roots, verse.meanings)}
+                                    {parseArabicText(verse.arabic, verse.roots, verse.meanings, verse)}
                                 </div>
                             )}
                             
@@ -491,7 +472,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                 <div className="root-analysis-modal">
                     <div className="root-analysis-content">
                         <div className="root-analysis-header">
-                            <h3>Root Analysis for {rootAnalysisData.sourceVerse.sura_verse}</h3>
+                            <h3>Root Analysis: "{rootAnalysisData.selectedRoot}"</h3>
                             <button 
                                 className="close-btn"
                                 onClick={() => setShowRootAnalysis(false)}
@@ -501,16 +482,11 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                         </div>
                         
                         <div className="root-info">
-                            <p><strong>Unique roots found:</strong> {rootAnalysisData.uniqueRoots.join(', ')}</p>
-                            <p><strong>Total related verses:</strong> {rootAnalysisData.totalRelated}</p>
-                            
-                            <div className="root-counts">
-                                {Object.entries(rootAnalysisData.rootCounts).map(([root, count]) => (
-                                    <span key={root} className="root-count-badge">
-                                        {root}: {count} verses
-                                    </span>
-                                ))}
-                            </div>
+                            <p><strong>Word clicked:</strong> {rootAnalysisData.clickedWord}</p>
+                            <p><strong>Root:</strong> {rootAnalysisData.selectedRoot}</p>
+                            <p><strong>From verse:</strong> [{rootAnalysisData.sourceVerse.sura_verse}]</p>
+                            <p><strong>Total occurrences:</strong> {rootAnalysisData.totalCount} verses</p>
+                            <p><strong>Other verses with this root:</strong> {rootAnalysisData.totalRelated}</p>
                         </div>
                         
                         <div className="related-verses-section">
@@ -524,9 +500,6 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                             <div className="related-verse-header">
                                                 <span className="verse-number">{index + 1}.</span>
                                                 <span className="verse-ref-small">[{verse.sura_verse}]</span>
-                                                <span className="matching-roots">
-                                                    Matching roots: {verse.matchingRoots.join(', ')}
-                                                </span>
                                             </div>
                                             <div className="related-verse-text">
                                                 {verse.english}
