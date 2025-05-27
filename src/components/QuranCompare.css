@@ -14,6 +14,12 @@
     margin-bottom: 30px;
 }
 
+.verse-comparison-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
 .verse-card {
     border: 1px solid #e8ecf0;
     border-radius: 10px;
@@ -21,10 +27,19 @@
     background-color: #fafbfc;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     transition: box-shadow 0.2s;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .verse-card:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.verse-main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .subtitle-header {
@@ -102,11 +117,12 @@
 }
 
 .footnote-section {
-    margin-top: 15px;
-    padding: 15px;
+    margin-top: 10px;
+    padding: 12px;
     background: #fff3cd;
     border-radius: 6px;
     border-left: 4px solid #ffc107;
+    font-size: 13px;
 }
 
 .footnote-text {

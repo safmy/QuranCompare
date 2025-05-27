@@ -391,14 +391,21 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
             )}
 
             <div className="verses-container">
-                {verses.map((verse, index) => (
-                    <div key={verse.sura_verse}>
-                        {/* Display subtitle if this verse has one */}
-                        {verse.subtitle && (
-                            <div className="subtitle-header">
-                                <h3 className="subtitle-text">{verse.subtitle}</h3>
-                            </div>
-                        )}
+                {verses.map((verse, index) => {
+                    // Check if this is the first verse or if subtitle is different from previous
+                    const showSubtitle = verse.subtitle && (
+                        index === 0 || 
+                        verse.subtitle !== verses[index - 1]?.subtitle
+                    );
+                    
+                    return (
+                        <div key={verse.sura_verse}>
+                            {/* Display subtitle if this verse has one and it's different from previous */}
+                            {showSubtitle && (
+                                <div className="subtitle-header">
+                                    <h3 className="subtitle-text">{verse.subtitle}</h3>
+                                </div>
+                            )}
                         
                         <div className="verse-card">
                             <div className="verse-header">
@@ -436,7 +443,8 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                             </div>
                         </div>
                     </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* Tooltip for word hover */}

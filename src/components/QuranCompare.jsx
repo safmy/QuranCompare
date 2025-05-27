@@ -9,7 +9,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
   const [quranData, setQuranData] = useState(null);
   const [hoveredWord, setHoveredWord] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-  const [highlightedRoot, setHighlightedRoot] = useState(null);
+  const [highlightedRoots, setHighlightedRoots] = useState({}); // Changed to object to track per verse
 
   useEffect(() => {
     // Load Quran data
@@ -166,12 +166,13 @@ const QuranCompare = ({ initialVerses = [] }) => {
     return arabicWords.map((word, index) => {
       const root = rootsArray[index] || '';
       const meaning = meaningsArray[index] || '';
+      const highlightedRoot = highlightedRoots[verseIndex];
       const isHighlighted = highlightedRoot && root === highlightedRoot;
       
       return (
         <span
           key={`${verseIndex}-${index}`}
-          className={`arabic-word ${isHighlighted ? 'highlighted' : ''}`}
+          className={`arabic-word ${isHighlighted ? 'highlighted' : ''} ${root && root !== '-' ? 'clickable' : ''}`}
           onMouseEnter={(e) => {
             if (root || meaning) {
               const rect = e.target.getBoundingClientRect();
@@ -184,14 +185,19 @@ const QuranCompare = ({ initialVerses = [] }) => {
                 root: root,
                 meaning: meaning
               });
-              if (root) {
-                setHighlightedRoot(root);
-              }
             }
           }}
           onMouseLeave={() => {
             setHoveredWord(null);
-            setHighlightedRoot(null);
+          }}
+          onClick={() => {
+            if (root && root !== '-') {
+              // Toggle highlighting for this verse
+              setHighlightedRoots(prev => ({
+                ...prev,
+                [verseIndex]: prev[verseIndex] === root ? null : root
+              }));
+            }
           }}
         >
           {word}
@@ -318,32 +324,36 @@ const QuranCompare = ({ initialVerses = [] }) => {
             gap: '20px'
           }}>
             {verses.map((verse, index) => (
-              <div key={`${verse.sura_verse}-${index}`} className="verse-card">
-                {verse.subtitle && (
-                  <div className="subtitle-header">
-                    <h3 className="subtitle-text">{verse.subtitle}</h3>
-                  </div>
-                )}
-                
-                <h4 className="verse-reference">
-                  {verse.reference}
-                </h4>
-                
-                {verse.arabic && (
-                  <div className="arabic-section">
-                    <div className="arabic-text" dir="rtl">
-                      {parseArabicText(verse.arabic, verse.roots, verse.meanings, index)}
+              <div key={`${verse.sura_verse}-${index}`} className="verse-comparison-wrapper">
+                <div className="verse-card">
+                  {verse.subtitle && (
+                    <div className="subtitle-header">
+                      <h3 className="subtitle-text">{verse.subtitle}</h3>
                     </div>
+                  )}
+                  
+                  <h4 className="verse-reference">
+                    {verse.reference}
+                  </h4>
+                  
+                  <div className="verse-main-content">
+                    {verse.arabic && (
+                      <div className="arabic-section">
+                        <div className="arabic-text" dir="rtl">
+                          {parseArabicText(verse.arabic, verse.roots, verse.meanings, index)}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {verse.english && (
+                      <div className="english-section">
+                        <p className="english-text">
+                          {verse.english}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                )}
-                
-                {verse.english && (
-                  <div className="english-section">
-                    <p className="english-text">
-                      {verse.english}
-                    </p>
-                  </div>
-                )}
+                </div>
                 
                 {verse.footnote && (
                   <div className="footnote-section">
