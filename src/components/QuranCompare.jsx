@@ -9,7 +9,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
   const [quranData, setQuranData] = useState(null);
   const [hoveredWord, setHoveredWord] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-  const [highlightedRoots, setHighlightedRoots] = useState({}); // Changed to object to track per verse
+  const [highlightedRoot, setHighlightedRoot] = useState(null); // Single root highlighted across all verses
 
   useEffect(() => {
     // Load Quran data
@@ -166,7 +166,6 @@ const QuranCompare = ({ initialVerses = [] }) => {
     return arabicWords.map((word, index) => {
       const root = rootsArray[index] || '';
       const meaning = meaningsArray[index] || '';
-      const highlightedRoot = highlightedRoots[verseIndex];
       const isHighlighted = highlightedRoot && root === highlightedRoot;
       
       return (
@@ -192,11 +191,8 @@ const QuranCompare = ({ initialVerses = [] }) => {
           }}
           onClick={() => {
             if (root && root !== '-') {
-              // Toggle highlighting for this verse
-              setHighlightedRoots(prev => ({
-                ...prev,
-                [verseIndex]: prev[verseIndex] === root ? null : root
-              }));
+              // Toggle highlighting across all verses
+              setHighlightedRoot(prevRoot => prevRoot === root ? null : root);
             }
           }}
         >
@@ -217,7 +213,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
   };
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
       <h2 style={{ color: '#333', marginBottom: '20px' }}>Compare Quran Verses</h2>
       
       <div style={{ marginBottom: '20px' }}>
@@ -324,42 +320,20 @@ const QuranCompare = ({ initialVerses = [] }) => {
             gap: '20px'
           }}>
             {verses.map((verse, index) => (
-              <div key={`${verse.sura_verse}-${index}`} className="verse-comparison-wrapper">
-                <div className="verse-card">
-                  {verse.subtitle && (
-                    <div className="subtitle-header">
-                      <h3 className="subtitle-text">{verse.subtitle}</h3>
-                    </div>
-                  )}
-                  
-                  <h4 className="verse-reference">
-                    {verse.reference}
-                  </h4>
-                  
-                  <div className="verse-main-content">
-                    {verse.arabic && (
-                      <div className="arabic-section">
-                        <div className="arabic-text" dir="rtl">
-                          {parseArabicText(verse.arabic, verse.roots, verse.meanings, index)}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {verse.english && (
-                      <div className="english-section">
-                        <p className="english-text">
-                          {verse.english}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <div key={`${verse.sura_verse}-${index}`} className="verse-card compact">
+                <h4 className="verse-reference">
+                  {verse.reference}
+                </h4>
                 
-                {verse.footnote && (
-                  <div className="footnote-section">
-                    <p className="footnote-text">
-                      {verse.footnote}
-                    </p>
+                {verse.arabic && (
+                  <div className="arabic-text" dir="rtl">
+                    {parseArabicText(verse.arabic, verse.roots, verse.meanings, index)}
+                  </div>
+                )}
+                
+                {verse.english && (
+                  <div className="english-text">
+                    {verse.english}
                   </div>
                 )}
               </div>

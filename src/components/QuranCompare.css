@@ -14,32 +14,21 @@
     margin-bottom: 30px;
 }
 
-.verse-comparison-wrapper {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
 .verse-card {
     border: 1px solid #e8ecf0;
-    border-radius: 10px;
-    padding: 20px;
+    border-radius: 8px;
+    padding: 15px;
     background-color: #fafbfc;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     transition: box-shadow 0.2s;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+}
+
+.verse-card.compact {
+    padding: 12px;
 }
 
 .verse-card:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.verse-main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
 }
 
 .subtitle-header {
@@ -62,25 +51,22 @@
 
 .verse-reference {
     color: #2c5aa0;
-    margin-bottom: 15px;
-    font-size: 18px;
+    margin-bottom: 10px;
+    font-size: 16px;
     text-align: center;
     font-weight: bold;
 }
 
-.arabic-section {
-    margin-bottom: 20px;
-}
-
 .arabic-text {
     font-family: 'Amiri', 'Scheherazade', 'Arabic Typesetting', serif;
-    font-size: 24px;
-    line-height: 1.9;
+    font-size: 20px;
+    line-height: 1.7;
     text-align: right;
-    padding: 20px;
+    padding: 10px;
     background: #f8f9fa;
-    border-radius: 8px;
-    border-right: 4px solid #2c5aa0;
+    border-radius: 6px;
+    border-right: 3px solid #2c5aa0;
+    margin-bottom: 10px;
 }
 
 .arabic-word {
@@ -100,37 +86,18 @@
     border-bottom: 2px solid #ffc107;
 }
 
-.english-section {
-    margin-bottom: 15px;
-}
-
 .english-text {
-    font-size: 16px;
-    line-height: 1.7;
-    color: #2c3e50;
-    padding: 15px;
-    background: #ffffff;
-    border-radius: 8px;
-    border: 1px solid #e8ecf0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    margin: 0;
-}
-
-.footnote-section {
-    margin-top: 10px;
-    padding: 12px;
-    background: #fff3cd;
-    border-radius: 6px;
-    border-left: 4px solid #ffc107;
-    font-size: 13px;
-}
-
-.footnote-text {
     font-size: 14px;
-    line-height: 1.5;
-    color: #856404;
+    line-height: 1.6;
+    color: #2c3e50;
+    padding: 10px;
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px solid #e8ecf0;
     margin: 0;
 }
+
+/* Footnotes removed from compare view */
 
 /* Tooltip styles */
 .word-tooltip {
