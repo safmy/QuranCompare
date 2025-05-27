@@ -3,6 +3,22 @@ import './QuranVerseLookup.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://vector-search-api-production.up.railway.app';
 
+// Chapter verse counts
+const CHAPTER_VERSE_COUNTS = {
+    1: 7, 2: 287, 3: 201, 4: 177, 5: 121, 6: 166, 7: 207, 8: 76, 9: 130, 10: 110,
+    11: 124, 12: 112, 13: 44, 14: 53, 15: 100, 16: 129, 17: 112, 18: 111, 19: 99, 20: 136,
+    21: 113, 22: 79, 23: 119, 24: 65, 25: 78, 26: 228, 27: 94, 28: 89, 29: 70, 30: 61,
+    31: 35, 32: 31, 33: 74, 34: 55, 35: 46, 36: 84, 37: 183, 38: 89, 39: 76, 40: 86,
+    41: 55, 42: 54, 43: 90, 44: 60, 45: 38, 46: 36, 47: 39, 48: 30, 49: 19, 50: 46,
+    51: 61, 52: 50, 53: 63, 54: 56, 55: 79, 56: 97, 57: 30, 58: 23, 59: 25, 60: 14,
+    61: 15, 62: 12, 63: 12, 64: 19, 65: 13, 66: 13, 67: 31, 68: 53, 69: 53, 70: 45,
+    71: 29, 72: 29, 73: 21, 74: 57, 75: 41, 76: 32, 77: 51, 78: 41, 79: 47, 80: 43,
+    81: 30, 82: 20, 83: 37, 84: 26, 85: 23, 86: 18, 87: 20, 88: 27, 89: 31, 90: 21,
+    91: 16, 92: 22, 93: 12, 94: 9, 95: 9, 96: 20, 97: 6, 98: 9, 99: 9, 100: 12,
+    101: 12, 102: 9, 103: 4, 104: 10, 105: 6, 106: 5, 107: 8, 108: 4, 109: 7, 110: 4,
+    111: 6, 112: 5, 113: 6, 114: 7
+};
+
 const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     const [verseRange, setVerseRange] = useState(initialRange || '1:1-7');
     const [verses, setVerses] = useState([]);
@@ -11,7 +27,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     const [hoveredWord, setHoveredWord] = useState(null);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
     const [searchMode, setSearchMode] = useState('range'); // 'range' or 'text'
-    const [currentSubtitle, setCurrentSubtitle] = useState('');
+    const [showArabic, setShowArabic] = useState(true); // New state for show/hide Arabic
     
     const handleVerseClick = async (verseRef) => {
         try {
@@ -73,31 +89,6 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                 
                 const data = await response.json();
                 setVerses(data.verses);
-                
-                // Get subtitle for this range
-                if (data.verses.length > 0) {
-                    try {
-                        const subtitleResponse = await fetch(`${API_BASE_URL}/verse-range-for-subtitle`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                verse_ref: data.verses[0].sura_verse
-                            })
-                        });
-                        
-                        if (subtitleResponse.ok) {
-                            const subtitleData = await subtitleResponse.json();
-                            setCurrentSubtitle(subtitleData.subtitle_text || '');
-                        }
-                    } catch (err) {
-                        console.error('Failed to get subtitle:', err);
-                        setCurrentSubtitle('');
-                    }
-                } else {
-                    setCurrentSubtitle('');
-                }
             } else {
                 // Text search mode - search through verse content
                 const response = await fetch(`${API_BASE_URL}/search`, {
@@ -107,7 +98,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                     },
                     body: JSON.stringify({
                         query: verseRange,
-                        num_results: 10,
+                        num_results: 50, // Increased from 10 to get more results
                         include_rashad_media: false,
                         include_final_testament: true,
                         include_qurantalk: false
@@ -148,6 +139,25 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         fetchVerses();
+    };
+    
+    const loadFullChapter = () => {
+        // Extract chapter number from current input
+        const chapterMatch = verseRange.match(/^(\d+)/);
+        if (chapterMatch) {
+            const chapter = parseInt(chapterMatch[1]);
+            const verseCount = CHAPTER_VERSE_COUNTS[chapter];
+            if (verseCount) {
+                // Set range to full chapter
+                setVerseRange(`${chapter}:1-${verseCount}`);
+                // This will trigger fetchVerses via useEffect
+            }
+        }
+    };
+    
+    const isChapterInput = () => {
+        // Check if input looks like a chapter number (e.g., "2" or "2:")
+        return /^\d+:?\s*$/.test(verseRange);
     };
 
     // Parse Arabic text with roots and meanings for hover functionality
@@ -225,6 +235,21 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                         🔍 Text Search
                     </button>
                 </div>
+                
+                {/* Arabic toggle checkbox */}
+                {searchMode === 'range' && (
+                    <div className="arabic-toggle">
+                        <label className="toggle-label">
+                            <input
+                                type="checkbox"
+                                checked={showArabic}
+                                onChange={(e) => setShowArabic(e.target.checked)}
+                                className="toggle-checkbox"
+                            />
+                            <span className="toggle-text">Show Arabic Text</span>
+                        </label>
+                    </div>
+                )}
             </div>
 
             <form onSubmit={handleSubmit} className="verse-lookup-form">
@@ -239,6 +264,17 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                     <button type="submit" disabled={loading} className="lookup-button">
                         {loading ? '🔄' : '🔍'} Lookup
                     </button>
+                    {searchMode === 'range' && isChapterInput() && (
+                        <button 
+                            type="button" 
+                            onClick={loadFullChapter} 
+                            disabled={loading} 
+                            className="chapter-button"
+                            title="Load the entire chapter"
+                        >
+                            📖 Full Chapter
+                        </button>
+                    )}
                 </div>
             </form>
 
@@ -254,28 +290,29 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                 </div>
             )}
 
-            {/* Display subtitle at the top if available */}
-            {currentSubtitle && verses.length > 0 && (
-                <div className="subtitle-header">
-                    <h3 className="subtitle-text">{currentSubtitle}</h3>
-                </div>
-            )}
-            
             <div className="verses-container">
                 {verses.map((verse, index) => (
-                    <div key={verse.sura_verse} className="verse-card">
-                        <div className="verse-header">
-                            <span 
-                                className="verse-ref"
-                                onClick={() => handleVerseClick(verse.sura_verse)}
-                                title={`Click to view subtitle section for ${verse.sura_verse}`}
-                            >
-                                [{verse.sura_verse}]
-                            </span>
-                        </div>
+                    <div key={verse.sura_verse}>
+                        {/* Display subtitle if this verse has one */}
+                        {verse.subtitle && (
+                            <div className="subtitle-header">
+                                <h3 className="subtitle-text">{verse.subtitle}</h3>
+                            </div>
+                        )}
                         
-                        <div className="verse-content">
-                            {verse.arabic && (
+                        <div className="verse-card">
+                            <div className="verse-header">
+                                <span 
+                                    className="verse-ref"
+                                    onClick={() => handleVerseClick(verse.sura_verse)}
+                                    title={`Click to view subtitle section for ${verse.sura_verse}`}
+                                >
+                                    [{verse.sura_verse}]
+                                </span>
+                            </div>
+                            
+                            <div className="verse-content">
+                            {verse.arabic && showArabic && (
                                 <div className="arabic-text" dir="rtl">
                                     {parseArabicText(verse.arabic, verse.roots, verse.meanings)}
                                 </div>
@@ -296,6 +333,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                     <small>{verse.footnote}</small>
                                 </div>
                             )}
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -331,7 +369,13 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
 
             {verses.length > 0 && (
                 <div className="verse-info">
-                    📊 Showing {verses.length} verse{verses.length !== 1 ? 's' : ''} for range: {verseRange}
+                    📊 Showing {verses.length} verse{verses.length !== 1 ? 's' : ''} 
+                    {searchMode === 'text' ? `matching "${verseRange}"` : `for range: ${verseRange}`}
+                    {searchMode === 'text' && verses.length >= 10 && (
+                        <div className="search-note">
+                            <small>Note: Results limited to most relevant matches. Try more specific search terms for better results.</small>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
