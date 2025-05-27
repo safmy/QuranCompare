@@ -50,9 +50,16 @@
     border-color: #2c5aa0;
 }
 
-.arabic-toggle {
+.toggle-controls {
     margin-top: 15px;
     text-align: center;
+}
+
+.arabic-toggle, .search-toggle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
 }
 
 .toggle-label {
@@ -72,6 +79,12 @@
 
 .toggle-text {
     user-select: none;
+}
+
+.search-mode-hint {
+    font-size: 12px;
+    color: #999;
+    font-style: italic;
 }
 
 .verse-lookup-form {

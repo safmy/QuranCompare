@@ -28,6 +28,8 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
     const [searchMode, setSearchMode] = useState('range'); // 'range' or 'text'
     const [showArabic, setShowArabic] = useState(true); // New state for show/hide Arabic
+    const [exactMatch, setExactMatch] = useState(true); // New state for exact vs regex match
+    const [allVersesData, setAllVersesData] = useState([]); // Store all verses for text search
     
     const handleVerseClick = async (verseRef) => {
         try {
@@ -88,45 +90,50 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                 }
                 
                 const data = await response.json();
-                setVerses(data.verses);
-            } else {
-                // Text search mode - search through verse content
-                const response = await fetch(`${API_BASE_URL}/search`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        query: verseRange,
-                        num_results: 50, // Increased from 10 to get more results
-                        include_rashad_media: false,
-                        include_final_testament: true,
-                        include_qurantalk: false
-                    })
+                // Ensure subtitle data is included from local data if missing
+                const versesWithSubtitles = data.verses.map(verse => {
+                    if (!verse.subtitle && allVersesData.length > 0) {
+                        const localVerse = allVersesData.find(v => v.sura_verse === verse.sura_verse);
+                        if (localVerse && localVerse.subtitle) {
+                            return { ...verse, subtitle: localVerse.subtitle };
+                        }
+                    }
+                    return verse;
                 });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || 'Failed to search verses');
+                setVerses(versesWithSubtitles);
+            } else {
+                // Text search mode - search through local verse content
+                if (!allVersesData.length) {
+                    throw new Error('Verses data not loaded yet. Please try again.');
                 }
                 
-                const searchData = await response.json();
-                // Convert search results to verse format
-                const convertedVerses = searchData.results.filter(r => r.collection === 'FinalTestament').map(result => {
-                    // Extract verse reference from title
-                    const match = result.title.match(/\[(\d+:\d+)\]/);
-                    const sura_verse = match ? match[1] : 'Unknown';
+                const searchTerm = verseRange.trim();
+                if (!searchTerm) {
+                    setVerses([]);
+                    return;
+                }
+                
+                // Perform local search
+                const matchedVerses = allVersesData.filter(verse => {
+                    const textToSearch = verse.english.toLowerCase();
+                    const searchLower = searchTerm.toLowerCase();
                     
-                    return {
-                        sura_verse: sura_verse,
-                        english: result.content,
-                        arabic: '', // Not available in search results
-                        roots: '',
-                        meanings: '',
-                        footnote: null
-                    };
+                    if (exactMatch) {
+                        // Exact match - look for the exact phrase
+                        return textToSearch.includes(searchLower);
+                    } else {
+                        // Regex match
+                        try {
+                            const regex = new RegExp(searchTerm, 'i');
+                            return regex.test(verse.english);
+                        } catch (e) {
+                            // Invalid regex, fall back to includes
+                            return textToSearch.includes(searchLower);
+                        }
+                    }
                 });
-                setVerses(convertedVerses);
+                
+                setVerses(matchedVerses);
             }
         } catch (err) {
             setError(err.message);
@@ -200,6 +207,20 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     };
 
     useEffect(() => {
+        // Load all verses data for text search
+        const loadAllVerses = async () => {
+            try {
+                const response = await fetch('/verses_final.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    setAllVersesData(data);
+                }
+            } catch (err) {
+                console.error('Failed to load verses data:', err);
+            }
+        };
+        loadAllVerses();
+        
         // Load verses when component mounts or when initialRange changes
         if (initialRange && initialRange !== verseRange) {
             setVerseRange(initialRange);
@@ -209,11 +230,11 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     }, [initialRange]);
     
     useEffect(() => {
-        // Fetch verses when verseRange changes
+        // Fetch verses when verseRange, searchMode, or exactMatch changes
         if (verseRange) {
             fetchVerses();
         }
-    }, [verseRange, searchMode]);
+    }, [verseRange, searchMode, exactMatch]);
 
     return (
         <div className="verse-lookup-container">
@@ -236,20 +257,38 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                     </button>
                 </div>
                 
-                {/* Arabic toggle checkbox */}
-                {searchMode === 'range' && (
-                    <div className="arabic-toggle">
-                        <label className="toggle-label">
-                            <input
-                                type="checkbox"
-                                checked={showArabic}
-                                onChange={(e) => setShowArabic(e.target.checked)}
-                                className="toggle-checkbox"
-                            />
-                            <span className="toggle-text">Show Arabic Text</span>
-                        </label>
-                    </div>
-                )}
+                {/* Toggle checkboxes */}
+                <div className="toggle-controls">
+                    {searchMode === 'range' && (
+                        <div className="arabic-toggle">
+                            <label className="toggle-label">
+                                <input
+                                    type="checkbox"
+                                    checked={showArabic}
+                                    onChange={(e) => setShowArabic(e.target.checked)}
+                                    className="toggle-checkbox"
+                                />
+                                <span className="toggle-text">Show Arabic Text</span>
+                            </label>
+                        </div>
+                    )}
+                    {searchMode === 'text' && (
+                        <div className="search-toggle">
+                            <label className="toggle-label">
+                                <input
+                                    type="checkbox"
+                                    checked={exactMatch}
+                                    onChange={(e) => setExactMatch(e.target.checked)}
+                                    className="toggle-checkbox"
+                                />
+                                <span className="toggle-text">Exact Match</span>
+                            </label>
+                            <span className="search-mode-hint">
+                                {exactMatch ? '(searching for exact phrase)' : '(regex pattern matching)'}
+                            </span>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <form onSubmit={handleSubmit} className="verse-lookup-form">
@@ -371,11 +410,6 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                 <div className="verse-info">
                     📊 Showing {verses.length} verse{verses.length !== 1 ? 's' : ''} 
                     {searchMode === 'text' ? `matching "${verseRange}"` : `for range: ${verseRange}`}
-                    {searchMode === 'text' && verses.length >= 10 && (
-                        <div className="search-note">
-                            <small>Note: Results limited to most relevant matches. Try more specific search terms for better results.</small>
-                        </div>
-                    )}
                 </div>
             )}
         </div>
