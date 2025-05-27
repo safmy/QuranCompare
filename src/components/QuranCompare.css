@@ -1,0 +1,199 @@
+/* QuranCompare Component Styles */
+
+.comparison-results {
+    margin-top: 30px;
+}
+
+.results-header {
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.verses-grid {
+    margin-bottom: 30px;
+}
+
+.verse-card {
+    border: 1px solid #e8ecf0;
+    border-radius: 10px;
+    padding: 20px;
+    background-color: #fafbfc;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.2s;
+}
+
+.verse-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.subtitle-header {
+    margin: -20px -20px 15px -20px;
+    text-align: center;
+}
+
+.subtitle-text {
+    background: linear-gradient(135deg, #2c5aa0, #4a90e2);
+    color: white;
+    padding: 15px 25px;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    box-shadow: 0 2px 8px rgba(44, 90, 160, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    font-style: italic;
+    border-radius: 8px 8px 0 0;
+}
+
+.verse-reference {
+    color: #2c5aa0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.arabic-section {
+    margin-bottom: 20px;
+}
+
+.arabic-text {
+    font-family: 'Amiri', 'Scheherazade', 'Arabic Typesetting', serif;
+    font-size: 24px;
+    line-height: 1.9;
+    text-align: right;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-right: 4px solid #2c5aa0;
+}
+
+.arabic-word {
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 2px 4px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.arabic-word:hover {
+    background-color: rgba(44, 90, 160, 0.1);
+}
+
+.arabic-word.highlighted {
+    background-color: rgba(255, 193, 7, 0.3);
+    border-bottom: 2px solid #ffc107;
+}
+
+.english-section {
+    margin-bottom: 15px;
+}
+
+.english-text {
+    font-size: 16px;
+    line-height: 1.7;
+    color: #2c3e50;
+    padding: 15px;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e8ecf0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    margin: 0;
+}
+
+.footnote-section {
+    margin-top: 15px;
+    padding: 15px;
+    background: #fff3cd;
+    border-radius: 6px;
+    border-left: 4px solid #ffc107;
+}
+
+.footnote-text {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #856404;
+    margin: 0;
+}
+
+/* Tooltip styles */
+.word-tooltip {
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    max-width: 250px;
+    z-index: 1000;
+}
+
+.tooltip-content {
+    text-align: center;
+}
+
+.tooltip-word {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-family: 'Amiri', 'Scheherazade', serif;
+}
+
+.tooltip-root, .tooltip-meaning {
+    font-size: 12px;
+    margin-bottom: 3px;
+    text-align: left;
+}
+
+.tooltip-root strong, .tooltip-meaning strong {
+    color: #ffc107;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    .verses-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .arabic-text {
+        font-size: 22px;
+        padding: 15px;
+    }
+    
+    .verse-card {
+        padding: 15px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .verse-card {
+        background: #2d2d2d;
+        border-color: #404040;
+        color: #e0e0e0;
+    }
+    
+    .results-header {
+        color: #e0e0e0;
+    }
+    
+    .arabic-text {
+        background: #333;
+        color: #fff;
+        border-right-color: #4a90e2;
+    }
+    
+    .english-text {
+        background: #333;
+        border-color: #404040;
+        color: #e8e8e8;
+    }
+    
+    .arabic-word:hover {
+        background-color: rgba(74, 144, 226, 0.2);
+    }
+    
+    .arabic-word.highlighted {
+        background-color: rgba(255, 193, 7, 0.5);
+    }
+}

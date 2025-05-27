@@ -329,6 +329,13 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                 </div>
             )}
 
+            {!loading && verses.length > 0 && (
+                <div className="verse-info">
+                    📊 Showing {verses.length} verse{verses.length !== 1 ? 's' : ''} 
+                    {searchMode === 'text' ? `matching "${verseRange}"` : `for range: ${verseRange}`}
+                </div>
+            )}
+
             <div className="verses-container">
                 {verses.map((verse, index) => (
                     <div key={verse.sura_verse}>
@@ -403,13 +410,6 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                             </div>
                         )}
                     </div>
-                </div>
-            )}
-
-            {verses.length > 0 && (
-                <div className="verse-info">
-                    📊 Showing {verses.length} verse{verses.length !== 1 ? 's' : ''} 
-                    {searchMode === 'text' ? `matching "${verseRange}"` : `for range: ${verseRange}`}
                 </div>
             )}
         </div>

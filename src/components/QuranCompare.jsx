@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './QuranCompare.css';
 
 const QuranCompare = () => {
   const [verses, setVerses] = useState([]);
@@ -6,6 +7,9 @@ const QuranCompare = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [quranData, setQuranData] = useState(null);
+  const [hoveredWord, setHoveredWord] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [highlightedRoot, setHighlightedRoot] = useState(null);
 
   useEffect(() => {
     // Load Quran data
@@ -35,7 +39,10 @@ const QuranCompare = () => {
       sura_verse: verseRef,
       english: verseData.english || '',
       arabic: verseData.arabic || '',
-      footnote: verseData.footnote || null
+      roots: verseData.roots || '',
+      meanings: verseData.meanings || '',
+      footnote: verseData.footnote || null,
+      subtitle: verseData.subtitle || null
     };
   };
 
@@ -137,6 +144,61 @@ const QuranCompare = () => {
     }
   };
 
+  // Parse Arabic text with roots and meanings for hover functionality
+  const parseArabicText = (arabic, roots, meanings, verseIndex) => {
+    if (!arabic || !roots || !meanings) return arabic;
+
+    const arabicWords = arabic.split(/\s+/);
+    const rootsArray = roots.split(',').map(r => r.trim());
+    const meaningsArray = meanings.split(',').map(m => m.trim());
+
+    return arabicWords.map((word, index) => {
+      const root = rootsArray[index] || '';
+      const meaning = meaningsArray[index] || '';
+      const isHighlighted = highlightedRoot && root === highlightedRoot;
+      
+      return (
+        <span
+          key={`${verseIndex}-${index}`}
+          className={`arabic-word ${isHighlighted ? 'highlighted' : ''}`}
+          onMouseEnter={(e) => {
+            if (root || meaning) {
+              const rect = e.target.getBoundingClientRect();
+              setTooltipPosition({
+                x: rect.left + rect.width / 2,
+                y: rect.top - 10
+              });
+              setHoveredWord({
+                word: word,
+                root: root,
+                meaning: meaning
+              });
+              if (root) {
+                setHighlightedRoot(root);
+              }
+            }
+          }}
+          onMouseLeave={() => {
+            setHoveredWord(null);
+            setHighlightedRoot(null);
+          }}
+        >
+          {word}
+          {index < arabicWords.length - 1 && ' '}
+        </span>
+      );
+    });
+  };
+
+  // Calculate grid layout based on number of verses
+  const getGridLayout = (count) => {
+    if (count === 2) return 'repeat(2, 1fr)';
+    if (count === 3) return 'repeat(2, 1fr)';
+    if (count === 4) return 'repeat(2, 1fr)';
+    if (count <= 6) return 'repeat(3, 1fr)';
+    return 'repeat(4, 1fr)';
+  };
+
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto' }}>
       <h2 style={{ color: '#333', marginBottom: '20px' }}>Compare Quran Verses</h2>
@@ -234,77 +296,47 @@ const QuranCompare = () => {
       )}
 
       {verses.length > 0 && (
-        <div>
-          <h3 style={{ color: '#333', marginBottom: '20px' }}>
+        <div className="comparison-results">
+          <h3 className="results-header">
             Comparison Results ({verses.length} verses)
           </h3>
           
-          <div style={{
+          <div className="verses-grid" style={{
             display: 'grid',
-            gridTemplateColumns: verses.length === 2 ? '1fr 1fr' : '1fr',
+            gridTemplateColumns: getGridLayout(verses.length),
             gap: '20px'
           }}>
             {verses.map((verse, index) => (
-              <div key={`${verse.sura_verse}-${index}`} style={{
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                padding: '20px',
-                backgroundColor: '#f9f9f9'
-              }}>
-                <h4 style={{ 
-                  color: '#4CAF50', 
-                  marginBottom: '15px',
-                  fontSize: '18px',
-                  textAlign: 'center'
-                }}>
+              <div key={`${verse.sura_verse}-${index}`} className="verse-card">
+                {verse.subtitle && (
+                  <div className="subtitle-header">
+                    <h3 className="subtitle-text">{verse.subtitle}</h3>
+                  </div>
+                )}
+                
+                <h4 className="verse-reference">
                   {verse.reference}
                 </h4>
                 
                 {verse.arabic && (
-                  <div style={{ marginBottom: '15px' }}>
-                    <h5 style={{ color: '#666', marginBottom: '8px' }}>Arabic:</h5>
-                    <p style={{
-                      fontSize: '18px',
-                      lineHeight: '1.8',
-                      direction: 'rtl',
-                      textAlign: 'right',
-                      fontFamily: 'Arial, sans-serif',
-                      padding: '10px',
-                      backgroundColor: 'white',
-                      border: '1px solid #eee',
-                      borderRadius: '4px'
-                    }}>
-                      {verse.arabic}
-                    </p>
+                  <div className="arabic-section">
+                    <div className="arabic-text" dir="rtl">
+                      {parseArabicText(verse.arabic, verse.roots, verse.meanings, index)}
+                    </div>
                   </div>
                 )}
                 
                 {verse.english && (
-                  <div style={{ marginBottom: '15px' }}>
-                    <h5 style={{ color: '#666', marginBottom: '8px' }}>English:</h5>
-                    <p style={{
-                      fontSize: '16px',
-                      lineHeight: '1.6',
-                      padding: '10px',
-                      backgroundColor: 'white',
-                      border: '1px solid #eee',
-                      borderRadius: '4px'
-                    }}>
+                  <div className="english-section">
+                    <p className="english-text">
                       {verse.english}
                     </p>
                   </div>
                 )}
                 
                 {verse.footnote && (
-                  <div style={{
-                    marginTop: '15px',
-                    padding: '10px',
-                    backgroundColor: '#e8f5e8',
-                    border: '1px solid #4CAF50',
-                    borderRadius: '4px'
-                  }}>
-                    <h5 style={{ color: '#2e7d32', marginBottom: '8px' }}>Footnote:</h5>
-                    <p style={{ fontSize: '14px', lineHeight: '1.5', color: '#2e7d32' }}>
+                  <div className="footnote-section">
+                    <p className="footnote-text">
                       {verse.footnote}
                     </p>
                   </div>
@@ -312,6 +344,34 @@ const QuranCompare = () => {
               </div>
             ))}
           </div>
+          
+          {/* Tooltip for word hover */}
+          {hoveredWord && (
+            <div 
+              className="word-tooltip"
+              style={{
+                position: 'fixed',
+                left: tooltipPosition.x,
+                top: tooltipPosition.y,
+                transform: 'translateX(-50%) translateY(-100%)',
+                zIndex: 1000
+              }}
+            >
+              <div className="tooltip-content">
+                <div className="tooltip-word">{hoveredWord.word}</div>
+                {hoveredWord.root && (
+                  <div className="tooltip-root">
+                    <strong>Root:</strong> {hoveredWord.root}
+                  </div>
+                )}
+                {hoveredWord.meaning && (
+                  <div className="tooltip-meaning">
+                    <strong>Meaning:</strong> {hoveredWord.meaning}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
