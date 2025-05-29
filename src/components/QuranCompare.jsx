@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './QuranCompare.css';
-import QuranAudioPlayerV3 from './QuranAudioPlayerV3';
+import QuranAudioPlayerSimple from './QuranAudioPlayerSimple';
 
 const QuranCompare = ({ initialVerses = [] }) => {
   const [verses, setVerses] = useState([]);
@@ -373,7 +373,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
                   </div>
                 )}
                 
-                <QuranAudioPlayerV3 
+                <QuranAudioPlayerSimple 
                   verseReference={verse.reference}
                   arabicText={verse.arabic}
                 />
