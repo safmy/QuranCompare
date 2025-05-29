@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Everyayah Word-by-Word Audio URL Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .url-test {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fafafa;
+        }
+        .url-test h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        .url {
+            font-family: monospace;
+            font-size: 12px;
+            background-color: #f0f0f0;
+            padding: 8px;
+            border-radius: 4px;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .status.loading {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+    </style>
+</head>
+<body>
+    <h1>Everyayah Word-by-Word Audio URL Test</h1>
+    <p>Testing different URL formats for Al-Fatiha verse 1 (1:1) - word-by-word recitation</p>
+
+    <div class="test-container">
+        <h2>Test Results for Verse 1:1 (بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ)</h2>
+        
+        <!-- Test 1: Standard Everyayah format -->
+        <div class="url-test">
+            <h3>Test 1: Standard Everyayah Format (Abdul Basit)</h3>
+            <div class="url">https://everyayah.com/data/AbdulBasit_Mujawwad_128kbps/001001.mp3</div>
+            <audio controls id="audio1">
+                <source src="https://everyayah.com/data/AbdulBasit_Mujawwad_128kbps/001001.mp3" type="audio/mpeg">
+            </audio>
+            <div class="status loading" id="status1">Loading...</div>
+        </div>
+
+        <!-- Test 2: Word-by-word format (if exists) -->
+        <div class="url-test">
+            <h3>Test 2: Word-by-Word Format - Word 1</h3>
+            <div class="url">https://everyayah.com/data/word-by-word/001_001_001.mp3</div>
+            <audio controls id="audio2">
+                <source src="https://everyayah.com/data/word-by-word/001_001_001.mp3" type="audio/mpeg">
+            </audio>
+            <div class="status loading" id="status2">Loading...</div>
+        </div>
+
+        <!-- Test 3: Alternative CDN -->
+        <div class="url-test">
+            <h3>Test 3: CDN Format (verses.quran.com)</h3>
+            <div class="url">https://verses.quran.com/AbdulBasit/mp3/001001.mp3</div>
+            <audio controls id="audio3">
+                <source src="https://verses.quran.com/AbdulBasit/mp3/001001.mp3" type="audio/mpeg">
+            </audio>
+            <div class="status loading" id="status3">Loading...</div>
+        </div>
+
+        <!-- Test 4: Quran.com word-by-word API -->
+        <div class="url-test">
+            <h3>Test 4: Quran.com Audio CDN (Word 1)</h3>
+            <div class="url">https://audio.qurancdn.com/wbw/001_001_001.mp3</div>
+            <audio controls id="audio4">
+                <source src="https://audio.qurancdn.com/wbw/001_001_001.mp3" type="audio/mpeg">
+            </audio>
+            <div class="status loading" id="status4">Loading...</div>
+        </div>
+
+        <!-- Test 5: Alternative word format -->
+        <div class="url-test">
+            <h3>Test 5: Alternative Word Format</h3>
+            <div class="url">https://everyayah.com/data/WordByWord/001/001/001_001_001.mp3</div>
+            <audio controls id="audio5">
+                <source src="https://everyayah.com/data/WordByWord/001/001/001_001_001.mp3" type="audio/mpeg">
+            </audio>
+            <div class="status loading" id="status5">Loading...</div>
+        </div>
+
+        <!-- Test 6: Tanzil.net format -->
+        <div class="url-test">
+            <h3>Test 6: Tanzil Audio Format</h3>
+            <div class="url">https://tanzil.net/res/audio/wbw/001001.mp3</div>
+            <audio controls id="audio6">
+                <source src="https://tanzil.net/res/audio/wbw/001001.mp3" type="audio/mpeg">
+            </audio>
+            <div class="status loading" id="status6">Loading...</div>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>Multiple Words Test (First 4 words of Al-Fatiha)</h2>
+        <p>Testing word-by-word audio for: بِسْمِ - اللَّهِ - الرَّحْمَٰنِ - الرَّحِيمِ</p>
+        
+        <div id="word-tests"></div>
+    </div>
+
+    <script>
+        // Check audio loading status
+        function checkAudioStatus(audioId, statusId) {
+            const audio = document.getElementById(audioId);
+            const status = document.getElementById(statusId);
+            
+            audio.addEventListener('loadeddata', () => {
+                status.textContent = '✓ Successfully loaded';
+                status.className = 'status success';
+            });
+            
+            audio.addEventListener('error', (e) => {
+                status.textContent = '✗ Failed to load';
+                status.className = 'status error';
+            });
+        }
+
+        // Check all test audios
+        for (let i = 1; i <= 6; i++) {
+            checkAudioStatus(`audio${i}`, `status${i}`);
+        }
+
+        // Test multiple words
+        const wordTestsContainer = document.getElementById('word-tests');
+        const wordFormats = [
+            {
+                name: 'Quran.com CDN Format',
+                urlPattern: 'https://audio.qurancdn.com/wbw/001_001_{word}.mp3'
+            },
+            {
+                name: 'Everyayah Word Format',
+                urlPattern: 'https://everyayah.com/data/word-by-word/001_001_{word}.mp3'
+            },
+            {
+                name: 'Alternative Format',
+                urlPattern: 'https://verses.quran.com/wbw/001/001/001_001_{word}.mp3'
+            }
+        ];
+
+        // Test first 4 words
+        wordFormats.forEach((format, formatIndex) => {
+            const formatDiv = document.createElement('div');
+            formatDiv.className = 'url-test';
+            formatDiv.innerHTML = `<h3>${format.name}</h3>`;
+            
+            for (let word = 1; word <= 4; word++) {
+                const wordNum = word.toString().padStart(3, '0');
+                const url = format.urlPattern.replace('{word}', wordNum);
+                const audioId = `word-audio-${formatIndex}-${word}`;
+                const statusId = `word-status-${formatIndex}-${word}`;
+                
+                const wordDiv = document.createElement('div');
+                wordDiv.innerHTML = `
+                    <div style="margin: 10px 0; padding: 10px; background: #f9f9f9; border-radius: 4px;">
+                        <strong>Word ${word}:</strong>
+                        <div class="url">${url}</div>
+                        <audio controls id="${audioId}" style="width: 100%; max-width: 400px;">
+                            <source src="${url}" type="audio/mpeg">
+                        </audio>
+                        <div class="status loading" id="${statusId}">Loading...</div>
+                    </div>
+                `;
+                formatDiv.appendChild(wordDiv);
+            }
+            
+            wordTestsContainer.appendChild(formatDiv);
+        });
+
+        // Check word audio status
+        wordFormats.forEach((format, formatIndex) => {
+            for (let word = 1; word <= 4; word++) {
+                const audioId = `word-audio-${formatIndex}-${word}`;
+                const statusId = `word-status-${formatIndex}-${word}`;
+                checkAudioStatus(audioId, statusId);
+            }
+        });
+
+        // Also test with fetch to check CORS
+        async function testCORS(url) {
+            try {
+                const response = await fetch(url, { method: 'HEAD' });
+                return response.ok;
+            } catch (error) {
+                console.error(`CORS error for ${url}:`, error);
+                return false;
+            }
+        }
+
+        // Log CORS test results
+        console.log('Testing CORS for audio URLs...');
+        const testUrls = [
+            'https://audio.qurancdn.com/wbw/001_001_001.mp3',
+            'https://everyayah.com/data/word-by-word/001_001_001.mp3',
+            'https://verses.quran.com/wbw/001/001/001_001_001.mp3'
+        ];
+
+        testUrls.forEach(async (url) => {
+            const corsOk = await testCORS(url);
+            console.log(`${url} - CORS: ${corsOk ? 'OK' : 'BLOCKED'}`);
+        });
+    </script>
+</body>
+</html>
