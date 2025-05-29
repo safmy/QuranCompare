@@ -14,14 +14,15 @@ const QuranAudioPlayer = ({
   const [repeatCount, setRepeatCount] = useState(3);
   const [pauseDuration, setPauseDuration] = useState(5);
   const [currentChunk, setCurrentChunk] = useState(0);
+  const [currentRepetition, setCurrentRepetition] = useState(0);
   const [isMemorizationPlaying, setIsMemorizationPlaying] = useState(false);
   
   const audioRef = useRef(null);
   const memorizationTimeoutRef = useRef(null);
-  const memorizationIntervalRef = useRef(null);
+  const memorizationStateRef = useRef({ isPlaying: false, currentChunk: 0, currentRep: 0 });
 
-
-  const playAudio = async () => {
+  const playAudio = async (options = {}) => {
+    const { onEnded } = options;
     const audioUrl = getVerseAudioUrl(verseReference);
     if (!audioUrl) {
       setError('Invalid verse reference');
@@ -42,9 +43,7 @@ const QuranAudioPlayer = ({
       audioRef.current.oncanplay = () => setIsLoading(false);
       audioRef.current.onended = () => {
         setIsPlaying(false);
-        if (memorizationMode && isMemorizationPlaying) {
-          handleMemorizationEnd();
-        }
+        if (onEnded) onEnded();
       };
       audioRef.current.onerror = () => {
         setError('Failed to load audio. Please try again.');
@@ -99,68 +98,69 @@ const QuranAudioPlayer = ({
     return chunks;
   };
 
-  const startMemorization = async () => {
+  const startMemorization = () => {
     const chunks = getArabicChunks();
     if (chunks.length === 0) return;
 
     setIsMemorizationPlaying(true);
     setCurrentChunk(0);
+    setCurrentRepetition(1);
+    memorizationStateRef.current = { isPlaying: true, currentChunk: 0, currentRep: 0 };
     
-    const playChunk = async (chunkIndex, repetition = 0) => {
-      if (!isMemorizationPlaying || chunkIndex >= chunks.length) {
-        setIsMemorizationPlaying(false);
-        setCurrentChunk(0);
+    const playNextSegment = () => {
+      const state = memorizationStateRef.current;
+      
+      if (!state.isPlaying || state.currentChunk >= chunks.length) {
+        stopMemorization();
         return;
       }
 
-      setCurrentChunk(chunkIndex);
+      setCurrentChunk(state.currentChunk);
+      setCurrentRepetition(state.currentRep + 1);
       
-      // Play the full verse audio (in a real implementation, you'd need chunk-specific audio)
-      await playAudio();
-      
-      // Wait for audio to finish, then decide next action
-      if (audioRef.current) {
-        audioRef.current.onended = () => {
-          setIsPlaying(false);
+      // Play the audio with custom onEnded handler
+      playAudio({
+        onEnded: () => {
+          if (!memorizationStateRef.current.isPlaying) return;
           
-          if (repetition < repeatCount - 1) {
-            // Repeat the same chunk
+          if (state.currentRep < repeatCount - 1) {
+            // More repetitions for this chunk
+            memorizationStateRef.current.currentRep = state.currentRep + 1;
             memorizationTimeoutRef.current = setTimeout(() => {
-              playChunk(chunkIndex, repetition + 1);
+              playNextSegment();
             }, pauseDuration * 1000);
           } else {
             // Move to next chunk
+            memorizationStateRef.current.currentChunk = state.currentChunk + 1;
+            memorizationStateRef.current.currentRep = 0;
             memorizationTimeoutRef.current = setTimeout(() => {
-              playChunk(chunkIndex + 1, 0);
+              playNextSegment();
             }, pauseDuration * 1000);
           }
-        };
-      }
+        }
+      });
     };
 
-    playChunk(0, 0);
+    // Start playing immediately
+    playNextSegment();
   };
 
   const stopMemorization = () => {
+    memorizationStateRef.current.isPlaying = false;
     setIsMemorizationPlaying(false);
     setCurrentChunk(0);
+    setCurrentRepetition(0);
     
     if (memorizationTimeoutRef.current) {
       clearTimeout(memorizationTimeoutRef.current);
-    }
-    if (memorizationIntervalRef.current) {
-      clearInterval(memorizationIntervalRef.current);
+      memorizationTimeoutRef.current = null;
     }
     
     if (audioRef.current) {
-      audioRef.current.onended = () => setIsPlaying(false);
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setIsPlaying(false);
     }
-  };
-
-  const handleMemorizationEnd = () => {
-    // This will be called when memorization cycle completes
-    setIsMemorizationPlaying(false);
-    setCurrentChunk(0);
   };
 
   useEffect(() => {
@@ -190,7 +190,7 @@ const QuranAudioPlayer = ({
         {!memorizationMode ? (
           <div style={{ display: 'flex', gap: '5px' }}>
             <button
-              onClick={isPlaying ? pauseAudio : playAudio}
+              onClick={() => isPlaying ? pauseAudio() : playAudio()}
               disabled={isLoading}
               style={{
                 padding: '8px 15px',
@@ -266,7 +266,8 @@ const QuranAudioPlayer = ({
                 min="1"
                 max="10"
                 value={chunkSize}
-                onChange={(e) => setChunkSize(parseInt(e.target.value))}
+                onChange={(e) => setChunkSize(parseInt(e.target.value) || 1)}
+                disabled={isMemorizationPlaying}
                 style={{
                   width: '100%',
                   padding: '5px',
@@ -285,7 +286,8 @@ const QuranAudioPlayer = ({
                 min="1"
                 max="10"
                 value={repeatCount}
-                onChange={(e) => setRepeatCount(parseInt(e.target.value))}
+                onChange={(e) => setRepeatCount(parseInt(e.target.value) || 1)}
+                disabled={isMemorizationPlaying}
                 style={{
                   width: '100%',
                   padding: '5px',
@@ -304,7 +306,8 @@ const QuranAudioPlayer = ({
                 min="1"
                 max="30"
                 value={pauseDuration}
-                onChange={(e) => setPauseDuration(parseInt(e.target.value))}
+                onChange={(e) => setPauseDuration(parseInt(e.target.value) || 1)}
+                disabled={isMemorizationPlaying}
                 style={{
                   width: '100%',
                   padding: '5px',
@@ -330,13 +333,40 @@ const QuranAudioPlayer = ({
                       border: '1px solid #ddd',
                       borderRadius: '4px',
                       direction: 'rtl',
-                      fontSize: '16px'
+                      fontSize: '16px',
+                      position: 'relative'
                     }}
                   >
                     <strong>Chunk {index + 1}:</strong> {chunk}
+                    {currentChunk === index && isMemorizationPlaying && (
+                      <span style={{ 
+                        position: 'absolute',
+                        left: '10px',
+                        top: '8px',
+                        fontSize: '12px',
+                        color: '#1976d2',
+                        fontWeight: 'bold'
+                      }}>
+                        Rep {currentRepetition}/{repeatCount}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+          
+          {isMemorizationPlaying && (
+            <div style={{
+              marginTop: '15px',
+              padding: '10px',
+              backgroundColor: '#e3f2fd',
+              borderRadius: '4px',
+              textAlign: 'center'
+            }}>
+              <p style={{ margin: 0, color: '#1976d2', fontWeight: 'bold' }}>
+                Memorization in progress... Chunk {currentChunk + 1} of {chunks.length}
+              </p>
             </div>
           )}
         </div>
