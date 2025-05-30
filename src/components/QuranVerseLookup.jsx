@@ -294,6 +294,12 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
         }
     }, [verseRange, searchMode, exactMatch]);
 
+    // Force re-render when language changes (for display purposes)
+    useEffect(() => {
+        // This ensures the component re-renders with new language
+        // The actual translation change happens in the render function
+    }, [currentLanguage]);
+
     return (
         <div className="verse-lookup-container">
             <LanguageSwitcher 

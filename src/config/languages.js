@@ -96,7 +96,14 @@ export const getLanguageConfig = (langCode) => {
 
 export const getTranslationText = (verse, langCode) => {
   const config = getLanguageConfig(langCode);
-  return verse[config.field] || verse[AVAILABLE_LANGUAGES[DEFAULT_LANGUAGE].field] || '';
+  const translationText = verse[config.field];
+  
+  // Debug log to help troubleshoot
+  if (!translationText && langCode !== DEFAULT_LANGUAGE) {
+    console.log(`Translation not found for language ${langCode} (field: ${config.field}), falling back to ${DEFAULT_LANGUAGE}`);
+  }
+  
+  return translationText || verse[AVAILABLE_LANGUAGES[DEFAULT_LANGUAGE].field] || '';
 };
 
 export const getFootnoteText = (verse, langCode) => {
