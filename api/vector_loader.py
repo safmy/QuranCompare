@@ -31,8 +31,8 @@ VECTOR_URLS = {
         "json": f"{GITHUB_RELEASE_BASE}/qurantalk_articles_1744655632.json"
     },
     "Newsletters": {
-        "faiss": "./newsletter_data/newsletters.faiss",
-        "json": "./newsletter_data/newsletters.json"
+        "faiss": "./newsletter_data/newsletters_comprehensive.faiss",
+        "json": "./newsletter_data/newsletters_comprehensive.json"
     }
 }
 
@@ -257,6 +257,10 @@ def load_vectors_from_local(base_dir: str = "../..") -> Dict:
         "QuranTalkArticles": {
             "faiss": os.path.join(base_dir, "qurantalk_articles_1744655632.faiss"),
             "json": os.path.join(base_dir, "qurantalk_articles_1744655632.json")
+        },
+        "Newsletters": {
+            "faiss": "./newsletter_data/newsletters_comprehensive.faiss",
+            "json": "./newsletter_data/newsletters_comprehensive.json"
         }
     }
     
