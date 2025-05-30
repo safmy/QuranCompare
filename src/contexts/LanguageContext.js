@@ -28,6 +28,7 @@ export const LanguageProvider = ({ children }) => {
   }, [currentLanguage]);
 
   const changeLanguage = (newLanguage) => {
+    console.log(`🔄 Language changed from ${currentLanguage} to ${newLanguage}`);
     setCurrentLanguage(newLanguage);
   };
 
