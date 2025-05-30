@@ -17,8 +17,18 @@ def load_verses_data():
     Returns: List of verse objects or None if failed
     """
     
-    # Try local paths first
+    # Try local paths first - prioritize verses_final.json with all translations
     local_paths = [
+        'verses_final.json',
+        '../verses_final.json', 
+        '../../verses_final.json',
+        '../public/verses_final.json',
+        '../../public/verses_final.json',
+        os.path.join(os.path.dirname(__file__), '../verses_final.json'),
+        os.path.join(os.path.dirname(__file__), '../../verses_final.json'),
+        os.path.join(os.path.dirname(__file__), '../public/verses_final.json'),
+        os.path.join(os.path.dirname(__file__), '../../public/verses_final.json'),
+        # Fallback to old file
         'verses_array_roots_meanings_subtitles_footnotes.json',
         '../verses_array_roots_meanings_subtitles_footnotes.json',
         '../../verses_array_roots_meanings_subtitles_footnotes.json',
@@ -41,15 +51,15 @@ def load_verses_data():
     logger.info("Verses data not found locally, attempting to download from GitHub releases...")
     
     try:
-        # GitHub release URL for the verses file
-        release_url = "https://github.com/safmy/QuranCompare/releases/download/v1.0-data/verses_array_roots_meanings_subtitles_footnotes.json"
+        # GitHub release URL for the verses file with all translations
+        release_url = os.getenv("VERSES_JSON_URL", "https://github.com/safmy/QuranCompare/releases/download/v1.0-vectors/verses_final.json")
         
-        response = requests.get(release_url, timeout=30)
+        response = requests.get(release_url, timeout=60)
         if response.status_code == 200:
             data = response.json()
             
             # Save to local file for future use
-            local_file = "verses_array_roots_meanings_subtitles_footnotes.json"
+            local_file = "verses_final.json"
             try:
                 with open(local_file, 'w', encoding='utf-8') as f:
                     json.dump(data, f, ensure_ascii=False, indent=2)

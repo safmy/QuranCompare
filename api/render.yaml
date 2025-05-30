@@ -25,3 +25,5 @@ services:
         value: https://github.com/safmy/QuranCompare/releases/download/v1.0-vectors/newsletters_comprehensive.faiss
       - key: NEWSLETTERS_JSON_URL
         value: https://github.com/safmy/QuranCompare/releases/download/v1.0-vectors/newsletters_comprehensive.json
+      - key: VERSES_JSON_URL
+        value: https://github.com/safmy/QuranCompare/releases/download/v1.0-vectors/verses_final.json
