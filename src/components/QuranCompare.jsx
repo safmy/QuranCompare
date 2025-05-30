@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import './QuranCompare.css';
 import QuranAudioPlayerSimple from './QuranAudioPlayerSimple';
+import LanguageSwitcher from './LanguageSwitcher';
+import { useLanguage } from '../contexts/LanguageContext';
+import { getLanguageConfig, getTranslationText, getFootnoteText } from '../config/languages';
 
 const QuranCompare = ({ initialVerses = [] }) => {
+  const { currentLanguage, changeLanguage } = useLanguage();
   const [verses, setVerses] = useState([]);
   const [verseInputs, setVerseInputs] = useState(['']);
   const [loading, setLoading] = useState(false);
@@ -245,6 +249,12 @@ const QuranCompare = ({ initialVerses = [] }) => {
 
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+      <LanguageSwitcher 
+        currentLanguage={currentLanguage}
+        onLanguageChange={changeLanguage}
+        compact={true}
+      />
+      
       <h2 style={{ color: '#333', marginBottom: '20px' }}>Compare Quran Verses</h2>
       
       <div style={{ marginBottom: '20px' }}>
@@ -367,9 +377,15 @@ const QuranCompare = ({ initialVerses = [] }) => {
                   </div>
                 )}
                 
-                {verse.english && (
-                  <div className="english-text">
-                    {verse.english}
+                {getTranslationText(verse, currentLanguage) && (
+                  <div className="translation-text" style={{ direction: getLanguageConfig(currentLanguage).direction }}>
+                    {getTranslationText(verse, currentLanguage)}
+                  </div>
+                )}
+                
+                {getFootnoteText(verse, currentLanguage) && (
+                  <div className="footnote" style={{ direction: getLanguageConfig(currentLanguage).direction, fontSize: '0.85em', color: '#666', marginTop: '10px' }}>
+                    <small>{getFootnoteText(verse, currentLanguage)}</small>
                   </div>
                 )}
                 

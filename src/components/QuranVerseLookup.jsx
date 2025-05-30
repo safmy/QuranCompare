@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './QuranVerseLookup.css';
+import LanguageSwitcher from './LanguageSwitcher';
+import { useLanguage } from '../contexts/LanguageContext';
+import { getLanguageConfig, getTranslationText, getFootnoteText } from '../config/languages';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://vector-search-api-production.up.railway.app';
 
@@ -20,6 +23,7 @@ const CHAPTER_VERSE_COUNTS = {
 };
 
 const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
+    const { currentLanguage, changeLanguage } = useLanguage();
     const [verseRange, setVerseRange] = useState(initialRange || '1:1-7');
     const [verses, setVerses] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -292,6 +296,11 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
 
     return (
         <div className="verse-lookup-container">
+            <LanguageSwitcher 
+                currentLanguage={currentLanguage}
+                onLanguageChange={changeLanguage}
+            />
+            
             <div className="verse-lookup-header">
                 <h2>📖 Quran Verse Lookup</h2>
                 <p>{searchMode === 'range' ? 'Enter a verse range (e.g., 1:1-7, 2:5-10, or 3:15)' : 'Search for text within verses'}</p>
@@ -425,8 +434,8 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                 </div>
                             )}
                             
-                            <div className="english-text">
-                                {verse.english}
+                            <div className="translation-text" style={{ direction: getLanguageConfig(currentLanguage).direction }}>
+                                {getTranslationText(verse, currentLanguage)}
                             </div>
                             
                             {searchMode === 'text' && !verse.arabic && (
@@ -435,9 +444,9 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                 </div>
                             )}
                             
-                            {verse.footnote && (
-                                <div className="footnote">
-                                    <small>{verse.footnote}</small>
+                            {getFootnoteText(verse, currentLanguage) && (
+                                <div className="footnote" style={{ direction: getLanguageConfig(currentLanguage).direction }}>
+                                    <small>{getFootnoteText(verse, currentLanguage)}</small>
                                 </div>
                             )}
                             </div>
