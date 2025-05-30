@@ -70,6 +70,7 @@ class SearchRequest(BaseModel):
     include_rashad_media: bool = True
     include_final_testament: bool = True  
     include_qurantalk: bool = True
+    include_newsletters: bool = True
 
 class VerseRangeRequest(BaseModel):
     verse_range: str  # Format: "1:1-7" or "2:5-10" or "3:15"
@@ -479,7 +480,8 @@ async def vector_search(request: SearchRequest):
         collection_filter = {
             "RashadAllMedia": request.include_rashad_media,
             "FinalTestament": request.include_final_testament,
-            "QuranTalkArticles": request.include_qurantalk
+            "QuranTalkArticles": request.include_qurantalk,
+            "Newsletters": request.include_newsletters
         }
         
         # Search more results than needed to account for filtering and deduplication
@@ -555,6 +557,13 @@ async def vector_search(request: SearchRequest):
                 
                 content = verse_text
                 source = "Final Testament"
+                youtube_link = None
+                
+            elif collection == "Newsletters":
+                title = metadata.get("title", "Newsletter")
+                content = metadata.get("content", "")[:500] + "..." if len(metadata.get("content", "")) > 500 else metadata.get("content", "")
+                newsletter_url = metadata.get("url", "")
+                source = newsletter_url if newsletter_url else "Rashad Khalifa Newsletters"
                 youtube_link = None
                 
             else:  # QuranTalkArticles

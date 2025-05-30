@@ -29,6 +29,10 @@ VECTOR_URLS = {
     "QuranTalkArticles": {
         "faiss": f"{GITHUB_RELEASE_BASE}/qurantalk_articles_1744655632.faiss",
         "json": f"{GITHUB_RELEASE_BASE}/qurantalk_articles_1744655632.json"
+    },
+    "Newsletters": {
+        "faiss": "./newsletter_data/newsletters.faiss",
+        "json": "./newsletter_data/newsletters.json"
     }
 }
 
@@ -47,6 +51,10 @@ def get_vector_urls():
         "QuranTalkArticles": {
             "faiss": os.getenv("QURANTALK_FAISS_URL", VECTOR_URLS["QuranTalkArticles"]["faiss"]),
             "json": os.getenv("QURANTALK_JSON_URL", VECTOR_URLS["QuranTalkArticles"]["json"])
+        },
+        "Newsletters": {
+            "faiss": os.getenv("NEWSLETTERS_FAISS_URL", VECTOR_URLS["Newsletters"]["faiss"]),
+            "json": os.getenv("NEWSLETTERS_JSON_URL", VECTOR_URLS["Newsletters"]["json"])
         }
     }
 
@@ -183,6 +191,15 @@ def load_vectors_from_cloud(cache_dir: str = "./vector_cache") -> Dict:
                                 "verse_ref": f"Verse {i}",
                                 "title": f"Verse {i}"
                             })
+                    elif name == "Newsletters":
+                        # Newsletters - use the scraped data structure
+                        for i, text in enumerate(texts):
+                            metadata.append({
+                                "content": text,
+                                "title": f"Newsletter {i+1}",
+                                "source": "Rashad Khalifa Newsletters",
+                                "id": i
+                            })
                     else:
                         # RashadAllMedia or default format
                         for i, text in enumerate(texts):
@@ -193,7 +210,13 @@ def load_vectors_from_cloud(cache_dir: str = "./vector_cache") -> Dict:
                             })
                             
                 elif isinstance(data, list):
-                    metadata = data
+                    # Handle newsletter format or regular list
+                    if name == "Newsletters" and len(data) > 0 and isinstance(data[0], dict) and 'title' in data[0]:
+                        # Newsletter format with full metadata
+                        metadata = data
+                    else:
+                        # Regular list format
+                        metadata = data
                 else:
                     logger.warning(f"  Unexpected JSON structure for {name}: {type(data)}")
                     metadata = []

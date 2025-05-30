@@ -9,6 +9,7 @@ const QuranVectorSearch = () => {
   const [includeRashadMedia, setIncludeRashadMedia] = useState(true);
   const [includeFinalTestament, setIncludeFinalTestament] = useState(true);
   const [includeQuranTalk, setIncludeQuranTalk] = useState(true);
+  const [includeNewsletters, setIncludeNewsletters] = useState(true);
   
   const handleVerseClick = async (verseRef) => {
     try {
@@ -116,7 +117,8 @@ const QuranVectorSearch = () => {
     const colors = {
       'RashadAllMedia': '#4CAF50',
       'FinalTestament': '#2196F3',
-      'QuranTalkArticles': '#FF9800'
+      'QuranTalkArticles': '#FF9800',
+      'Newsletters': '#9C27B0'
     };
     return colors[collection] || '#666';
   };
@@ -125,7 +127,8 @@ const QuranVectorSearch = () => {
     const emojis = {
       'RashadAllMedia': '🎥',
       'FinalTestament': '📖',
-      'QuranTalkArticles': '📄'
+      'QuranTalkArticles': '📄',
+      'Newsletters': '📰'
     };
     return emojis[collection] || '📌';
   };
@@ -150,7 +153,8 @@ const QuranVectorSearch = () => {
           num_results: numResults,
           include_rashad_media: includeRashadMedia,
           include_final_testament: includeFinalTestament,
-          include_qurantalk: includeQuranTalk
+          include_qurantalk: includeQuranTalk,
+          include_newsletters: includeNewsletters
         })
       });
 
@@ -184,7 +188,7 @@ const QuranVectorSearch = () => {
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
       <h2 style={{ color: '#333', marginBottom: '20px' }}>Semantic Search</h2>
       <p style={{ color: '#666', marginBottom: '20px' }}>
-        Search across Rashad Khalifa Media, Final Testament, and QuranTalk articles using AI-powered semantic search
+        Search across Rashad Khalifa Media, Final Testament, QuranTalk articles, and Rashad Khalifa Newsletters using AI-powered semantic search
       </p>
       
       <div style={{ 
@@ -288,6 +292,15 @@ const QuranVectorSearch = () => {
               style={{ marginRight: '8px' }}
             />
             <span style={{ color: '#FF9800', fontWeight: 'bold' }}>📄 QuranTalk Articles</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={includeNewsletters}
+              onChange={(e) => setIncludeNewsletters(e.target.checked)}
+              style={{ marginRight: '8px' }}
+            />
+            <span style={{ color: '#9C27B0', fontWeight: 'bold' }}>📰 Rashad Khalifa Newsletters</span>
           </label>
         </div>
       </div>
