@@ -81,6 +81,7 @@ class SearchResult(BaseModel):
     content: str
     similarity_score: float
     source: Optional[str] = None
+    source_url: Optional[str] = None
     youtube_link: Optional[str] = None
 
 class VerseResult(BaseModel):
@@ -509,6 +510,7 @@ async def vector_search(request: SearchRequest):
             similarity = float(1 / (1 + distance))
             
             # Format result based on collection type
+            source_url = None  # Initialize source_url for all collections
             if collection == "RashadAllMedia":
                 content = metadata.get("content", "")
                 
@@ -563,15 +565,19 @@ async def vector_search(request: SearchRequest):
                 title = metadata.get("title", "Newsletter")
                 content = metadata.get("content", "")[:500] + "..." if len(metadata.get("content", "")) > 500 else metadata.get("content", "")
                 newsletter_url = metadata.get("url", "")
-                source = newsletter_url if newsletter_url else "Rashad Khalifa Newsletters"
+                source = "Rashad Khalifa Newsletters"
                 youtube_link = None
+                # Store URL separately for frontend to use
+                source_url = newsletter_url
                 
             else:  # QuranTalkArticles
                 title = metadata.get("title", "Unknown Article")
                 content = metadata.get("content", "")[:500] + "..." if len(metadata.get("content", "")) > 500 else metadata.get("content", "")
                 article_url = metadata.get("url", "")
-                source = article_url if article_url else "QuranTalk"
+                source = "QuranTalk"
                 youtube_link = None
+                # Store URL separately for frontend to use
+                source_url = article_url
             
             # Create unique identifier for deduplication
             if collection == "QuranTalkArticles":
@@ -595,6 +601,7 @@ async def vector_search(request: SearchRequest):
                 content=content,
                 similarity_score=similarity,
                 source=source,
+                source_url=source_url,
                 youtube_link=youtube_link
             ))
         

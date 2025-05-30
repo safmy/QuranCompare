@@ -88,15 +88,16 @@ const QuranVectorSearch = () => {
       }
     }
     
-    // For other collections or if no verse match found
-    if (result.collection === 'QuranTalkArticles' && result.source && result.source.startsWith('http')) {
+    // For other collections with URLs
+    if ((result.collection === 'QuranTalkArticles' || result.collection === 'Newsletters') && result.source_url) {
+      const color = result.collection === 'QuranTalkArticles' ? '#FF9800' : '#9C27B0';
       return (
         <a 
-          href={result.source}
+          href={result.source_url}
           target="_blank"
           rel="noopener noreferrer"
           style={{
-            color: '#FF9800',
+            color: color,
             textDecoration: 'none'
           }}
           onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
@@ -380,7 +381,21 @@ const QuranVectorSearch = () => {
               
               {result.source && (
                 <p style={{ fontSize: '13px', color: '#888', marginBottom: '5px' }}>
-                  Source: {result.source}
+                  Source: {result.source_url ? (
+                    <a 
+                      href={result.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: '#1976d2',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      {result.source}
+                    </a>
+                  ) : (
+                    result.source
+                  )}
                 </p>
               )}
               
