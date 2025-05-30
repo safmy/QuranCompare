@@ -22,6 +22,7 @@ const QuranAudioPlayerSimple = ({
   const audioRef = useRef(null);
   const loopIntervalRef = useRef(null);
   const loopCountRef = useRef(0);
+  const isLoopingRef = useRef(false);
 
   // Initialize audio on component mount
   useEffect(() => {
@@ -43,9 +44,32 @@ const QuranAudioPlayerSimple = ({
       setCurrentTime(audio.currentTime);
     });
 
-    audio.addEventListener('ended', () => {
-      setIsPlaying(false);
-    });
+    // Handle audio ended event
+    const handleAudioEnded = () => {
+      if (isLoopingRef.current) {
+        // Handle looping mode
+        if (loopCountRef.current < loopCount) {
+          setTimeout(() => {
+            loopCountRef.current++;
+            setCurrentLoop(loopCountRef.current);
+            console.log(`Starting loop ${loopCountRef.current} of ${loopCount}`);
+            audio.currentTime = 0;
+            audio.play().catch((err) => {
+              console.error('Error playing loop:', err);
+              stopLooping();
+            });
+          }, pauseBetweenLoops * 1000);
+        } else {
+          console.log('All loops completed');
+          stopLooping();
+        }
+      } else {
+        // Normal playback mode
+        setIsPlaying(false);
+      }
+    };
+
+    audio.addEventListener('ended', handleAudioEnded);
 
     audio.addEventListener('error', () => {
       setError('Failed to load audio');
@@ -60,10 +84,11 @@ const QuranAudioPlayerSimple = ({
       if (loopIntervalRef.current) {
         clearInterval(loopIntervalRef.current);
       }
+      audio.removeEventListener('ended', handleAudioEnded);
       audio.pause();
       audio.remove();
     };
-  }, [verseReference]);
+  }, [verseReference, loopCount, pauseBetweenLoops]);
 
   const playAudio = async () => {
     if (!audioRef.current || !audioLoaded) {
@@ -115,44 +140,33 @@ const QuranAudioPlayerSimple = ({
       return;
     }
 
+    console.log(`Starting memorization mode: ${loopCount} loops with ${pauseBetweenLoops}s pause`);
+    
+    // Initialize loop state
     setIsLooping(true);
+    isLoopingRef.current = true;
     setCurrentLoop(1);
     loopCountRef.current = 1;
     
-    // Play first time
+    // Reset and start playing
     audioRef.current.currentTime = 0;
     audioRef.current.playbackRate = playbackSpeed;
     
     try {
       await audioRef.current.play();
       setIsPlaying(true);
-      
-      // Set up loop handling
-      const handleLoop = () => {
-        if (!audioRef.current.paused && audioRef.current.ended) {
-          if (loopCountRef.current < loopCount) {
-            setTimeout(() => {
-              loopCountRef.current++;
-              setCurrentLoop(loopCountRef.current);
-              audioRef.current.currentTime = 0;
-              audioRef.current.play().catch(console.error);
-            }, pauseBetweenLoops * 1000);
-          } else {
-            stopLooping();
-          }
-        }
-      };
-
-      // Check every 100ms if audio ended
-      loopIntervalRef.current = setInterval(handleLoop, 100);
+      setError('');
     } catch (err) {
+      console.error('Failed to start looping:', err);
       setError('Failed to start loop');
       stopLooping();
     }
   };
 
   const stopLooping = () => {
+    console.log('Stopping memorization mode');
     setIsLooping(false);
+    isLoopingRef.current = false;
     setCurrentLoop(0);
     loopCountRef.current = 0;
     
@@ -319,7 +333,7 @@ const QuranAudioPlayerSimple = ({
               <input
                 type="number"
                 min="1"
-                max="20"
+                max="1000"
                 value={loopCount}
                 onChange={(e) => setLoopCount(parseInt(e.target.value) || 1)}
                 disabled={isLooping}
@@ -330,6 +344,11 @@ const QuranAudioPlayerSimple = ({
                   borderRadius: '3px'
                 }}
               />
+              {loopCount > 50 && (
+                <div style={{ fontSize: '11px', color: '#ff9800', marginTop: '3px' }}>
+                  ⚠️ High repeat count: {loopCount} loops will take approximately {Math.round(loopCount * (duration + pauseBetweenLoops) / 60)} minutes
+                </div>
+              )}
             </div>
             
             <div>
@@ -339,7 +358,7 @@ const QuranAudioPlayerSimple = ({
               <input
                 type="number"
                 min="0"
-                max="10"
+                max="30"
                 value={pauseBetweenLoops}
                 onChange={(e) => setPauseBetweenLoops(parseInt(e.target.value) || 0)}
                 disabled={isLooping}
@@ -362,7 +381,11 @@ const QuranAudioPlayerSimple = ({
               textAlign: 'center'
             }}>
               <p style={{ margin: 0, color: '#1976d2', fontWeight: 'bold' }}>
-                Playing: Loop {currentLoop} of {loopCount}
+                🔄 Memorization Mode: Loop {currentLoop} of {loopCount}
+              </p>
+              <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '12px' }}>
+                {loopCount - currentLoop} repetitions remaining 
+                {pauseBetweenLoops > 0 && ` • ${pauseBetweenLoops}s pause between loops`}
               </p>
               <div style={{
                 marginTop: '10px',
