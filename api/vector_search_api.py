@@ -91,6 +91,29 @@ class VerseResult(BaseModel):
     roots: str
     meanings: str
     footnote: Optional[str] = None
+    # Additional language translations
+    tquran: Optional[str] = None
+    tmquran: Optional[str] = None
+    squran: Optional[str] = None
+    rquran: Optional[str] = None
+    pquran: Optional[str] = None
+    gquran: Optional[str] = None
+    fquran: Optional[str] = None
+    bquran: Optional[str] = None
+    myquran: Optional[str] = None
+    # Language-specific footnotes
+    tquran_footnote: Optional[str] = None
+    tmquran_footnote: Optional[str] = None
+    squran_footnote: Optional[str] = None
+    rquran_footnote: Optional[str] = None
+    pquran_footnote: Optional[str] = None
+    gquran_footnote: Optional[str] = None
+    fquran_footnote: Optional[str] = None
+    bquran_footnote: Optional[str] = None
+    myquran_footnote: Optional[str] = None
+    # Additional fields
+    transliteration: Optional[str] = None
+    subtitle: Optional[str] = None
 
 class SearchResponse(BaseModel):
     results: List[SearchResult]
@@ -424,7 +447,30 @@ async def get_verse_range(request: VerseRangeRequest):
                     arabic=verse_data.get('arabic', ''),
                     roots=verse_data.get('roots', ''),
                     meanings=verse_data.get('meanings', ''),
-                    footnote=verse_data.get('footnote')
+                    footnote=verse_data.get('footnote'),
+                    # Include all language translations
+                    tquran=verse_data.get('tquran'),
+                    tmquran=verse_data.get('tmquran'),
+                    squran=verse_data.get('squran'),
+                    rquran=verse_data.get('rquran'),
+                    pquran=verse_data.get('pquran'),
+                    gquran=verse_data.get('gquran'),
+                    fquran=verse_data.get('fquran'),
+                    bquran=verse_data.get('bquran'),
+                    myquran=verse_data.get('myquran'),
+                    # Include language-specific footnotes
+                    tquran_footnote=verse_data.get('tquran_footnote'),
+                    tmquran_footnote=verse_data.get('tmquran_footnote'),
+                    squran_footnote=verse_data.get('squran_footnote'),
+                    rquran_footnote=verse_data.get('rquran_footnote'),
+                    pquran_footnote=verse_data.get('pquran_footnote'),
+                    gquran_footnote=verse_data.get('gquran_footnote'),
+                    fquran_footnote=verse_data.get('fquran_footnote'),
+                    bquran_footnote=verse_data.get('bquran_footnote'),
+                    myquran_footnote=verse_data.get('myquran_footnote'),
+                    # Additional fields
+                    transliteration=verse_data.get('transliteration'),
+                    subtitle=verse_data.get('subtitle')
                 ))
         
         return VerseRangeResponse(
