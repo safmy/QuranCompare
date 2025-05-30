@@ -2,6 +2,9 @@ services:
   - type: web
     name: quran-vector-search-api
     env: python
+    repo: https://github.com/safmy/QuranCompare
+    branch: main
+    autoDeploy: true
     buildCommand: "pip install -r requirements.txt"
     startCommand: "uvicorn vector_search_api:app --host 0.0.0.0 --port ${PORT:-8000}"
     envVars:
