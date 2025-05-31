@@ -142,6 +142,17 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                     return;
                 }
                 
+                // Check minimum character requirement for text search
+                if (searchTerm.length < 3) {
+                    setVerses([]);
+                    setError(`Please enter at least 3 characters to search (currently ${searchTerm.length})`);
+                    setSearchMode('text');
+                    return;
+                }
+                
+                // Clear any previous error
+                setError(null);
+                
                 // Perform local search
                 const matchedVerses = allVersesData.filter(verse => {
                     const textToSearch = verse.english.toLowerCase();
@@ -426,7 +437,20 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     useEffect(() => {
         // Fetch verses when verseRange, searchMode, or exactMatch changes
         if (verseRange) {
-            fetchVerses();
+            // Only auto-search if it's a verse range or if text search has 3+ characters
+            const isVerseRange = detectSearchType(verseRange);
+            if (isVerseRange || verseRange.trim().length >= 3) {
+                fetchVerses();
+            } else if (!isVerseRange && verseRange.trim().length > 0 && verseRange.trim().length < 3) {
+                // Show the minimum character message without searching
+                setVerses([]);
+                setError(`Please enter at least 3 characters to search (currently ${verseRange.trim().length})`);
+                setSearchMode('text');
+            } else {
+                // Clear everything if empty
+                setVerses([]);
+                setError(null);
+            }
         }
     }, [verseRange, searchMode, exactMatch]);
 
@@ -514,8 +538,8 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
             </form>
 
             {error && (
-                <div className="error-message">
-                    ❌ {error}
+                <div className={error.includes('at least 3 characters') ? 'search-hint' : 'error-message'}>
+                    {error.includes('at least 3 characters') ? '💡' : '❌'} {error}
                 </div>
             )}
 

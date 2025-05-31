@@ -175,6 +175,17 @@
     margin-bottom: 20px;
 }
 
+.search-hint {
+    text-align: center;
+    color: #1976d2;
+    background: #e3f2fd;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    border: 1px solid #bbdefb;
+}
+
 .loading {
     text-align: center;
     color: #666;
