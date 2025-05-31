@@ -47,18 +47,20 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Add CORS middleware
+# Add CORS middleware - MUST be before any route definitions
 allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",") if os.getenv("ALLOWED_ORIGINS") != "*" else ["*"]
 # Always allow capacitor URLs for iOS app
 if "*" not in allowed_origins:
     allowed_origins.extend(["capacitor://localhost", "ionic://localhost", "http://localhost"])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=["*"],  # Allow all origins for now
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"],
     allow_headers=["*"],
-    expose_headers=["*"]
+    expose_headers=["*"],
+    max_age=3600
 )
 
 # Global variables
@@ -750,6 +752,12 @@ async def transcribe_audio(audio: UploadFile = File(...)):
     except Exception as e:
         logger.error(f"Error transcribing audio: {type(e).__name__}: {e}")
         raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
+
+# Catch-all OPTIONS handler for any endpoint
+@app.options("/{path:path}")
+async def catch_all_options(path: str):
+    """Handle all OPTIONS requests for CORS preflight"""
+    return {"message": "OK"}
 
 if __name__ == "__main__":
     import uvicorn
