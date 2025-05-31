@@ -76,6 +76,21 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
         }
     };
 
+    const detectSearchType = (input) => {
+        const trimmed = input.trim();
+        
+        // Patterns for verse ranges
+        const versePatterns = [
+            /^(\d+):(\d+)(?:-(\d+))?$/,  // Standard format: 1:1 or 1:1-7
+            /^(\d+)$/, // Just chapter number
+            /^(\d+):$/, // Chapter with colon
+            /^chapter\s+(\d+)(?:\s+verse\s+(\d+)(?:\s*(?:to|-)\s*(\d+))?)?$/i,
+            /^surah?\s+(\d+)(?:\s+(?:verse|ayah?)\s+(\d+)(?:\s*(?:to|-)\s*(\d+))?)?$/i,
+        ];
+        
+        return versePatterns.some(pattern => pattern.test(trimmed));
+    };
+
     const fetchVerses = async () => {
         if (!verseRange.trim()) return;
         
@@ -83,7 +98,9 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
         setError(null);
         
         try {
-            if (searchMode === 'range') {
+            const isVerseRange = detectSearchType(verseRange);
+            
+            if (isVerseRange) {
                 // Range lookup (e.g., 1:1-7)
                 const response = await fetch(`${API_BASE_URL}/verses`, {
                     method: 'POST',
@@ -112,6 +129,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                     return verse;
                 });
                 setVerses(versesWithSubtitles);
+                setSearchMode('range'); // Update mode indicator
             } else {
                 // Text search mode - search through local verse content
                 if (!allVersesData.length) {
@@ -145,6 +163,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                 });
                 
                 setVerses(matchedVerses);
+                setSearchMode('text'); // Update mode indicator
             }
         } catch (err) {
             setError(err.message);
@@ -261,52 +280,8 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     };
     
     const handleVoiceTranscription = (transcription) => {
-        // Detect if it's a verse range or text search
-        const trimmedText = transcription.trim();
-        
-        // Pattern for verse ranges: "1:1", "2:5-10", "chapter 3 verse 15", etc.
-        const versePatterns = [
-            /^(\d+):(\d+)(?:-(\d+))?$/,  // Standard format: 1:1 or 1:1-7
-            /^chapter\s+(\d+)\s+verse\s+(\d+)(?:\s*(?:to|-)\s*(\d+))?$/i,  // "chapter 1 verse 1" or "chapter 1 verse 1 to 7"
-            /^surah?\s+(\d+)\s+(?:verse|ayah?)\s+(\d+)(?:\s*(?:to|-)\s*(\d+))?$/i,  // "sura 1 verse 1" or "surah 1 ayah 1"
-            /^(\d+)\s*:\s*(\d+)(?:\s*-\s*(\d+))?$/  // With spaces: "1 : 1" or "1 : 1 - 7"
-        ];
-        
-        let isVerseRange = false;
-        let formattedRange = trimmedText;
-        
-        for (const pattern of versePatterns) {
-            const match = trimmedText.match(pattern);
-            if (match) {
-                isVerseRange = true;
-                const chapter = match[1];
-                const startVerse = match[2];
-                const endVerse = match[3];
-                
-                if (endVerse) {
-                    formattedRange = `${chapter}:${startVerse}-${endVerse}`;
-                } else {
-                    formattedRange = `${chapter}:${startVerse}`;
-                }
-                break;
-            }
-        }
-        
-        // Check if it's just a chapter number
-        const chapterOnlyMatch = trimmedText.match(/^(?:chapter|surah?)\s+(\d+)$/i);
-        if (chapterOnlyMatch) {
-            isVerseRange = true;
-            formattedRange = chapterOnlyMatch[1] + ':';
-        }
-        
-        // Set the appropriate mode and value
-        if (isVerseRange) {
-            setSearchMode('range');
-            setVerseRange(formattedRange);
-        } else {
-            setSearchMode('text');
-            setVerseRange(trimmedText);
-        }
+        // Simply set the transcription and let fetchVerses handle the detection
+        setVerseRange(transcription.trim());
         
         // Automatically search after a short delay
         setTimeout(() => {
@@ -469,41 +444,23 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
             />
             
             <div className="verse-lookup-header">
-                <h2>📖 Quran Verse Lookup</h2>
-                <p>{searchMode === 'range' ? 'Enter a verse range (e.g., 1:1-7, 2:5-10, or 3:15)' : 'Search for text within verses'}</p>
+                <h2>📖 Quran Search</h2>
+                <p>Enter verse references (1:1-7, 2:5, chapter 3) or search for text within verses</p>
                 
-                <div className="search-mode-toggle">
-                    <button 
-                        className={`mode-button ${searchMode === 'range' ? 'active' : ''}`}
-                        onClick={() => setSearchMode('range')}
-                    >
-                        📍 Range Lookup
-                    </button>
-                    <button 
-                        className={`mode-button ${searchMode === 'text' ? 'active' : ''}`}
-                        onClick={() => setSearchMode('text')}
-                    >
-                        🔍 Text Search
-                    </button>
-                </div>
-                
-                {/* Toggle checkboxes */}
+                {/* Simplified toggle controls */}
                 <div className="toggle-controls">
-                    {searchMode === 'range' && (
-                        <div className="arabic-toggle">
-                            <label className="toggle-label">
-                                <input
-                                    type="checkbox"
-                                    checked={showArabic}
-                                    onChange={(e) => setShowArabic(e.target.checked)}
-                                    className="toggle-checkbox"
-                                />
-                                <span className="toggle-text">Show Arabic Text</span>
-                            </label>
-                        </div>
-                    )}
-                    {searchMode === 'text' && (
-                        <div className="search-toggle">
+                    <div className="unified-controls">
+                        <label className="toggle-label">
+                            <input
+                                type="checkbox"
+                                checked={showArabic}
+                                onChange={(e) => setShowArabic(e.target.checked)}
+                                className="toggle-checkbox"
+                            />
+                            <span className="toggle-text">Show Arabic Text</span>
+                        </label>
+                        
+                        {searchMode === 'text' && (
                             <label className="toggle-label">
                                 <input
                                     type="checkbox"
@@ -513,9 +470,17 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                 />
                                 <span className="toggle-text">Exact Match</span>
                             </label>
-                            <span className="search-mode-hint">
-                                {exactMatch ? '(searching for exact phrase)' : '(regex pattern matching)'}
-                            </span>
+                        )}
+                    </div>
+                    
+                    {searchMode === 'text' && (
+                        <div className="search-mode-indicator">
+                            📝 Text search {exactMatch ? '(exact phrase)' : '(flexible matching)'}
+                        </div>
+                    )}
+                    {searchMode === 'range' && (
+                        <div className="search-mode-indicator">
+                            📍 Verse range lookup
                         </div>
                     )}
                 </div>
@@ -527,13 +492,13 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                         type="text"
                         value={verseRange}
                         onChange={(e) => setVerseRange(e.target.value)}
-                        placeholder={searchMode === 'range' ? '1:1-7' : 'Search text...'}
+                        placeholder="1:1-7, chapter 2, or search text..."
                         className="verse-input"
                     />
                     <button type="submit" disabled={loading} className="lookup-button">
-                        {loading ? '🔄' : '🔍'} Lookup
+                        {loading ? '🔄' : '🔍'} Search
                     </button>
-                    {searchMode === 'range' && isChapterInput() && (
+                    {detectSearchType(verseRange) && isChapterInput() && (
                         <button 
                             type="button" 
                             onClick={loadFullChapter} 
@@ -563,7 +528,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
             {!loading && verses.length > 0 && (
                 <div className="verse-info">
                     📊 Showing {verses.length} verse{verses.length !== 1 ? 's' : ''} 
-                    {searchMode === 'text' ? `matching "${verseRange}"` : `for range: ${verseRange}`}
+                    {searchMode === 'text' ? `matching "${verseRange}"` : `for "${verseRange}"`}
                 </div>
             )}
 
