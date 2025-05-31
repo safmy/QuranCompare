@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import VoiceSearchButton from './VoiceSearchButton';
 
+// API endpoint - change this to your deployed API URL in production
+const API_URL = process.env.REACT_APP_API_URL || 'https://vector-search-api-production.up.railway.app';
+
 const QuranVectorSearch = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -112,8 +115,6 @@ const QuranVectorSearch = () => {
     return result.title;
   };
 
-  // API endpoint - change this to your deployed API URL in production
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8001';
 
   const getCollectionColor = (collection) => {
     const colors = {

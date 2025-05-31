@@ -47,10 +47,5 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>QuranCompare uses your microphone for voice search to find verses using speech recognition.</string>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
 </dict>
 </plist>

@@ -21,7 +21,10 @@ const config: CapacitorConfig = {
     }
   },
   server: {
-    allowNavigation: ['*']
+    allowNavigation: ['*'],
+    iosScheme: 'capacitor',
+    androidScheme: 'https',
+    hostname: 'localhost'
   }
 };
 

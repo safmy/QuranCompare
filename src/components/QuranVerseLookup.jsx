@@ -415,8 +415,17 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
         // Load all verses data for text search
         const loadAllVerses = async () => {
             try {
-                const response = await fetch('/verses_final.json');
-                if (response.ok) {
+                // Try different paths for web vs mobile
+                let response;
+                try {
+                    // First try the public path (works on web)
+                    response = await fetch('/verses_final.json');
+                } catch (e) {
+                    // If that fails, try without leading slash (works on mobile)
+                    response = await fetch('verses_final.json');
+                }
+                
+                if (response && response.ok) {
                     const data = await response.json();
                     setAllVersesData(data);
                 }

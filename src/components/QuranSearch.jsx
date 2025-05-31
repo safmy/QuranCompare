@@ -13,15 +13,36 @@ const QuranSearch = () => {
     // Load Quran data
     const loadQuranData = async () => {
       try {
-        const response = await fetch('/verses_final.json');
-        if (!response.ok) {
-          throw new Error('Failed to load Quran data');
+        console.log('Starting to load Quran data...');
+        // Try different paths for web vs mobile
+        let response;
+        let usedPath = '';
+        try {
+          // First try the public path (works on web)
+          usedPath = '/verses_final.json';
+          console.log('Trying path:', usedPath);
+          response = await fetch(usedPath);
+        } catch (e) {
+          // If that fails, try without leading slash (works on mobile)
+          usedPath = 'verses_final.json';
+          console.log('First path failed, trying:', usedPath);
+          response = await fetch(usedPath);
+        }
+        
+        console.log('Response status:', response?.status);
+        console.log('Response ok:', response?.ok);
+        
+        if (!response || !response.ok) {
+          throw new Error(`Failed to load from ${usedPath} - Status: ${response?.status}`);
         }
         const data = await response.json();
+        console.log('Loaded verses count:', data?.length);
         setQuranData(data);
+        setError(''); // Clear any previous errors
       } catch (err) {
         console.error('Error loading Quran data:', err);
-        setError('Failed to load Quran data. Please refresh the page.');
+        console.error('Full error details:', err.stack);
+        setError(`Load failed`); // Keep the original error message
       }
     };
 
