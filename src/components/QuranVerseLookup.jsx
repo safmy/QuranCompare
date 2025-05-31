@@ -5,7 +5,7 @@ import VoiceSearchButton from './VoiceSearchButton';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getLanguageConfig, getTranslationText, getFootnoteText } from '../config/languages';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://vector-search-api-production.up.railway.app';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
 
 // Chapter verse counts
 const CHAPTER_VERSE_COUNTS = {

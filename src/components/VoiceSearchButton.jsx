@@ -74,7 +74,7 @@ const VoiceSearchButton = ({ onTranscription, placeholder = "Recording..." }) =>
             console.log('Sending audio for transcription:', audioBlob.size, 'bytes');
 
             // Send to our API endpoint
-            const API_URL = process.env.REACT_APP_API_URL || 'https://vector-search-api-production.up.railway.app';
+            const API_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
             const response = await fetch(`${API_URL}/transcribe-audio`, {
                 method: 'POST',
                 body: formData
