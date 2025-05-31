@@ -395,6 +395,11 @@ async def test_download():
             "accessible": False
         }
 
+@app.options("/verses")
+async def verses_options():
+    """Handle preflight requests for /verses endpoint"""
+    return {"message": "OK"}
+
 @app.post("/verses", response_model=VerseRangeResponse)
 async def get_verse_range(request: VerseRangeRequest):
     """Get verses by range (e.g., '1:1-7' or '2:5-10' or '3:15')"""
@@ -489,6 +494,11 @@ async def get_verse_range(request: VerseRangeRequest):
         logger.error(f"Error in verse range lookup: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.options("/verse-range-for-subtitle")
+async def verse_range_for_subtitle_options():
+    """Handle preflight requests for /verse-range-for-subtitle endpoint"""
+    return {"message": "OK"}
+
 @app.post("/verse-range-for-subtitle", response_model=VerseRangeForSubtitleResponse)
 async def get_verse_range_for_subtitle(request: VerseRangeForSubtitleRequest):
     """Get the subtitle range for a given verse (e.g., 2:3 -> 2:3-5)"""
@@ -508,6 +518,11 @@ async def get_verse_range_for_subtitle(request: VerseRangeForSubtitleRequest):
     except Exception as e:
         logger.error(f"Error in verse range for subtitle lookup: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.options("/search")
+async def search_options():
+    """Handle preflight requests for /search endpoint"""
+    return {"message": "OK"}
 
 @app.post("/search", response_model=SearchResponse)
 async def vector_search(request: SearchRequest):
@@ -664,6 +679,11 @@ async def vector_search(request: SearchRequest):
     except Exception as e:
         logger.error(f"Error in vector search: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.options("/transcribe-audio")
+async def transcribe_audio_options():
+    """Handle preflight requests for /transcribe-audio endpoint"""
+    return {"message": "OK"}
 
 @app.post("/transcribe-audio")
 async def transcribe_audio(audio: UploadFile = File(...)):

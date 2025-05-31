@@ -23,6 +23,21 @@ const CHAPTER_VERSE_COUNTS = {
     111: 6, 112: 5, 113: 6, 114: 7
 };
 
+// Helper function to parse verse range from local data
+const parseVerseRangeFromLocal = (range, versesData) => {
+    const match = range.match(/^(\d+):(\d+)(?:-(\d+))?$/);
+    if (!match) return [];
+    
+    const chapter = parseInt(match[1]);
+    const startVerse = parseInt(match[2]);
+    const endVerse = match[3] ? parseInt(match[3]) : startVerse;
+    
+    return versesData.filter(verse => {
+        const [ch, v] = verse.sura_verse.split(':').map(n => parseInt(n));
+        return ch === chapter && v >= startVerse && v <= endVerse;
+    });
+};
+
 const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     const { currentLanguage, changeLanguage } = useLanguage();
     const [verseRange, setVerseRange] = useState(initialRange || '1:1-7');
@@ -102,34 +117,45 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
             
             if (isVerseRange) {
                 // Range lookup (e.g., 1:1-7)
-                const response = await fetch(`${API_BASE_URL}/verses`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        verse_range: verseRange
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || 'Failed to fetch verses');
-                }
-                
-                const data = await response.json();
-                // Ensure subtitle data is included from local data if missing
-                const versesWithSubtitles = data.verses.map(verse => {
-                    if (!verse.subtitle && allVersesData.length > 0) {
-                        const localVerse = allVersesData.find(v => v.sura_verse === verse.sura_verse);
-                        if (localVerse && localVerse.subtitle) {
-                            return { ...verse, subtitle: localVerse.subtitle };
-                        }
+                try {
+                    const response = await fetch(`${API_BASE_URL}/verses`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            verse_range: verseRange
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`API returned ${response.status}`);
                     }
-                    return verse;
-                });
-                setVerses(versesWithSubtitles);
-                setSearchMode('range'); // Update mode indicator
+                    
+                    const data = await response.json();
+                    // Ensure subtitle data is included from local data if missing
+                    const versesWithSubtitles = data.verses.map(verse => {
+                        if (!verse.subtitle && allVersesData.length > 0) {
+                            const localVerse = allVersesData.find(v => v.sura_verse === verse.sura_verse);
+                            if (localVerse && localVerse.subtitle) {
+                                return { ...verse, subtitle: localVerse.subtitle };
+                            }
+                        }
+                        return verse;
+                    });
+                    setVerses(versesWithSubtitles);
+                    setSearchMode('range'); // Update mode indicator
+                } catch (apiError) {
+                    console.error('API call failed, falling back to local data:', apiError);
+                    // Fallback to local data processing
+                    if (allVersesData.length > 0) {
+                        const verses = parseVerseRangeFromLocal(verseRange, allVersesData);
+                        setVerses(verses);
+                        setSearchMode('range');
+                    } else {
+                        throw new Error('No data available');
+                    }
+                }
             } else {
                 // Text search mode - search through local verse content
                 if (!allVersesData.length) {
