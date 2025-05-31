@@ -37,6 +37,8 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     const [showRootAnalysis, setShowRootAnalysis] = useState(false);
     const [rootAnalysisData, setRootAnalysisData] = useState(null);
     const [showAllRootVerses, setShowAllRootVerses] = useState(false);
+    const [selectedWord, setSelectedWord] = useState(null); // For mobile touch interaction
+    const [isMobile, setIsMobile] = useState(false);
     
     const handleVerseClick = async (verseRef) => {
         try {
@@ -174,17 +176,47 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
         return /^\d+:?\s*$/.test(verseRange);
     };
     
-    const analyzeWordRoot = (word, root, verse) => {
+    const analyzeWordRoot = (word, root, verse, wordMeaning) => {
         if (!root || root === '-' || !allVersesData.length) return;
         
         // Find all verses containing this specific root
         const relatedVerses = [];
+        const meaningVariations = new Map(); // Track different meanings of the same root
         let totalCount = 0;
         
         allVersesData.forEach(v => {
             if (v.roots && v.roots.includes(root)) {
                 totalCount++;
                 if (v.sura_verse !== verse.sura_verse) {
+                    // Extract meanings for this root in this verse
+                    const rootsArray = v.roots.split(',').map(r => r.trim());
+                    const meaningsArray = v.meanings ? v.meanings.split(',').map(m => m.trim()) : [];
+                    const arabicWords = v.arabic ? v.arabic.split(/\s+/) : [];
+                    
+                    // Find all occurrences of this root and their meanings
+                    rootsArray.forEach((r, idx) => {
+                        if (r === root && meaningsArray[idx]) {
+                            const meaning = meaningsArray[idx];
+                            const arabicWord = arabicWords[idx] || '';
+                            
+                            // Group by meaning variation
+                            if (!meaningVariations.has(meaning)) {
+                                meaningVariations.set(meaning, []);
+                            }
+                            
+                            // Check if this verse is already in this meaning group
+                            const existingVerse = meaningVariations.get(meaning).find(item => item.verse.sura_verse === v.sura_verse);
+                            if (!existingVerse) {
+                                meaningVariations.get(meaning).push({
+                                    verse: v,
+                                    arabicWord: arabicWord,
+                                    meaning: meaning,
+                                    rootIndex: idx
+                                });
+                            }
+                        }
+                    });
+                    
                     relatedVerses.push({
                         ...v,
                         matchingRoots: [root]
@@ -193,16 +225,23 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
             }
         });
         
-        // Sort by verse reference
+        // Sort meaning variations by frequency (most common first)
+        const sortedVariations = Array.from(meaningVariations.entries())
+            .sort((a, b) => b[1].length - a[1].length)
+            .slice(0, 10); // Limit to top 10 variations
+        
+        // Sort related verses by verse reference
         relatedVerses.sort((a, b) => a.sura_verse.localeCompare(b.sura_verse));
         
         setRootAnalysisData({
             sourceVerse: verse,
             clickedWord: word,
+            clickedWordMeaning: wordMeaning,
             selectedRoot: root,
             totalCount: totalCount,
             relatedVerses: relatedVerses,
-            totalRelated: relatedVerses.length
+            totalRelated: relatedVerses.length,
+            meaningVariations: sortedVariations
         });
         setShowRootAnalysis(true);
         setShowAllRootVerses(false);
@@ -231,13 +270,15 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
             const root = rootsArray[index] || '';
             const meaning = meaningsArray[index] || '';
             const isClickable = root && root !== '-';
+            const wordKey = `${verse.sura_verse}-${index}`;
+            const isSelected = selectedWord?.key === wordKey;
             
             return (
                 <span
                     key={index}
-                    className={`arabic-word ${isClickable ? 'clickable' : ''}`}
+                    className={`arabic-word ${isClickable ? 'clickable' : ''} ${isSelected ? 'selected' : ''}`}
                     onMouseEnter={(e) => {
-                        if (root || meaning) {
+                        if (!isMobile && (root || meaning)) {
                             const rect = e.target.getBoundingClientRect();
                             setTooltipPosition({
                                 x: rect.left + rect.width / 2,
@@ -250,10 +291,45 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                             });
                         }
                     }}
-                    onMouseLeave={() => setHoveredWord(null)}
-                    onClick={() => {
-                        if (isClickable) {
-                            analyzeWordRoot(word, root, verse);
+                    onMouseLeave={() => {
+                        if (!isMobile) {
+                            setHoveredWord(null);
+                        }
+                    }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        
+                        if (isMobile) {
+                            // Mobile behavior: first tap shows tooltip, second tap analyzes root
+                            if (isSelected) {
+                                // Second tap - analyze root
+                                if (isClickable) {
+                                    analyzeWordRoot(word, root, verse, meaning);
+                                }
+                            } else {
+                                // First tap - show tooltip
+                                const rect = e.target.getBoundingClientRect();
+                                setTooltipPosition({
+                                    x: rect.left + rect.width / 2,
+                                    y: rect.top - 10
+                                });
+                                setSelectedWord({
+                                    key: wordKey,
+                                    word: word,
+                                    root: root,
+                                    meaning: meaning
+                                });
+                                setHoveredWord({
+                                    word: word,
+                                    root: root,
+                                    meaning: meaning
+                                });
+                            }
+                        } else {
+                            // Desktop behavior - immediate analysis
+                            if (isClickable) {
+                                analyzeWordRoot(word, root, verse, meaning);
+                            }
                         }
                     }}
                 >
@@ -263,6 +339,35 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
             );
         });
     };
+
+    useEffect(() => {
+        // Detect mobile device
+        const checkMobile = () => {
+            setIsMobile(window.matchMedia('(max-width: 768px)').matches || 
+                       'ontouchstart' in window || 
+                       navigator.maxTouchPoints > 0);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        
+        // Clear selected word when clicking outside
+        const handleClickOutside = (e) => {
+            if (!e.target.closest('.arabic-word') && !e.target.closest('.word-tooltip')) {
+                setSelectedWord(null);
+                if (isMobile) {
+                    setHoveredWord(null);
+                }
+            }
+        };
+        
+        document.addEventListener('click', handleClickOutside);
+        
+        return () => {
+            window.removeEventListener('resize', checkMobile);
+            document.removeEventListener('click', handleClickOutside);
+        };
+    }, [isMobile]);
 
     useEffect(() => {
         // Load all verses data for text search
@@ -421,6 +526,21 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                     <h3 className="subtitle-text">{verse.subtitle}</h3>
                                 </div>
                             )}
+                            
+                            {/* Mobile hint for first verse with Arabic text */}
+                            {isMobile && index === 0 && verse.arabic && showArabic && verse.roots && (
+                                <div className="mobile-hint" style={{
+                                    padding: '10px',
+                                    background: '#e3f2fd',
+                                    borderRadius: '6px',
+                                    marginBottom: '15px',
+                                    fontSize: '14px',
+                                    color: '#1976d2',
+                                    textAlign: 'center'
+                                }}>
+                                    💡 Tap Arabic words to see root/meaning, tap again to analyze
+                                </div>
+                            )}
                         
                         <div className="verse-card">
                             <div className="verse-header">
@@ -476,7 +596,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                 >
                     <div className="tooltip-content">
                         <div className="tooltip-word">{hoveredWord.word}</div>
-                        {hoveredWord.root && (
+                        {hoveredWord.root && hoveredWord.root !== '-' && (
                             <div className="tooltip-root">
                                 <strong>Root:</strong> {hoveredWord.root}
                             </div>
@@ -484,6 +604,15 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                         {hoveredWord.meaning && (
                             <div className="tooltip-meaning">
                                 <strong>Meaning:</strong> {hoveredWord.meaning}
+                            </div>
+                        )}
+                        {isMobile && hoveredWord.root && hoveredWord.root !== '-' && (
+                            <div style={{
+                                marginTop: '8px',
+                                fontSize: '12px',
+                                opacity: 0.8
+                            }}>
+                                Tap again to see all verses with this root
                             </div>
                         )}
                     </div>
@@ -507,10 +636,39 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                         <div className="root-info">
                             <p><strong>Word clicked:</strong> {rootAnalysisData.clickedWord}</p>
                             <p><strong>Root:</strong> {rootAnalysisData.selectedRoot}</p>
+                            <p><strong>Meaning in this verse:</strong> {rootAnalysisData.clickedWordMeaning || 'N/A'}</p>
                             <p><strong>From verse:</strong> [{rootAnalysisData.sourceVerse.sura_verse}]</p>
                             <p><strong>Total occurrences:</strong> {rootAnalysisData.totalCount} verses</p>
                             <p><strong>Other verses with this root:</strong> {rootAnalysisData.totalRelated}</p>
                         </div>
+                        
+                        {/* Meaning variations section */}
+                        {rootAnalysisData.meaningVariations && rootAnalysisData.meaningVariations.length > 0 && (
+                            <div className="meaning-variations" style={{
+                                padding: '20px',
+                                background: '#f8f9fa',
+                                borderBottom: '1px solid #e8ecf0'
+                            }}>
+                                <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#333' }}>
+                                    Meaning Variations of "{rootAnalysisData.selectedRoot}"
+                                </h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    {rootAnalysisData.meaningVariations.map(([meaning, verses], idx) => (
+                                        <div key={idx} style={{
+                                            padding: '8px 12px',
+                                            background: '#e3f2fd',
+                                            borderRadius: '6px',
+                                            fontSize: '14px'
+                                        }}>
+                                            <strong>{meaning}</strong>
+                                            <span style={{ marginLeft: '10px', color: '#666' }}>
+                                                ({verses.length} verse{verses.length !== 1 ? 's' : ''})
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         
                         <div className="related-verses-section">
                             <h4>Related Verses (showing {showAllRootVerses ? rootAnalysisData.relatedVerses.length : Math.min(10, rootAnalysisData.relatedVerses.length)})</h4>

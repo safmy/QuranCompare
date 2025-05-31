@@ -255,6 +255,14 @@
     border-bottom-color: #2c5aa0;
 }
 
+/* Selected word state for mobile */
+.arabic-word.selected {
+    background-color: rgba(44, 90, 160, 0.2);
+    border-bottom: 2px solid #2c5aa0;
+    border-radius: 4px;
+    padding: 4px 6px;
+}
+
 .english-text {
     font-size: 17px;
     line-height: 1.7;
@@ -289,6 +297,26 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     max-width: 250px;
     z-index: 1000;
+    pointer-events: none;
+}
+
+/* Mobile-optimized tooltip */
+@media (max-width: 768px), (hover: none) {
+    .word-tooltip {
+        padding: 12px 16px;
+        font-size: 16px;
+        max-width: 90vw;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .tooltip-word {
+        font-size: 20px !important;
+    }
+    
+    .tooltip-root, .tooltip-meaning {
+        font-size: 14px !important;
+    }
 }
 
 .tooltip-content {
@@ -366,6 +394,18 @@
     .arabic-text {
         font-size: 24px;
     }
+    
+    /* Larger touch targets for mobile */
+    .arabic-word {
+        padding: 4px 6px;
+        margin: 2px 0;
+    }
+    
+    .arabic-word.clickable {
+        min-height: 32px;
+        display: inline-flex;
+        align-items: center;
+    }
 
     .english-text {
         font-size: 16px;
@@ -391,6 +431,44 @@
     justify-content: center;
     z-index: 1000;
     padding: 20px;
+    overflow-y: auto;
+}
+
+/* Mobile optimization for root analysis modal */
+@media (max-width: 768px) {
+    .root-analysis-modal {
+        padding: 10px;
+        align-items: flex-start;
+    }
+    
+    .root-analysis-content {
+        margin-top: 20px;
+        max-height: calc(100vh - 40px);
+    }
+    
+    .root-analysis-header {
+        padding: 15px;
+    }
+    
+    .root-analysis-header h3 {
+        font-size: 18px;
+    }
+    
+    .root-info {
+        padding: 15px;
+    }
+    
+    .related-verses-section {
+        padding: 15px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .compare-btn, .cancel-btn {
+        width: 100%;
+    }
 }
 
 .root-analysis-content {
