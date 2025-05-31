@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './QuranVerseLookup.css';
 import LanguageSwitcher from './LanguageSwitcher';
+import VoiceSearchButton from './VoiceSearchButton';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getLanguageConfig, getTranslationText, getFootnoteText } from '../config/languages';
 
@@ -258,6 +259,60 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
         });
         window.dispatchEvent(event);
     };
+    
+    const handleVoiceTranscription = (transcription) => {
+        // Detect if it's a verse range or text search
+        const trimmedText = transcription.trim();
+        
+        // Pattern for verse ranges: "1:1", "2:5-10", "chapter 3 verse 15", etc.
+        const versePatterns = [
+            /^(\d+):(\d+)(?:-(\d+))?$/,  // Standard format: 1:1 or 1:1-7
+            /^chapter\s+(\d+)\s+verse\s+(\d+)(?:\s*(?:to|-)\s*(\d+))?$/i,  // "chapter 1 verse 1" or "chapter 1 verse 1 to 7"
+            /^surah?\s+(\d+)\s+(?:verse|ayah?)\s+(\d+)(?:\s*(?:to|-)\s*(\d+))?$/i,  // "sura 1 verse 1" or "surah 1 ayah 1"
+            /^(\d+)\s*:\s*(\d+)(?:\s*-\s*(\d+))?$/  // With spaces: "1 : 1" or "1 : 1 - 7"
+        ];
+        
+        let isVerseRange = false;
+        let formattedRange = trimmedText;
+        
+        for (const pattern of versePatterns) {
+            const match = trimmedText.match(pattern);
+            if (match) {
+                isVerseRange = true;
+                const chapter = match[1];
+                const startVerse = match[2];
+                const endVerse = match[3];
+                
+                if (endVerse) {
+                    formattedRange = `${chapter}:${startVerse}-${endVerse}`;
+                } else {
+                    formattedRange = `${chapter}:${startVerse}`;
+                }
+                break;
+            }
+        }
+        
+        // Check if it's just a chapter number
+        const chapterOnlyMatch = trimmedText.match(/^(?:chapter|surah?)\s+(\d+)$/i);
+        if (chapterOnlyMatch) {
+            isVerseRange = true;
+            formattedRange = chapterOnlyMatch[1] + ':';
+        }
+        
+        // Set the appropriate mode and value
+        if (isVerseRange) {
+            setSearchMode('range');
+            setVerseRange(formattedRange);
+        } else {
+            setSearchMode('text');
+            setVerseRange(trimmedText);
+        }
+        
+        // Automatically search after a short delay
+        setTimeout(() => {
+            fetchVerses();
+        }, 100);
+    };
 
     // Parse Arabic text with roots and meanings for hover functionality
     const parseArabicText = (arabic, roots, meanings, verse) => {
@@ -489,6 +544,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                             📖 Full Chapter
                         </button>
                     )}
+                    <VoiceSearchButton onTranscription={handleVoiceTranscription} />
                 </div>
             </form>
 

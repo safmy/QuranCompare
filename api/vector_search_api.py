@@ -4,7 +4,7 @@ Vector Search API for QuranCompare
 Provides embedded search functionality similar to Discord bot's /search command
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Optional
@@ -659,6 +659,44 @@ async def vector_search(request: SearchRequest):
         
     except Exception as e:
         logger.error(f"Error in vector search: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/transcribe-audio")
+async def transcribe_audio(audio: UploadFile = File(...)):
+    """Transcribe audio using OpenAI Whisper API"""
+    try:
+        # Validate file type
+        if not audio.content_type.startswith('audio/'):
+            raise HTTPException(status_code=400, detail="File must be an audio file")
+        
+        # Read audio file
+        audio_data = await audio.read()
+        
+        # Save temporarily (Whisper API requires a file)
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.webm') as temp_file:
+            temp_file.write(audio_data)
+            temp_file_path = temp_file.name
+        
+        try:
+            # Use OpenAI Whisper API
+            with open(temp_file_path, 'rb') as audio_file:
+                transcript = client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file,
+                    language="en"  # You can make this configurable
+                )
+            
+            return {"transcription": transcript.text}
+            
+        finally:
+            # Clean up temp file
+            import os
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+                
+    except Exception as e:
+        logger.error(f"Error transcribing audio: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import VoiceSearchButton from './VoiceSearchButton';
 
 const QuranVectorSearch = () => {
   const [searchResults, setSearchResults] = useState([]);
@@ -185,6 +186,14 @@ const QuranVectorSearch = () => {
     }
   };
 
+  const handleVoiceTranscription = (transcription) => {
+    setSearchTerm(transcription);
+    // Automatically search after transcription
+    setTimeout(() => {
+      handleSearch();
+    }, 100);
+  };
+
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
       <h2 style={{ color: '#333', marginBottom: '20px' }}>Semantic Search</h2>
@@ -255,6 +264,8 @@ const QuranVectorSearch = () => {
         >
           {loading ? 'Searching...' : 'Search'}
         </button>
+        
+        <VoiceSearchButton onTranscription={handleVoiceTranscription} />
       </div>
 
       {/* Collection Filters */}
