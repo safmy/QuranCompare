@@ -1,11 +1,14 @@
 {
-  "total_newsletters": 8,
-  "total_words": 12217,
-  "total_chars": 70557,
+  "total_newsletters": 20,
+  "total_words": 31618,
+  "total_chars": 184160,
   "years_covered": [
     "1985",
-    "1986"
+    "1986",
+    "1987",
+    "1988",
+    "1989"
   ],
-  "average_words_per_page": 1527.125,
-  "scraped_at": "2025-05-30T07:09:39.080208"
+  "average_words_per_page": 1580.9,
+  "scraped_at": "2025-05-30T07:13:35.766116"
 }

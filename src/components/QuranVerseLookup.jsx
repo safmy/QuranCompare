@@ -39,6 +39,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     const [showAllRootVerses, setShowAllRootVerses] = useState(false);
     const [selectedWord, setSelectedWord] = useState(null); // For mobile touch interaction
     const [isMobile, setIsMobile] = useState(false);
+    const [selectedMeaningCategory, setSelectedMeaningCategory] = useState(null);
     
     const handleVerseClick = async (verseRef) => {
         try {
@@ -647,7 +648,9 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                             <div className="meaning-variations" style={{
                                 padding: '20px',
                                 background: '#f8f9fa',
-                                borderBottom: '1px solid #e8ecf0'
+                                borderBottom: '1px solid #e8ecf0',
+                                maxHeight: isMobile ? '200px' : 'auto',
+                                overflowY: isMobile ? 'auto' : 'visible'
                             }}>
                                 <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#333' }}>
                                     Meaning Variations of "{rootAnalysisData.selectedRoot}"
@@ -656,16 +659,82 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                     {rootAnalysisData.meaningVariations.map(([meaning, verses], idx) => (
                                         <div key={idx} style={{
                                             padding: '8px 12px',
-                                            background: '#e3f2fd',
+                                            background: selectedMeaningCategory === meaning ? '#1976d2' : '#e3f2fd',
+                                            color: selectedMeaningCategory === meaning ? 'white' : 'inherit',
                                             borderRadius: '6px',
-                                            fontSize: '14px'
-                                        }}>
+                                            fontSize: '14px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onClick={() => setSelectedMeaningCategory(selectedMeaningCategory === meaning ? null : meaning)}
+                                        >
                                             <strong>{meaning}</strong>
-                                            <span style={{ marginLeft: '10px', color: '#666' }}>
+                                            <span style={{ marginLeft: '10px', color: selectedMeaningCategory === meaning ? 'rgba(255,255,255,0.8)' : '#666' }}>
                                                 ({verses.length} verse{verses.length !== 1 ? 's' : ''})
                                             </span>
+                                            {selectedMeaningCategory === meaning && (
+                                                <span style={{ marginLeft: '10px', fontSize: '12px' }}>
+                                                    ✓ Selected
+                                                </span>
+                                            )}
                                         </div>
                                     ))}
+                                </div>
+                                
+                                {/* Quick action buttons */}
+                                <div style={{ marginTop: '15px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                    <button
+                                        className="quick-action-btn"
+                                        style={{
+                                            padding: '8px 16px',
+                                            background: '#4caf50',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            fontSize: '14px',
+                                            cursor: 'pointer'
+                                        }}
+                                        onClick={() => {
+                                            // Select one verse from each meaning variation
+                                            const versesToCompare = [rootAnalysisData.sourceVerse];
+                                            rootAnalysisData.meaningVariations.forEach(([meaning, verses]) => {
+                                                if (verses.length > 0) {
+                                                    versesToCompare.push(verses[0].verse);
+                                                }
+                                            });
+                                            navigateToCompare(versesToCompare.slice(0, 11)); // Limit to 10 variations + source
+                                            setShowRootAnalysis(false);
+                                        }}
+                                    >
+                                        📊 Compare One from Each Meaning
+                                    </button>
+                                    
+                                    {selectedMeaningCategory && (
+                                        <button
+                                            className="quick-action-btn"
+                                            style={{
+                                                padding: '8px 16px',
+                                                background: '#2196f3',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '6px',
+                                                fontSize: '14px',
+                                                cursor: 'pointer'
+                                            }}
+                                            onClick={() => {
+                                                // Get all verses for selected meaning category
+                                                const categoryData = rootAnalysisData.meaningVariations.find(([meaning]) => meaning === selectedMeaningCategory);
+                                                if (categoryData) {
+                                                    const [, verses] = categoryData;
+                                                    const versesToCompare = verses.map(v => v.verse).slice(0, 10); // Limit to 10
+                                                    navigateToCompare(versesToCompare);
+                                                    setShowRootAnalysis(false);
+                                                }
+                                            }}
+                                        >
+                                            📚 View All "{selectedMeaningCategory}" Verses
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -705,7 +774,19 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                 </div>
                             )}
                             
-                            <div className="action-buttons">
+                            {/* Sticky action buttons for mobile */}
+                            <div className="action-buttons" style={{
+                                position: isMobile ? 'sticky' : 'relative',
+                                bottom: isMobile ? 0 : 'auto',
+                                background: isMobile ? 'white' : 'transparent',
+                                padding: isMobile ? '15px' : '20px',
+                                paddingTop: '20px',
+                                borderTop: '1px solid #e8ecf0',
+                                display: 'flex',
+                                gap: '10px',
+                                flexDirection: isMobile ? 'column' : 'row',
+                                boxShadow: isMobile ? '0 -2px 10px rgba(0,0,0,0.1)' : 'none'
+                            }}>
                                 <button
                                     className="compare-btn"
                                     onClick={() => {
@@ -717,11 +798,14 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                         setShowRootAnalysis(false);
                                     }}
                                 >
-                                    📊 Compare in Compare Tab
+                                    📊 Compare Selected Verses
                                 </button>
                                 <button
                                     className="cancel-btn"
-                                    onClick={() => setShowRootAnalysis(false)}
+                                    onClick={() => {
+                                        setShowRootAnalysis(false);
+                                        setSelectedMeaningCategory(null);
+                                    }}
                                 >
                                     Close
                                 </button>
