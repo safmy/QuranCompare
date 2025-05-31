@@ -19,7 +19,10 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "ios:setup": "npm install @capacitor/core @capacitor/ios @capacitor/cli && npx cap init",
+    "ios:build": "npm run build && npx cap sync ios",
+    "ios:open": "npx cap open ios"
   },
   "eslintConfig": {
     "extends": [

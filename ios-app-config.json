@@ -1,0 +1,67 @@
+{
+  "app": {
+    "name": "QuranCompare",
+    "displayName": "Quran Compare",
+    "bundleId": "com.yourcompany.qurancompare",
+    "version": "1.0.0",
+    "buildNumber": "1",
+    "description": "Compare Quran translations, search verses, and explore Arabic roots",
+    "category": "EDUCATION",
+    "primaryLanguage": "en-US",
+    "supportedLanguages": ["en", "ar", "fr", "de", "es", "ru", "tr", "id", "ms", "ta", "sv"],
+    "minimumOSVersion": "13.0"
+  },
+  "developer": {
+    "teamId": "YOUR_TEAM_ID",
+    "companyName": "Your Company Name",
+    "website": "https://qurancompare.com",
+    "supportEmail": "support@qurancompare.com",
+    "privacyPolicyUrl": "https://qurancompare.com/privacy",
+    "termsOfUseUrl": "https://qurancompare.com/terms"
+  },
+  "features": {
+    "capabilities": [
+      "AUDIO_PLAYBACK",
+      "NETWORK_ACCESS"
+    ],
+    "permissions": {
+      "microphone": {
+        "purpose": "QuranCompare uses your microphone for voice search to find verses using speech recognition."
+      }
+    },
+    "orientations": {
+      "iphone": ["portrait", "landscape"],
+      "ipad": ["portrait", "landscape"]
+    }
+  },
+  "appStore": {
+    "keywords": [
+      "Quran",
+      "Quran translation",
+      "Quran compare",
+      "Islamic",
+      "Arabic roots",
+      "Quran search",
+      "Rashad Khalifa",
+      "Quran study",
+      "Verse comparison",
+      "Muslim"
+    ],
+    "screenshots": {
+      "iphone65": {
+        "required": 4,
+        "dimensions": "1284x2778"
+      },
+      "iphone55": {
+        "required": 4,
+        "dimensions": "1242x2208"
+      },
+      "ipadPro129": {
+        "required": 4,
+        "dimensions": "2048x2732"
+      }
+    },
+    "ageRating": "4+",
+    "price": "Free"
+  }
+}
