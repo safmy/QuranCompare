@@ -13,28 +13,24 @@ const QuranSearch = () => {
     // Load Quran data
     const loadQuranData = async () => {
       try {
-        console.log('Starting to load Quran data...');
-        // Try different paths for web vs mobile
-        let response;
-        let usedPath = '';
-        try {
-          // First try the public path (works on web)
-          usedPath = '/verses_final.json';
-          console.log('Trying path:', usedPath);
-          response = await fetch(usedPath);
-        } catch (e) {
-          // If that fails, try without leading slash (works on mobile)
-          usedPath = 'verses_final.json';
-          console.log('First path failed, trying:', usedPath);
-          response = await fetch(usedPath);
+        // For iOS/Capacitor apps, we need to use the full URL
+        const isCapacitor = window.Capacitor !== undefined;
+        console.log('Is Capacitor app:', isCapacitor);
+        
+        let url = '/verses_final.json';
+        if (isCapacitor) {
+          // Use the capacitor URL scheme
+          url = window.location.origin + '/verses_final.json';
         }
         
-        console.log('Response status:', response?.status);
-        console.log('Response ok:', response?.ok);
+        console.log('Loading from URL:', url);
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
         
-        if (!response || !response.ok) {
-          throw new Error(`Failed to load from ${usedPath} - Status: ${response?.status}`);
+        if (!response.ok) {
+          throw new Error(`Failed to load verses - Status: ${response.status}`);
         }
+        
         const data = await response.json();
         console.log('Loaded verses count:', data?.length);
         setQuranData(data);

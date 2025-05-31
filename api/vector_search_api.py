@@ -49,12 +49,16 @@ app = FastAPI(
 
 # Add CORS middleware
 allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",") if os.getenv("ALLOWED_ORIGINS") != "*" else ["*"]
+# Always allow capacitor URLs for iOS app
+if "*" not in allowed_origins:
+    allowed_origins.extend(["capacitor://localhost", "ionic://localhost", "http://localhost"])
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 # Global variables
