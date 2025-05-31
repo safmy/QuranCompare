@@ -665,39 +665,67 @@ async def vector_search(request: SearchRequest):
 async def transcribe_audio(audio: UploadFile = File(...)):
     """Transcribe audio using OpenAI Whisper API"""
     try:
-        # Validate file type
-        if not audio.content_type.startswith('audio/'):
-            raise HTTPException(status_code=400, detail="File must be an audio file")
+        # Check if OpenAI client is available
+        if not client:
+            raise HTTPException(status_code=500, detail="OpenAI client not configured")
+        
+        logger.info(f"Received audio file: {audio.filename}, content_type: {audio.content_type}, size: {audio.size}")
         
         # Read audio file
         audio_data = await audio.read()
+        if len(audio_data) == 0:
+            raise HTTPException(status_code=400, detail="Empty audio file")
+        
+        logger.info(f"Audio data size: {len(audio_data)} bytes")
         
         # Save temporarily (Whisper API requires a file)
         import tempfile
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.webm') as temp_file:
+        import os
+        
+        # Use appropriate file extension based on content type
+        file_extension = '.webm'
+        if audio.content_type:
+            if 'mp4' in audio.content_type or 'mp4a' in audio.content_type:
+                file_extension = '.mp4'
+            elif 'wav' in audio.content_type:
+                file_extension = '.wav'
+            elif 'mpeg' in audio.content_type or 'mp3' in audio.content_type:
+                file_extension = '.mp3'
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
             temp_file.write(audio_data)
             temp_file_path = temp_file.name
+        
+        logger.info(f"Saved audio to temporary file: {temp_file_path}")
         
         try:
             # Use OpenAI Whisper API
             with open(temp_file_path, 'rb') as audio_file:
+                logger.info("Calling OpenAI Whisper API...")
                 transcript = client.audio.transcriptions.create(
                     model="whisper-1",
                     file=audio_file,
-                    language="en"  # You can make this configurable
+                    response_format="text"
                 )
             
-            return {"transcription": transcript.text}
+            logger.info(f"Transcription result: {transcript}")
+            
+            # Handle both string and object responses
+            transcription_text = transcript if isinstance(transcript, str) else transcript.text if hasattr(transcript, 'text') else str(transcript)
+            
+            return {"transcription": transcription_text}
             
         finally:
             # Clean up temp file
-            import os
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
+                logger.info(f"Cleaned up temporary file: {temp_file_path}")
                 
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error transcribing audio: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error transcribing audio: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
