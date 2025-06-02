@@ -13,6 +13,7 @@ const QuranVectorSearch = () => {
   const [includeRashadMedia, setIncludeRashadMedia] = useState(false);
   const [includeFinalTestament, setIncludeFinalTestament] = useState(true);
   const [includeNewsletters, setIncludeNewsletters] = useState(false);
+  const [includeArabicVerses, setIncludeArabicVerses] = useState(false); // Disabled by default
   const [useRegex, setUseRegex] = useState(false);
   const [regexResults, setRegexResults] = useState([]);
   const [quranData, setQuranData] = useState(null);
@@ -198,6 +199,13 @@ const QuranVectorSearch = () => {
       return;
     }
 
+    // Check if any collections are selected
+    const hasSelections = includeRashadMedia || includeFinalTestament || includeNewsletters || includeArabicVerses;
+    if (!hasSelections && !useRegex) {
+      setError('Please select at least one source to search');
+      return;
+    }
+
     setLoading(true);
     setError('');
     
@@ -215,10 +223,7 @@ const QuranVectorSearch = () => {
           setError(`No regex matches found for "${searchTerm}"`);
         }
       } else {
-        // Detect if the search term is Arabic
-        const searchIsArabic = isArabicText(searchTerm);
-        
-        // Perform semantic search via API
+        // Perform semantic search via API - trust user selections
         const response = await fetch(`${API_URL}/search`, {
           method: 'POST',
           headers: {
@@ -231,7 +236,7 @@ const QuranVectorSearch = () => {
             include_final_testament: includeFinalTestament,
             include_qurantalk: includeNewsletters,
             include_newsletters: includeNewsletters,
-            include_arabic_verses: includeFinalTestament && searchIsArabic
+            include_arabic_verses: includeArabicVerses
           })
         });
 
@@ -275,10 +280,10 @@ const QuranVectorSearch = () => {
     <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px' }}>
       <h2 style={{ color: '#333', marginBottom: '20px' }}>Semantic Search</h2>
       <p style={{ color: '#666', marginBottom: '20px' }}>
-        Search across Rashad Khalifa Media, Final Testament (English & Arabic), and Newsletters/Articles using AI-powered semantic search.
+        Search individual collections using AI-powered semantic search. Select checkboxes below to choose sources.
         <br />
         <span style={{ fontSize: '14px', color: '#888' }}>
-          ✨ Supports Arabic text search and phonetic matching (e.g., "Kulhu" → "قل هو")
+          ✨ Final Testament (English) • Arabic Verses • Media • Newsletters & Articles
         </span>
       </p>
       
@@ -366,7 +371,16 @@ const QuranVectorSearch = () => {
               onChange={(e) => setIncludeFinalTestament(e.target.checked)}
               style={{ marginRight: '8px' }}
             />
-            <span style={{ color: '#2196F3', fontWeight: 'bold' }}>📖 Final Testament</span>
+            <span style={{ color: '#2196F3', fontWeight: 'bold' }}>📖 Final Testament (English)</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={includeArabicVerses}
+              onChange={(e) => setIncludeArabicVerses(e.target.checked)}
+              style={{ marginRight: '8px' }}
+            />
+            <span style={{ color: '#7c3aed', fontWeight: 'bold' }}>🕌 Quran Arabic Verses</span>
           </label>
           <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
             <input
