@@ -14,7 +14,7 @@ const QuranVectorSearch = () => {
   const [includeFinalTestament, setIncludeFinalTestament] = useState(false);
   const [includeQuranTalk, setIncludeQuranTalk] = useState(false);
   const [includeNewsletters, setIncludeNewsletters] = useState(false);
-  const [includeArabicVerses, setIncludeArabicVerses] = useState(true);
+  const [includeArabicVerses, setIncludeArabicVerses] = useState(false);
   
   const handleVerseClick = async (verseRef) => {
     try {
@@ -354,7 +354,85 @@ const QuranVectorSearch = () => {
             Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for "{searchTerm}"
           </p>
           
-          {searchResults.map((result, index) => (
+          {/* Group Arabic Verses separately */}
+          {searchResults.filter(r => r.collection === 'ArabicVerses').length > 0 && (
+            <div style={{ marginBottom: '30px' }}>
+              <h3 style={{ 
+                color: '#7c3aed', 
+                fontSize: '18px', 
+                marginBottom: '15px',
+                borderBottom: '2px solid #7c3aed',
+                paddingBottom: '8px'
+              }}>
+                🕌 Quran Arabic Verses
+              </h3>
+              {searchResults
+                .filter(result => result.collection === 'ArabicVerses')
+                .map((result, index) => (
+                  <div key={`arabic-${index}`} style={{
+                    border: '1px solid #e0d4f7',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    backgroundColor: '#f9f6ff',
+                    marginBottom: '15px'
+                  }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'flex-start',
+                      marginBottom: '10px'
+                    }}>
+                      <div>
+                        <h3 style={{ 
+                          color: '#333', 
+                          marginTop: '10px',
+                          marginBottom: '5px',
+                          fontSize: '18px'
+                        }}>
+                          {renderTitle(result)}
+                        </h3>
+                      </div>
+                      <div style={{
+                        backgroundColor: '#e8f5e9',
+                        padding: '5px 10px',
+                        borderRadius: '4px',
+                        fontSize: '14px',
+                        color: '#2e7d32'
+                      }}>
+                        {(result.similarity_score * 100).toFixed(1)}% match
+                      </div>
+                    </div>
+                    
+                    <p style={{
+                      fontSize: '15px',
+                      lineHeight: '1.6',
+                      color: '#555',
+                      marginBottom: '10px'
+                    }}>
+                      {result.content}
+                    </p>
+                  </div>
+                ))}
+            </div>
+          )}
+          
+          {/* Group English/Other results */}
+          {searchResults.filter(r => r.collection !== 'ArabicVerses').length > 0 && (
+            <div>
+              {searchResults.filter(r => r.collection === 'ArabicVerses').length > 0 && (
+                <h3 style={{ 
+                  color: '#2196F3', 
+                  fontSize: '18px', 
+                  marginBottom: '15px',
+                  borderBottom: '2px solid #2196F3',
+                  paddingBottom: '8px'
+                }}>
+                  📚 English Results & Other Sources
+                </h3>
+              )}
+              {searchResults
+                .filter(result => result.collection !== 'ArabicVerses')
+                .map((result, index) => (
             <div key={index} style={{
               border: '1px solid #ddd',
               borderRadius: '8px',
@@ -449,6 +527,8 @@ const QuranVectorSearch = () => {
               )}
             </div>
           ))}
+            </div>
+          )}
         </div>
       )}
 
