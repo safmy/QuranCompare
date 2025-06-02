@@ -582,159 +582,108 @@ async def vector_search(request: SearchRequest):
         
         logger.info(f"Query: '{request.query}', Collection filter: {collection_filter}")
         
-        # Search more results than needed to account for filtering and deduplication
-        search_count = min(request.num_results * 5, COMBINED_INDEX.ntotal)
-        distances, indices = COMBINED_INDEX.search(query_embedding, search_count)
+        # Check if only one collection is selected - if so, search it directly
+        selected_collections = [k for k, v in collection_filter.items() if v]
         
-        logger.info(f"Found {len(indices[0])} candidate results from combined index")
-        
-        # Debug: Check what collections are in the first 20 results
-        collection_counts = {}
-        for i, idx in enumerate(indices[0][:20]):
-            if idx >= 0 and idx < len(COMBINED_METADATA):
-                collection = COMBINED_METADATA[idx]["collection"]
-                collection_counts[collection] = collection_counts.get(collection, 0) + 1
-        logger.info(f"Top 20 candidates by collection: {collection_counts}")
-        
-        results = []
-        seen_content = set()  # Track unique content to avoid duplicates
-        final_testament_count = 0
-        
-        for i, (distance, idx) in enumerate(zip(distances[0], indices[0])):
-            if idx < 0 or len(results) >= request.num_results:
-                continue
-                
-            # Get metadata
-            combined_meta = COMBINED_METADATA[idx]
-            collection = combined_meta["collection"]
+        if len(selected_collections) == 1 and selected_collections[0] in VECTOR_COLLECTIONS:
+            # Search individual collection directly
+            collection_name = selected_collections[0]
+            collection_data = VECTOR_COLLECTIONS[collection_name]
+            search_count = min(request.num_results * 2, collection_data["index"].ntotal)
+            distances, indices = collection_data["index"].search(query_embedding, search_count)
             
-            # Skip if collection is filtered out
-            if not collection_filter.get(collection, True):
-                continue
+            logger.info(f"Searching {collection_name} directly: {len(indices[0])} results")
             
-            if collection == "FinalTestament":
-                final_testament_count += 1
-                
-            metadata = combined_meta["metadata"]
+            results = []
             
-            # Calculate similarity score (1 - normalized distance)
-            similarity = float(1 / (1 + distance))
+            for i, (distance, idx) in enumerate(zip(distances[0], indices[0])):
+                if idx < 0 or len(results) >= request.num_results:
+                    continue
+                
+                if idx >= len(collection_data["metadata"]):
+                    continue
+                
+                metadata = collection_data["metadata"][idx]
+                similarity = float(1 / (1 + distance))
+                
+                # Process based on collection type
+                if collection_name == "FinalTestament":
+                    verse_text = metadata.get("content", "").strip()
+                    
+                    # Get proper verse reference from mapping
+                    if QURAN_VERSE_MAPPING and str(idx) in QURAN_VERSE_MAPPING:
+                        verse_ref = f"[{QURAN_VERSE_MAPPING[str(idx)]}]"
+                    else:
+                        verse_ref = f"[Verse {idx + 1}]"
+                    
+                    title = f"{verse_ref} {verse_text[:50]}{'...' if len(verse_text) > 50 else ''}"
+                    content = verse_text
+                    source = "Final Testament"
+                    
+                    results.append(SearchResult(
+                        collection=collection_name,
+                        title=title,
+                        content=content,
+                        similarity_score=similarity,
+                        source=source,
+                        source_url=None,
+                        youtube_link=None
+                    ))
+                # Add other collection types here if needed
             
-            # Format result based on collection type
-            source_url = None  # Initialize source_url for all collections
-            if collection == "RashadAllMedia":
-                content = metadata.get("content", "")
-                
-                # Use YouTube mapper to get proper title and link
-                # This now properly handles exact vs approximate matches
-                mapped_title, youtube_link, is_exact_match = youtube_mapper.find_title_for_content_simple(content)
-                
-                # If we found a mapped title, use it
-                if mapped_title:
-                    title = mapped_title
-                    # For exact matches, add timestamp. For approximate, don't.
-                    if is_exact_match:
-                        youtube_link = youtube_mapper.add_timestamp_to_youtube_link(youtube_link, content)
-                    # youtube_link already set for approximate matches without timestamp
-                else:
-                    # Fallback: extract title from content
-                    title = youtube_mapper.extract_title_from_content(content)
-                    youtube_link = youtube_mapper.get_youtube_link_for_content(content)
-                
-                # Truncate content for display
-                truncated_content = content[:500] + "..." if len(content) > 500 else content
-                content = truncated_content
-                
-                # If no direct YouTube link found, provide search link
-                if not youtube_link:
-                    search_query = title.replace(" ", "+")
-                    youtube_link = f"https://www.youtube.com/results?search_query=rashad+khalifa+{search_query}"
-                
-                source = "Rashad Khalifa Media"
-                
-            elif collection == "FinalTestament":
-                # Extract verse reference from content
-                verse_text = metadata.get("content", "").strip()
-                verse_index = combined_meta.get("original_index", 0)
-                
-                # Get proper verse reference from mapping
-                if QURAN_VERSE_MAPPING and str(verse_index) in QURAN_VERSE_MAPPING:
-                    verse_ref = f"[{QURAN_VERSE_MAPPING[str(verse_index)]}]"
-                else:
-                    # Fallback if mapping not available
-                    verse_ref = f"[Verse {verse_index + 1}]"
-                
-                # Format the title to match the expected format
-                # Just show the verse reference and truncated content
-                title = f"{verse_ref} {verse_text[:50]}{'...' if len(verse_text) > 50 else ''}"
-                
-                content = verse_text
-                source = "Final Testament"
-                youtube_link = None
-                
-            elif collection == "Newsletters":
-                title = metadata.get("title", "Newsletter")
-                content = metadata.get("content", "")[:500] + "..." if len(metadata.get("content", "")) > 500 else metadata.get("content", "")
-                newsletter_url = metadata.get("url", "")
-                source = "Rashad Khalifa Newsletters"
-                youtube_link = None
-                # Store URL separately for frontend to use
-                source_url = newsletter_url
-                
-            elif collection == "ArabicVerses":
-                verse_meta = metadata
-                sura_verse = verse_meta.get("sura_verse", "")
-                arabic_text = verse_meta.get("arabic", "")
-                english_text = verse_meta.get("english", "")
-                
-                title = f"[{sura_verse}] {arabic_text[:50]}{'...' if len(arabic_text) > 50 else ''}"
-                content = f"Arabic: {arabic_text}\nEnglish: {english_text}"
-                source = "Quran Arabic Verses"
-                youtube_link = None
-                source_url = None
-                
-            else:  # QuranTalkArticles
-                title = metadata.get("title", "Unknown Article")
-                content = metadata.get("content", "")[:500] + "..." if len(metadata.get("content", "")) > 500 else metadata.get("content", "")
-                article_url = metadata.get("url", "")
-                source = "QuranTalk"
-                youtube_link = None
-                # Store URL separately for frontend to use
-                source_url = article_url
+            logger.info(f"Direct search results: {len(results)} from {collection_name}")
             
-            # Create unique identifier for deduplication
-            if collection == "QuranTalkArticles":
-                # For articles, deduplicate by URL or title
-                content_key = article_url if article_url else title
-            elif collection == "RashadAllMedia":
-                # For videos, deduplicate by title
-                content_key = title
-            elif collection == "ArabicVerses":
-                # For Arabic verses, deduplicate by verse reference
-                content_key = verse_meta.get("sura_verse", content[:100])
-            elif collection == "Newsletters":
-                # For newsletters, deduplicate by URL or title
-                content_key = newsletter_url if newsletter_url else title
-            else:
-                # For other verses, deduplicate by content
-                content_key = content[:100]
+        else:
+            # Use combined index for multiple collections - simplified version
+            search_count = min(request.num_results * 5, COMBINED_INDEX.ntotal)
+            distances, indices = COMBINED_INDEX.search(query_embedding, search_count)
             
-            # Skip if we've already seen this content
-            if content_key in seen_content:
-                continue
-            seen_content.add(content_key)
+            logger.info(f"Found {len(indices[0])} candidate results from combined index")
             
-            results.append(SearchResult(
-                collection=collection,
-                title=title,
-                content=content,
-                similarity_score=similarity,
-                source=source,
-                source_url=source_url,
-                youtube_link=youtube_link
-            ))
-        
-        logger.info(f"Final results: {len(results)} total, {final_testament_count} from Final Testament")
+            results = []
+            seen_content = set()
+            
+            for i, (distance, idx) in enumerate(zip(distances[0], indices[0])):
+                if idx < 0 or len(results) >= request.num_results:
+                    continue
+                    
+                # Get metadata
+                combined_meta = COMBINED_METADATA[idx]
+                collection = combined_meta["collection"]
+                
+                # Skip if collection is filtered out
+                if not collection_filter.get(collection, True):
+                    continue
+                    
+                metadata = combined_meta["metadata"]
+                similarity = float(1 / (1 + distance))
+                
+                # Format result based on collection type (simplified)
+                if collection == "FinalTestament":
+                    verse_text = metadata.get("content", "").strip()
+                    verse_index = combined_meta.get("original_index", 0)
+                    
+                    if QURAN_VERSE_MAPPING and str(verse_index) in QURAN_VERSE_MAPPING:
+                        verse_ref = f"[{QURAN_VERSE_MAPPING[str(verse_index)]}]"
+                    else:
+                        verse_ref = f"[Verse {verse_index + 1}]"
+                    
+                    title = f"{verse_ref} {verse_text[:50]}{'...' if len(verse_text) > 50 else ''}"
+                    content = verse_text
+                    source = "Final Testament"
+                    
+                    content_key = content[:100]
+                    if content_key not in seen_content:
+                        seen_content.add(content_key)
+                        results.append(SearchResult(
+                            collection=collection,
+                            title=title,
+                            content=content,
+                            similarity_score=similarity,
+                            source=source,
+                            source_url=None,
+                            youtube_link=None
+                        ))
         
         return SearchResponse(
             results=results,
