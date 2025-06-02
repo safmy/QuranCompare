@@ -78,6 +78,7 @@ class SearchRequest(BaseModel):
     include_final_testament: bool = True  
     include_qurantalk: bool = True
     include_newsletters: bool = True
+    include_arabic_verses: bool = True
 
 class VerseRangeRequest(BaseModel):
     verse_range: str  # Format: "1:1-7" or "2:5-10" or "3:15"
@@ -242,7 +243,7 @@ def create_embedding(text: str) -> np.ndarray:
         
         response = client.embeddings.create(
             input=query_text,
-            model="text-embedding-ada-002"
+            model="text-embedding-3-small"
         )
         return np.array(response.data[0].embedding).astype('float32')
     except Exception as e:
@@ -355,7 +356,7 @@ async def debug_info():
                 "loaded": name in VECTOR_COLLECTIONS,
                 "vectors": VECTOR_COLLECTIONS[name]["size"] if name in VECTOR_COLLECTIONS else 0
             }
-            for name in ["RashadAllMedia", "FinalTestament", "QuranTalkArticles"]
+            for name in ["RashadAllMedia", "FinalTestament", "QuranTalkArticles", "Newsletters", "ArabicVerses"]
         }
     }
 
@@ -562,7 +563,8 @@ async def vector_search(request: SearchRequest):
             "RashadAllMedia": request.include_rashad_media,
             "FinalTestament": request.include_final_testament,
             "QuranTalkArticles": request.include_qurantalk,
-            "Newsletters": request.include_newsletters
+            "Newsletters": request.include_newsletters,
+            "ArabicVerses": request.include_arabic_verses
         }
         
         # Search more results than needed to account for filtering and deduplication
@@ -650,6 +652,18 @@ async def vector_search(request: SearchRequest):
                 # Store URL separately for frontend to use
                 source_url = newsletter_url
                 
+            elif collection == "ArabicVerses":
+                verse_meta = metadata
+                sura_verse = verse_meta.get("sura_verse", "")
+                arabic_text = verse_meta.get("arabic", "")
+                english_text = verse_meta.get("english", "")
+                
+                title = f"[{sura_verse}] {arabic_text[:50]}{'...' if len(arabic_text) > 50 else ''}"
+                content = f"Arabic: {arabic_text}\nEnglish: {english_text}"
+                source = "Quran Arabic Verses"
+                youtube_link = None
+                source_url = None
+                
             else:  # QuranTalkArticles
                 title = metadata.get("title", "Unknown Article")
                 content = metadata.get("content", "")[:500] + "..." if len(metadata.get("content", "")) > 500 else metadata.get("content", "")
@@ -666,8 +680,14 @@ async def vector_search(request: SearchRequest):
             elif collection == "RashadAllMedia":
                 # For videos, deduplicate by title
                 content_key = title
+            elif collection == "ArabicVerses":
+                # For Arabic verses, deduplicate by verse reference
+                content_key = verse_meta.get("sura_verse", content[:100])
+            elif collection == "Newsletters":
+                # For newsletters, deduplicate by URL or title
+                content_key = newsletter_url if newsletter_url else title
             else:
-                # For verses, deduplicate by content
+                # For other verses, deduplicate by content
                 content_key = content[:100]
             
             # Skip if we've already seen this content

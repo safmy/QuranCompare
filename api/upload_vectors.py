@@ -84,14 +84,24 @@ def main():
     
     # Define vector files to upload
     source_dir = Path(args.source_dir)
-    vector_files = [
-        source_dir / "data" / "RashadAllMedia.faiss",
-        source_dir / "data" / "RashadAllMedia.json",
-        source_dir / "FinalTestament.faiss",
-        source_dir / "FinalTestament.json",
-        source_dir / "qurantalk_articles_1744655632.faiss",
-        source_dir / "qurantalk_articles_1744655632.json"
-    ]
+    
+    # Check if we're uploading Arabic embeddings specifically
+    if args.source_dir.endswith('arabic_embeddings'):
+        vector_files = [
+            source_dir / "arabic_verses.faiss",
+            source_dir / "arabic_verses.json"
+        ]
+    else:
+        vector_files = [
+            source_dir / "data" / "RashadAllMedia.faiss",
+            source_dir / "data" / "RashadAllMedia.json",
+            source_dir / "FinalTestament.faiss",
+            source_dir / "FinalTestament.json",
+            source_dir / "qurantalk_articles_1744655632.faiss",
+            source_dir / "qurantalk_articles_1744655632.json",
+            source_dir / "api" / "arabic_embeddings" / "arabic_verses.faiss",
+            source_dir / "api" / "arabic_embeddings" / "arabic_verses.json"
+        ]
     
     # Convert to absolute paths
     vector_files = [str(f.absolute()) for f in vector_files]

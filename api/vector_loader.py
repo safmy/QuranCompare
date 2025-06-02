@@ -33,6 +33,10 @@ VECTOR_URLS = {
     "Newsletters": {
         "faiss": f"{GITHUB_RELEASE_BASE}/newsletters_comprehensive.faiss",
         "json": f"{GITHUB_RELEASE_BASE}/newsletters_comprehensive.json"
+    },
+    "ArabicVerses": {
+        "faiss": f"{GITHUB_RELEASE_BASE}/arabic_verses.faiss",
+        "json": f"{GITHUB_RELEASE_BASE}/arabic_verses.json"
     }
 }
 
@@ -55,6 +59,10 @@ def get_vector_urls():
         "Newsletters": {
             "faiss": os.getenv("NEWSLETTERS_FAISS_URL", VECTOR_URLS["Newsletters"]["faiss"]),
             "json": os.getenv("NEWSLETTERS_JSON_URL", VECTOR_URLS["Newsletters"]["json"])
+        },
+        "ArabicVerses": {
+            "faiss": os.getenv("ARABIC_VERSES_FAISS_URL", VECTOR_URLS["ArabicVerses"]["faiss"]),
+            "json": os.getenv("ARABIC_VERSES_JSON_URL", VECTOR_URLS["ArabicVerses"]["json"])
         }
     }
 
