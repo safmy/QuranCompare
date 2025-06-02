@@ -229,7 +229,7 @@ def load_vector_collections():
     else:
         logger.error("❌ No embeddings to create combined index")
 
-def create_embedding(text: str) -> np.ndarray:
+def create_embedding(text: str, force_english: bool = False) -> np.ndarray:
     """Create embedding for text using OpenAI"""
     global client
     
@@ -237,17 +237,21 @@ def create_embedding(text: str) -> np.ndarray:
         raise HTTPException(status_code=503, detail="OpenAI client not initialized")
     
     try:
-        # Enhance the text if it's Arabic or transliterated
-        enhanced_text = enhance_arabic_search_query(text)
-        
-        # For Arabic text, we might want to include both original and enhanced
-        if is_arabic_text(text) or text != enhanced_text:
-            # Create a combined query with variations
-            variations = get_phonetic_variations(enhanced_text)
-            # Use the first variation or combine them
-            query_text = " ".join(variations[:2]) if len(variations) > 1 else enhanced_text
-        else:
+        # If force_english is True, don't apply Arabic enhancements
+        if force_english:
             query_text = text
+        else:
+            # Enhance the text if it's Arabic or transliterated
+            enhanced_text = enhance_arabic_search_query(text)
+            
+            # For Arabic text, we might want to include both original and enhanced
+            if is_arabic_text(text) or text != enhanced_text:
+                # Create a combined query with variations
+                variations = get_phonetic_variations(enhanced_text)
+                # Use the first variation or combine them
+                query_text = " ".join(variations[:2]) if len(variations) > 1 else enhanced_text
+            else:
+                query_text = text
         
         response = client.embeddings.create(
             input=query_text,
@@ -559,24 +563,39 @@ async def vector_search(request: SearchRequest):
         raise HTTPException(status_code=503, detail="OpenAI API not configured")
     
     # Validate input
-    request.num_results = min(max(1, request.num_results), 10)
+    request.num_results = min(max(1, request.num_results), 20)
     
     try:
+        # Detect if query is Arabic
+        query_is_arabic = is_arabic_text(request.query)
+        
         # Create query embedding
         query_embedding = create_embedding(request.query)
         query_embedding = query_embedding.reshape(1, -1)
         
-        # Filter collections based on request
+        # Adjust collection filter based on language
         collection_filter = {
             "RashadAllMedia": request.include_rashad_media,
-            "FinalTestament": request.include_final_testament,
+            "FinalTestament": request.include_final_testament and not query_is_arabic,
             "QuranTalkArticles": request.include_qurantalk,
             "Newsletters": request.include_newsletters,
-            "ArabicVerses": request.include_arabic_verses
+            "ArabicVerses": request.include_arabic_verses and query_is_arabic
         }
         
+        # If query is English but Final Testament is requested, ensure we search it
+        if not query_is_arabic and request.include_final_testament:
+            collection_filter["FinalTestament"] = True
+            collection_filter["ArabicVerses"] = False
+        
+        # If query is Arabic but Arabic verses are requested, ensure we search them
+        if query_is_arabic and request.include_arabic_verses:
+            collection_filter["ArabicVerses"] = True
+            # Still allow Final Testament for Arabic queries if specifically requested
+            if request.include_final_testament:
+                collection_filter["FinalTestament"] = True
+        
         # Search more results than needed to account for filtering and deduplication
-        search_count = min(request.num_results * 5, COMBINED_INDEX.ntotal)
+        search_count = min(request.num_results * 10, COMBINED_INDEX.ntotal)
         distances, indices = COMBINED_INDEX.search(query_embedding, search_count)
         
         results = []

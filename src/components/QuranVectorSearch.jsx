@@ -186,6 +186,12 @@ const QuranVectorSearch = () => {
     }));
   };
 
+  // Helper function to detect if text contains Arabic
+  const isArabicText = (text) => {
+    const arabicPattern = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+    return arabicPattern.test(text);
+  };
+
   const handleSearch = async () => {
     if (!searchTerm.trim()) {
       setError('Please enter a search term');
@@ -209,6 +215,9 @@ const QuranVectorSearch = () => {
           setError(`No regex matches found for "${searchTerm}"`);
         }
       } else {
+        // Detect if the search term is Arabic
+        const searchIsArabic = isArabicText(searchTerm);
+        
         // Perform semantic search via API
         const response = await fetch(`${API_URL}/search`, {
           method: 'POST',
@@ -222,7 +231,7 @@ const QuranVectorSearch = () => {
             include_final_testament: includeFinalTestament,
             include_qurantalk: includeNewsletters,
             include_newsletters: includeNewsletters,
-            include_arabic_verses: includeFinalTestament
+            include_arabic_verses: includeFinalTestament && searchIsArabic
           })
         });
 
