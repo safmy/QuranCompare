@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './QuranCompare.css';
 import QuranAudioPlayerSimple from './QuranAudioPlayerSimple';
-import LanguageSwitcher from './LanguageSwitcher';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getLanguageConfig, getTranslationText, getFootnoteText } from '../config/languages';
 
@@ -249,12 +248,6 @@ const QuranCompare = ({ initialVerses = [] }) => {
 
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-      <LanguageSwitcher 
-        currentLanguage={currentLanguage}
-        onLanguageChange={changeLanguage}
-        compact={true}
-      />
-      
       <h2 style={{ color: '#333', marginBottom: '20px' }}>Compare Quran Verses</h2>
       
       <div style={{ marginBottom: '20px' }}>
@@ -324,7 +317,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
             disabled={loading || !quranData}
             style={{
               padding: '10px 25px',
-              backgroundColor: loading ? '#ccc' : '#4CAF50',
+              backgroundColor: loading ? '#ccc' : '#7c3aed',
               color: 'white',
               border: 'none',
               borderRadius: '4px',

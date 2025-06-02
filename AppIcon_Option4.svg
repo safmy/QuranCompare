@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 1024 1024">
+  <!-- Generator: Adobe Illustrator 29.5.1, SVG Export Plug-In . SVG Version: 2.1.0 Build 141)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: url(#radial-gradient);
+      }
+
+      .st1 {
+        fill: url(#linear-gradient);
+      }
+
+      .st2 {
+        fill: #fff;
+        font-family: Montserrat-Bold, Montserrat;
+        font-size: 180px;
+        font-weight: 700;
+      }
+
+      .st2, .st3 {
+        isolation: isolate;
+      }
+
+      .st4 {
+        fill: #0a0a0a;
+      }
+
+      .st3 {
+        fill: #9333ea;
+        opacity: .5;
+      }
+    </style>
+    <linearGradient id="linear-gradient" x1="-445.88" y1="1052.91" x2="-444.88" y2="1051.91" gradientTransform="translate(178665 421485) scale(400 -400)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6b46c1"/>
+      <stop offset="1" stop-color="#9333ea"/>
+    </linearGradient>
+    <radialGradient id="radial-gradient" cx="-445.58" cy="1052.61" fx="-445.58" fy="1052.61" r=".5" gradientTransform="translate(178665 421485) scale(400 -400)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".2"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect class="st4" width="1024" height="1024" rx="230" ry="230"/>
+  <rect class="st1" x="312" y="321.27" width="400" height="400" rx="60" ry="60"/>
+  <rect class="st0" x="312" y="321.27" width="400" height="400" rx="60" ry="60"/>
+  <text class="st2" transform="translate(375.37 575.72)"><tspan x="0" y="0">QC</tspan></text>
+  <circle class="st3" cx="240" cy="240" r="3"/>
+  <circle class="st3" cx="784" cy="240" r="3"/>
+  <circle class="st3" cx="240" cy="784" r="3"/>
+  <circle class="st3" cx="784" cy="784" r="3"/>
+</svg>

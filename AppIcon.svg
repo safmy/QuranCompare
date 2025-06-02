@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Solid dark background filling entire canvas -->
+  <rect width="1024" height="1024" fill="#0D1117"/>
+  
+  <!-- Gradient definitions -->
+  <defs>
+    <linearGradient id="techGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#238636;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#2EA043;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#56D364;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="bgEffect" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#21262D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0D1117;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Background effect with rounded corners for iOS -->
+  <rect width="1024" height="1024" rx="230" fill="url(#bgEffect)"/>
+  
+  <!-- Main design -->
+  <g transform="translate(512, 512)">
+    <!-- Outer tech frame -->
+    <rect x="-200" y="-200" width="400" height="400" rx="40" 
+          stroke="#30363D" 
+          stroke-width="2" 
+          fill="none" 
+          opacity="0.6"/>
+    
+    <!-- Main chip container -->
+    <rect x="-160" y="-160" width="320" height="320" rx="32" 
+          fill="url(#techGradient)"/>
+    
+    <!-- Inner highlight -->
+    <rect x="-160" y="-160" width="320" height="160" rx="32" 
+          fill="#ffffff" 
+          opacity="0.1"/>
+    
+    <!-- Centered "QC" -->
+    <text x="0" y="25" 
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Menlo', monospace" 
+          font-size="120" 
+          font-weight="800"
+          text-anchor="middle" 
+          fill="#ffffff">QC</text>
+    
+    <!-- Computer chip connector lines - thick and prominent -->
+    <!-- Left side connectors -->
+    <g stroke="#56D364" stroke-width="6" stroke-linecap="round">
+      <line x1="-260" y1="-120" x2="-180" y2="-120"/>
+      <line x1="-260" y1="-80" x2="-180" y2="-80"/>
+      <line x1="-260" y1="-40" x2="-180" y2="-40"/>
+      <line x1="-260" y1="0" x2="-180" y2="0"/>
+      <line x1="-260" y1="40" x2="-180" y2="40"/>
+      <line x1="-260" y1="80" x2="-180" y2="80"/>
+      <line x1="-260" y1="120" x2="-180" y2="120"/>
+    </g>
+    
+    <!-- Right side connectors -->
+    <g stroke="#56D364" stroke-width="6" stroke-linecap="round">
+      <line x1="180" y1="-120" x2="260" y2="-120"/>
+      <line x1="180" y1="-80" x2="260" y2="-80"/>
+      <line x1="180" y1="-40" x2="260" y2="-40"/>
+      <line x1="180" y1="0" x2="260" y2="0"/>
+      <line x1="180" y1="40" x2="260" y2="40"/>
+      <line x1="180" y1="80" x2="260" y2="80"/>
+      <line x1="180" y1="120" x2="260" y2="120"/>
+    </g>
+    
+    <!-- Top side connectors -->
+    <g stroke="#56D364" stroke-width="6" stroke-linecap="round">
+      <line x1="-80" y1="-260" x2="-80" y2="-180"/>
+      <line x1="-40" y1="-260" x2="-40" y2="-180"/>
+      <line x1="0" y1="-260" x2="0" y2="-180"/>
+      <line x1="40" y1="-260" x2="40" y2="-180"/>
+      <line x1="80" y1="-260" x2="80" y2="-180"/>
+    </g>
+    
+    <!-- Bottom side connectors -->
+    <g stroke="#56D364" stroke-width="6" stroke-linecap="round">
+      <line x1="-80" y1="180" x2="-80" y2="260"/>
+      <line x1="-40" y1="180" x2="-40" y2="260"/>
+      <line x1="0" y1="180" x2="0" y2="260"/>
+      <line x1="40" y1="180" x2="40" y2="260"/>
+      <line x1="80" y1="180" x2="80" y2="260"/>
+    </g>
+    
+    <!-- Chip pad connectors at ends -->
+    <g fill="#56D364" opacity="0.8">
+      <!-- Left pads -->
+      <circle cx="-265" cy="-120" r="4"/>
+      <circle cx="-265" cy="-80" r="4"/>
+      <circle cx="-265" cy="-40" r="4"/>
+      <circle cx="-265" cy="0" r="4"/>
+      <circle cx="-265" cy="40" r="4"/>
+      <circle cx="-265" cy="80" r="4"/>
+      <circle cx="-265" cy="120" r="4"/>
+      
+      <!-- Right pads -->
+      <circle cx="265" cy="-120" r="4"/>
+      <circle cx="265" cy="-80" r="4"/>
+      <circle cx="265" cy="-40" r="4"/>
+      <circle cx="265" cy="0" r="4"/>
+      <circle cx="265" cy="40" r="4"/>
+      <circle cx="265" cy="80" r="4"/>
+      <circle cx="265" cy="120" r="4"/>
+    </g>
+  </g>
+  
+  <!-- Subtle grid pattern -->
+  <g opacity="0.03">
+    <defs>
+      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#56D364" stroke-width="1"/>
+      </pattern>
+    </defs>
+    <rect width="1024" height="1024" fill="url(#grid)"/>
+  </g>
+</svg>

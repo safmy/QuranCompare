@@ -1,11 +1,71 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './QuranVerseLookup.css';
-import LanguageSwitcher from './LanguageSwitcher';
 import VoiceSearchButton from './VoiceSearchButton';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getLanguageConfig, getTranslationText, getFootnoteText } from '../config/languages';
+import { getVerseAudioUrl } from '../utils/verseMapping';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
+
+// Minimal audio button component
+const MinimalAudioButton = ({ verseReference }) => {
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const audioRef = useRef(null);
+    
+    useEffect(() => {
+        // Cleanup audio on unmount
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+            }
+        };
+    }, []);
+    
+    const togglePlay = () => {
+        if (!audioRef.current) {
+            const audioUrl = getVerseAudioUrl(verseReference);
+            if (!audioUrl) return;
+            
+            audioRef.current = new Audio(audioUrl);
+            audioRef.current.addEventListener('ended', () => {
+                setIsPlaying(false);
+            });
+            audioRef.current.addEventListener('loadstart', () => {
+                setIsLoading(true);
+            });
+            audioRef.current.addEventListener('canplay', () => {
+                setIsLoading(false);
+            });
+        }
+        
+        if (isPlaying) {
+            audioRef.current.pause();
+            setIsPlaying(false);
+        } else {
+            // Stop all other audio players first
+            document.querySelectorAll('audio').forEach(audio => {
+                if (audio !== audioRef.current) {
+                    audio.pause();
+                }
+            });
+            audioRef.current.play();
+            setIsPlaying(true);
+        }
+    };
+    
+    return (
+        <button 
+            className="minimal-audio-btn"
+            onClick={togglePlay}
+            disabled={isLoading}
+            title={isPlaying ? 'Pause' : 'Play Mishary recitation'}
+        >
+            {isLoading ? '⏳' : (isPlaying ? '⏸' : '▶')}
+        </button>
+    );
+};
 
 // Chapter verse counts
 const CHAPTER_VERSE_COUNTS = {
@@ -496,11 +556,6 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
 
     return (
         <div className="verse-lookup-container">
-            <LanguageSwitcher 
-                currentLanguage={currentLanguage}
-                onLanguageChange={changeLanguage}
-            />
-            
             <div className="verse-lookup-header">
                 <h2>📖 Quran Search</h2>
                 <p>Enter verse references (1:1-7, 2:5, chapter 3) or search for text within verses</p>
@@ -631,6 +686,12 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                 >
                                     [{verse.sura_verse}]
                                 </span>
+                                {/* Minimal audio player */}
+                                <div className="verse-audio-player">
+                                    <MinimalAudioButton 
+                                        verseReference={verse.sura_verse}
+                                    />
+                                </div>
                             </div>
                             
                             <div className="verse-content">

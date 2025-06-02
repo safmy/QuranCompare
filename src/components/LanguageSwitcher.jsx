@@ -29,22 +29,31 @@ const LanguageSwitcher = ({ currentLanguage, onLanguageChange, compact = false }
           onClick={() => setIsOpen(!isOpen)}
           style={{
             padding: '8px 12px',
-            border: '1px solid #ddd',
+            border: '1px solid rgba(255,255,255,0.3)',
             borderRadius: '6px',
-            backgroundColor: 'white',
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            backdropFilter: 'blur(10px)',
             cursor: 'pointer',
             fontSize: '14px',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
             minWidth: '120px',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            color: 'white',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseOver={(e) => {
+            e.target.style.backgroundColor = 'rgba(255,255,255,0.2)';
+          }}
+          onMouseOut={(e) => {
+            e.target.style.backgroundColor = 'rgba(255,255,255,0.1)';
           }}
         >
           <span>
             {currentLangConfig.flag} {currentLangConfig.name}
           </span>
-          <span style={{ fontSize: '12px' }}>▼</span>
+          <span style={{ fontSize: '12px', color: 'white' }}>▼</span>
         </button>
         
         {isOpen && (

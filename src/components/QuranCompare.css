@@ -44,7 +44,7 @@
 }
 
 .subtitle-text {
-    background: linear-gradient(135deg, #2c5aa0, #4a90e2);
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
     color: white;
     padding: 15px 25px;
     font-size: 16px;
@@ -57,7 +57,7 @@
 }
 
 .verse-reference {
-    color: #2c5aa0;
+    color: #7c3aed;
     margin-bottom: 10px;
     font-size: 16px;
     text-align: center;
@@ -72,7 +72,7 @@
     padding: 10px;
     background: #f8f9fa;
     border-radius: 6px;
-    border-right: 3px solid #2c5aa0;
+    border-right: 3px solid #7c3aed;
     margin-bottom: 10px;
 }
 
@@ -85,7 +85,7 @@
 }
 
 .arabic-word:hover {
-    background-color: rgba(44, 90, 160, 0.1);
+    background-color: rgba(124, 58, 237, 0.1);
 }
 
 .arabic-word.highlighted {
@@ -200,7 +200,7 @@
 }
 
 .quran-audio-player h4 {
-    color: #2c5aa0;
+    color: #7c3aed;
     font-size: 14px;
     font-weight: 600;
 }
@@ -229,9 +229,9 @@
 }
 
 .quran-audio-player input[type="number"]:focus {
-    border-color: #2c5aa0;
+    border-color: #7c3aed;
     outline: none;
-    box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.1);
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.1);
 }
 
 .memorization-settings {

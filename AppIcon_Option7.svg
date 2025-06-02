@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Pure black background -->
+  <rect width="1024" height="1024" rx="230" fill="#000000"/>
+  
+  <!-- Simple white QC -->
+  <g transform="translate(512, 512)">
+    <!-- Clean QC text -->
+    <text x="0" y="40" 
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" 
+          font-size="280" 
+          font-weight="500"
+          text-anchor="middle" 
+          fill="#ffffff"
+          letter-spacing="-20">QC</text>
+    
+    <!-- Subtle underline accent -->
+    <rect x="-120" y="100" width="240" height="4" fill="#ffffff" opacity="0.8"/>
+  </g>
+</svg>

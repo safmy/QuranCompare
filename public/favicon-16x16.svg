@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6b46c1;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background with rounded corners -->
+  <rect width="16" height="16" rx="2.4" fill="url(#purpleGradient)"/>
+  
+  <!-- Subtle highlight on top -->
+  <rect width="16" height="8" rx="2.4" fill="white" opacity="0.1"/>
+  
+  <!-- QC Text -->
+  <text x="8" y="8.72" 
+        font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif" 
+        font-size="7.2" 
+        font-weight="bold"
+        text-anchor="middle" 
+        fill="white">QC</text>
+</svg>

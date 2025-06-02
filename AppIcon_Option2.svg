@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark background -->
+  <rect width="1024" height="1024" rx="230" fill="#1C1C1E"/>
+  
+  <!-- Subtle background pattern -->
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="30%" r="60%">
+      <stop offset="0%" style="stop-color:#2C2C2E;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#1C1C1E;stop-opacity:1" />
+    </radialGradient>
+    <linearGradient id="badgeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#34C759;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#30A953;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="1024" height="1024" rx="230" fill="url(#bgGlow)"/>
+  
+  <!-- Main design centered -->
+  <g transform="translate(512, 512)">
+    <!-- Outer ring -->
+    <circle cx="0" cy="0" r="260" stroke="#2C2C2E" stroke-width="1" fill="none" opacity="0.4"/>
+    
+    <!-- Main circle -->
+    <circle cx="0" cy="0" r="180" fill="url(#badgeGradient)"/>
+    
+    <!-- Inner shine effect -->
+    <ellipse cx="-40" cy="-60" rx="100" ry="80" fill="#ffffff" opacity="0.15"/>
+    
+    <!-- Centered "19" -->
+    <text x="0" y="25" 
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" 
+          font-size="140" 
+          font-weight="600"
+          text-anchor="middle" 
+          fill="#ffffff">19</text>
+    
+    <!-- Subtle bottom shadow inside -->
+    <ellipse cx="0" cy="140" rx="120" ry="20" fill="#000000" opacity="0.1"/>
+  </g>
+  
+  <!-- Corner accents -->
+  <circle cx="140" cy="140" r="2" fill="#34C759" opacity="0.3"/>
+  <circle cx="884" cy="140" r="2" fill="#34C759" opacity="0.3"/>
+  <circle cx="140" cy="884" r="2" fill="#34C759" opacity="0.3"/>
+  <circle cx="884" cy="884" r="2" fill="#34C759" opacity="0.3"/>
+</svg>

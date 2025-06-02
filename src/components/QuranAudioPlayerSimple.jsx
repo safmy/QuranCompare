@@ -229,7 +229,7 @@ const QuranAudioPlayerSimple = ({
                 disabled={!audioLoaded}
                 style={{
                   padding: '8px 15px',
-                  backgroundColor: !audioLoaded ? '#ccc' : (isPlaying ? '#ff9800' : '#4CAF50'),
+                  backgroundColor: !audioLoaded ? '#ccc' : (isPlaying ? '#ff9800' : '#7c3aed'),
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',

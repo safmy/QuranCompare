@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark background with iOS rounded corners -->
+  <rect width="1024" height="1024" rx="230" fill="#181818"/>
+  
+  <!-- Main geometric shape - hexagon with centered 19 -->
+  <g transform="translate(512, 512)">
+    <!-- Outer hexagon border -->
+    <path d="M 0,-200 L 173,-100 L 173,100 L 0,200 L -173,100 L -173,-100 Z" 
+          stroke="#333333" 
+          stroke-width="2" 
+          fill="none" 
+          opacity="0.3"/>
+    
+    <!-- Main hexagon -->
+    <path d="M 0,-160 L 139,-80 L 139,80 L 0,160 L -139,80 L -139,-80 Z" 
+          fill="#4A9EFF"/>
+    
+    <!-- Inner glow effect -->
+    <path d="M 0,-160 L 139,-80 L 139,80 L 0,160 L -139,80 L -139,-80 Z" 
+          fill="url(#innerGlow)" 
+          opacity="0.6"/>
+    
+    <!-- Centered "19" -->
+    <text x="0" y="20" 
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" 
+          font-size="120" 
+          font-weight="700"
+          text-anchor="middle" 
+          fill="#ffffff">19</text>
+  </g>
+  
+  <!-- Gradient definitions -->
+  <defs>
+    <radialGradient id="innerGlow" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+</svg>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Purple Favicon ICO</title>
+</head>
+<body>
+    <h1>Purple QC Favicon ICO Generator</h1>
+    <p>This page generates a purple QC favicon. Right-click and save the canvas images, then use an online ICO converter.</p>
+    
+    <!-- 16x16 favicon -->
+    <h3>16x16</h3>
+    <canvas id="canvas16" width="16" height="16"></canvas>
+    
+    <!-- 32x32 favicon -->
+    <h3>32x32</h3>
+    <canvas id="canvas32" width="32" height="32"></canvas>
+    
+    <!-- 48x48 favicon -->
+    <h3>48x48</h3>
+    <canvas id="canvas48" width="48" height="48"></canvas>
+
+    <script>
+        function drawFavicon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Fill with purple gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#6b46c1');
+            gradient.addColorStop(1, '#8b5cf6');
+            
+            // Draw rounded rectangle
+            const radius = Math.max(2, size * 0.15);
+            ctx.beginPath();
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(size - radius, 0);
+            ctx.arc(size - radius, radius, radius, -Math.PI/2, 0);
+            ctx.lineTo(size, size - radius);
+            ctx.arc(size - radius, size - radius, radius, 0, Math.PI/2);
+            ctx.lineTo(radius, size);
+            ctx.arc(radius, size - radius, radius, Math.PI/2, Math.PI);
+            ctx.lineTo(0, radius);
+            ctx.arc(radius, radius, radius, Math.PI, -Math.PI/2);
+            ctx.closePath();
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Draw text
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            let fontSize = Math.floor(size * 0.45);
+            ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+            
+            // Draw QC
+            ctx.fillText('QC', size/2, size/2 + 1);
+        }
+        
+        // Draw all sizes
+        drawFavicon('canvas16', 16);
+        drawFavicon('canvas32', 32);
+        drawFavicon('canvas48', 48);
+    </script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin: 10px;
+            display: block;
+            background: white;
+            image-rendering: pixelated;
+            width: auto;
+            height: auto;
+        }
+        #canvas16 { zoom: 10; }
+        #canvas32 { zoom: 5; }
+        #canvas48 { zoom: 3.33; }
+    </style>
+    
+    <h2>Instructions:</h2>
+    <ol>
+        <li>Right-click each canvas and save as PNG</li>
+        <li>Go to an online ICO converter like <a href="https://www.icoconverter.com/" target="_blank">icoconverter.com</a></li>
+        <li>Upload all three PNG files</li>
+        <li>Create ICO with all sizes included</li>
+        <li>Save as favicon.ico in the public folder</li>
+    </ol>
+</body>
+</html>

@@ -5,9 +5,11 @@ import QuranVectorSearch from './components/QuranVectorSearch';
 import QuranVerseLookup from './components/QuranVerseLookup';
 import QuranCompare from './components/QuranCompare';
 import QuranManuscriptAnalysis from './components/QuranManuscriptAnalysis';
-import { LanguageProvider } from './contexts/LanguageContext';
+import LanguageSwitcher from './components/LanguageSwitcher';
+import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 
-function App() {
+function AppContent() {
+  const { currentLanguage, changeLanguage } = useLanguage();
   const [activeTab, setActiveTab] = useState('lookup');
   const [verseRangeForLookup, setVerseRangeForLookup] = useState('');
   const [compareVerses, setCompareVerses] = useState([]);
@@ -45,37 +47,78 @@ function App() {
   ];
 
   return (
+    <div className="App">
+      <header style={{
+        backgroundColor: "#6b46c1",
+        padding: "20px",
+        color: "white",
+        display: "flex",
+        flexDirection: "column",
+        gap: "15px"
+      }}>
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "15px"
+        }}>
+          <h1 style={{fontSize: "24px", fontWeight: "bold", margin: 0}}>Quran Analysis & Comparison Tool</h1>
+          <LanguageSwitcher 
+            currentLanguage={currentLanguage}
+            onLanguageChange={changeLanguage}
+            compact={true}
+          />
+        </div>
+        <nav style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "10px"
+        }}>
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: activeTab === tab.id ? "#8b5cf6" : "rgba(255,255,255,0.1)",
+                color: "white",
+                border: "1px solid rgba(255,255,255,0.2)",
+                borderRadius: "5px",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                fontWeight: activeTab === tab.id ? "600" : "400"
+              }}
+              onMouseOver={(e) => {
+                if (activeTab !== tab.id) {
+                  e.target.style.backgroundColor = "rgba(255,255,255,0.2)";
+                }
+              }}
+              onMouseOut={(e) => {
+                if (activeTab !== tab.id) {
+                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
+                }
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </header>
+      <main style={{padding: "20px", minHeight: "80vh"}}>
+        {tabs.find(tab => tab.id === activeTab)?.component}
+      </main>
+      <footer style={{padding: "20px", backgroundColor: "#6b46c1", color: "white", textAlign: "center"}}>
+        <p>© 2025 Quran Analysis & Comparison Tool</p>
+      </footer>
+    </div>
+  );
+}
+
+function App() {
+  return (
     <LanguageProvider>
-      <div className="App">
-        <header style={{backgroundColor: "#282c34", padding: "20px", color: "white"}}>
-          <h1 style={{fontSize: "24px", fontWeight: "bold"}}>Quran Analysis & Comparison Tool</h1>
-          <nav style={{marginTop: "15px"}}>
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  padding: "10px 20px",
-                  margin: "0 5px",
-                  backgroundColor: activeTab === tab.id ? "#4CAF50" : "#555",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer"
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </header>
-        <main style={{padding: "20px", minHeight: "80vh"}}>
-          {tabs.find(tab => tab.id === activeTab)?.component}
-        </main>
-        <footer style={{padding: "20px", backgroundColor: "#282c34", color: "white", textAlign: "center"}}>
-          <p>© 2025 Quran Analysis & Comparison Tool</p>
-        </footer>
-      </div>
+      <AppContent />
     </LanguageProvider>
   );
 }
