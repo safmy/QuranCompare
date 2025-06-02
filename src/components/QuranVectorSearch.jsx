@@ -10,10 +10,11 @@ const QuranVectorSearch = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [numResults, setNumResults] = useState(5);
-  const [includeRashadMedia, setIncludeRashadMedia] = useState(true);
-  const [includeFinalTestament, setIncludeFinalTestament] = useState(true);
-  const [includeQuranTalk, setIncludeQuranTalk] = useState(true);
-  const [includeNewsletters, setIncludeNewsletters] = useState(true);
+  const [includeRashadMedia, setIncludeRashadMedia] = useState(false);
+  const [includeFinalTestament, setIncludeFinalTestament] = useState(false);
+  const [includeQuranTalk, setIncludeQuranTalk] = useState(false);
+  const [includeNewsletters, setIncludeNewsletters] = useState(false);
+  const [includeArabicVerses, setIncludeArabicVerses] = useState(true);
   
   const handleVerseClick = async (verseRef) => {
     try {
@@ -121,7 +122,8 @@ const QuranVectorSearch = () => {
       'RashadAllMedia': '#4CAF50',
       'FinalTestament': '#2196F3',
       'QuranTalkArticles': '#FF9800',
-      'Newsletters': '#9C27B0'
+      'Newsletters': '#9C27B0',
+      'ArabicVerses': '#7c3aed'
     };
     return colors[collection] || '#666';
   };
@@ -131,7 +133,8 @@ const QuranVectorSearch = () => {
       'RashadAllMedia': '🎥',
       'FinalTestament': '📖',
       'QuranTalkArticles': '📄',
-      'Newsletters': '📰'
+      'Newsletters': '📰',
+      'ArabicVerses': '🕌'
     };
     return emojis[collection] || '📌';
   };
@@ -157,7 +160,8 @@ const QuranVectorSearch = () => {
           include_rashad_media: includeRashadMedia,
           include_final_testament: includeFinalTestament,
           include_qurantalk: includeQuranTalk,
-          include_newsletters: includeNewsletters
+          include_newsletters: includeNewsletters,
+          include_arabic_verses: includeArabicVerses
         })
       });
 
@@ -283,6 +287,15 @@ const QuranVectorSearch = () => {
       }}>
         <h4 style={{ marginBottom: '10px', color: '#333' }}>Search In:</h4>
         <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={includeArabicVerses}
+              onChange={(e) => setIncludeArabicVerses(e.target.checked)}
+              style={{ marginRight: '8px' }}
+            />
+            <span style={{ color: '#7c3aed', fontWeight: 'bold' }}>🕌 Quran Arabic Verses</span>
+          </label>
           <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
             <input
               type="checkbox"
