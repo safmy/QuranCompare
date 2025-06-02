@@ -19,6 +19,7 @@ from vector_loader import load_vectors_from_cloud, load_vectors_from_local
 from youtube_mapper import youtube_mapper
 from verses_loader import load_verses_data
 from subtitle_ranges import get_cached_verse_range, get_subtitle_for_range
+from arabic_utils import enhance_arabic_search_query, is_arabic_text, get_phonetic_variations
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -227,8 +228,20 @@ def create_embedding(text: str) -> np.ndarray:
         raise HTTPException(status_code=503, detail="OpenAI client not initialized")
     
     try:
+        # Enhance the text if it's Arabic or transliterated
+        enhanced_text = enhance_arabic_search_query(text)
+        
+        # For Arabic text, we might want to include both original and enhanced
+        if is_arabic_text(text) or text != enhanced_text:
+            # Create a combined query with variations
+            variations = get_phonetic_variations(enhanced_text)
+            # Use the first variation or combine them
+            query_text = " ".join(variations[:2]) if len(variations) > 1 else enhanced_text
+        else:
+            query_text = text
+        
         response = client.embeddings.create(
-            input=text,
+            input=query_text,
             model="text-embedding-ada-002"
         )
         return np.array(response.data[0].embedding).astype('float32')
@@ -688,8 +701,8 @@ async def transcribe_audio_options():
     return {"message": "OK"}
 
 @app.post("/transcribe-audio")
-async def transcribe_audio(audio: UploadFile = File(...)):
-    """Transcribe audio using OpenAI Whisper API"""
+async def transcribe_audio(audio: UploadFile = File(...), language: Optional[str] = None):
+    """Transcribe audio using OpenAI Whisper API with support for Arabic and English"""
     try:
         # Check if OpenAI client is available
         if not client:
@@ -728,11 +741,23 @@ async def transcribe_audio(audio: UploadFile = File(...)):
             # Use OpenAI Whisper API
             with open(temp_file_path, 'rb') as audio_file:
                 logger.info("Calling OpenAI Whisper API...")
-                transcript = client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=audio_file,
-                    response_format="text"
-                )
+                
+                # If no language specified, let Whisper auto-detect
+                # Otherwise use the specified language (ar for Arabic, en for English)
+                if language:
+                    transcript = client.audio.transcriptions.create(
+                        model="whisper-1",
+                        file=audio_file,
+                        language=language,
+                        response_format="text"
+                    )
+                else:
+                    # Auto-detect language
+                    transcript = client.audio.transcriptions.create(
+                        model="whisper-1",
+                        file=audio_file,
+                        response_format="text"
+                    )
             
             logger.info(f"Transcription result: {transcript}")
             

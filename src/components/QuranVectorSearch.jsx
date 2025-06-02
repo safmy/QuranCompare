@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import VoiceSearchButton from './VoiceSearchButton';
+import VoiceSearchButtonEnhanced from './VoiceSearchButtonEnhanced';
 
 // API endpoint - change this to your deployed API URL in production
 const API_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
@@ -199,7 +199,11 @@ const QuranVectorSearch = () => {
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
       <h2 style={{ color: '#333', marginBottom: '20px' }}>Semantic Search</h2>
       <p style={{ color: '#666', marginBottom: '20px' }}>
-        Search across Rashad Khalifa Media, Final Testament, QuranTalk articles, and Rashad Khalifa Newsletters using AI-powered semantic search
+        Search across Rashad Khalifa Media, Final Testament, QuranTalk articles, and Rashad Khalifa Newsletters using AI-powered semantic search.
+        <br />
+        <span style={{ fontSize: '14px', color: '#888' }}>
+          ✨ Supports Arabic text search and phonetic matching (e.g., "Kulhu" → "قل هو")
+        </span>
       </p>
       
       <div style={{ 
@@ -225,7 +229,7 @@ const QuranVectorSearch = () => {
               width: '100%',
               fontSize: '16px'
             }}
-            placeholder="Enter your search query..."
+            placeholder="Enter your search query (Arabic or English)..."
           />
         </div>
         
@@ -266,7 +270,7 @@ const QuranVectorSearch = () => {
           {loading ? 'Searching...' : 'Search'}
         </button>
         
-        <VoiceSearchButton onTranscription={handleVoiceTranscription} />
+        <VoiceSearchButtonEnhanced onTranscription={handleVoiceTranscription} />
       </div>
 
       {/* Collection Filters */}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './QuranCompare.css';
 import QuranAudioPlayerSimple from './QuranAudioPlayerSimple';
+import QuranAudioPlayerEnhanced from './QuranAudioPlayerEnhanced';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getLanguageConfig, getTranslationText, getFootnoteText } from '../config/languages';
 
@@ -389,6 +390,16 @@ const QuranCompare = ({ initialVerses = [] }) => {
               </div>
             ))}
           </div>
+          
+          {/* Enhanced Audio Player for Multiple Verses */}
+          {verses.length > 1 && (
+            <div style={{ marginTop: '30px' }}>
+              <QuranAudioPlayerEnhanced
+                verseReferences={verses.map(v => v.reference)}
+                arabicTexts={verses.map(v => v.arabic || '')}
+              />
+            </div>
+          )}
           
           {/* Tooltip for word hover */}
           {hoveredWord && (
