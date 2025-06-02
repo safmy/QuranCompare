@@ -143,7 +143,18 @@ def load_vectors_from_cloud(cache_dir: str = "./vector_cache") -> Dict:
                 logger.info(f"  FAISS file not in cache, downloading...")
                 if not download_file(urls["faiss"], str(faiss_path)):
                     logger.warning(f"Failed to download {name} FAISS index")
-                    continue
+                    # For ArabicVerses, try to load from local embeddings if available
+                    if name == "ArabicVerses":
+                        local_faiss = Path("./arabic_embeddings/arabic_verses.faiss")
+                        local_json = Path("./arabic_embeddings/arabic_verses.json") 
+                        if local_faiss.exists() and local_json.exists():
+                            logger.info(f"  Using local Arabic embeddings as fallback")
+                            faiss_path = local_faiss
+                            json_path = local_json
+                        else:
+                            continue
+                    else:
+                        continue
             else:
                 logger.info(f"  FAISS file found in cache: {faiss_path}")
             
@@ -151,7 +162,18 @@ def load_vectors_from_cloud(cache_dir: str = "./vector_cache") -> Dict:
                 logger.info(f"  JSON file not in cache, downloading...")
                 if not download_file(urls["json"], str(json_path)):
                     logger.warning(f"Failed to download {name} metadata")
-                    continue
+                    # For ArabicVerses, try to load from local embeddings if available
+                    if name == "ArabicVerses":
+                        local_faiss = Path("./arabic_embeddings/arabic_verses.faiss")
+                        local_json = Path("./arabic_embeddings/arabic_verses.json") 
+                        if local_faiss.exists() and local_json.exists():
+                            logger.info(f"  Using local Arabic embeddings as fallback")
+                            faiss_path = local_faiss
+                            json_path = local_json
+                        else:
+                            continue
+                    else:
+                        continue
             else:
                 logger.info(f"  JSON file found in cache: {json_path}")
             
