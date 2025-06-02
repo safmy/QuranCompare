@@ -11,8 +11,28 @@ const QuranVectorSearch = () => {
   const [error, setError] = useState('');
   const [numResults, setNumResults] = useState(10);
   const [includeRashadMedia, setIncludeRashadMedia] = useState(false);
-  const [includeFinalTestament, setIncludeFinalTestament] = useState(false);
+  const [includeFinalTestament, setIncludeFinalTestament] = useState(true);
   const [includeNewsletters, setIncludeNewsletters] = useState(false);
+  const [useRegex, setUseRegex] = useState(false);
+  const [regexResults, setRegexResults] = useState([]);
+  const [quranData, setQuranData] = useState(null);
+  
+  // Load Quran data on component mount
+  React.useEffect(() => {
+    const loadQuranData = async () => {
+      try {
+        const response = await fetch('/verses_final.json');
+        if (!response.ok) {
+          throw new Error('Failed to load Quran data');
+        }
+        const data = await response.json();
+        setQuranData(data);
+      } catch (err) {
+        console.error('Error loading Quran data:', err);
+      }
+    };
+    loadQuranData();
+  }, []);
   
   const handleVerseClick = async (verseRef) => {
     try {
@@ -47,7 +67,7 @@ const QuranVectorSearch = () => {
   };
   
   const renderTitle = (result) => {
-    if (result.collection === 'FinalTestament') {
+    if (result.collection === 'FinalTestament' || result.collection === 'ArabicVerses') {
       // Extract verse reference and make it clickable
       const verseMatch = result.title.match(/\[(\d+:\d+)\]/);
       if (verseMatch) {
@@ -55,12 +75,15 @@ const QuranVectorSearch = () => {
         const beforeVerse = result.title.substring(0, verseMatch.index);
         const afterVerse = result.title.substring(verseMatch.index + verseMatch[0].length);
         
+        const bgColor = result.collection === 'ArabicVerses' ? '#7c3aed' : '#2196F3';
+        const hoverColor = result.collection === 'ArabicVerses' ? '#6d28d9' : '#1976D2';
+        
         return (
           <span>
             {beforeVerse}
             <span 
               style={{
-                backgroundColor: '#2196F3',
+                backgroundColor: bgColor,
                 color: 'white',
                 padding: '3px 8px',
                 borderRadius: '4px',
@@ -68,17 +91,17 @@ const QuranVectorSearch = () => {
                 fontWeight: 'bold',
                 fontSize: '13px',
                 transition: 'all 0.2s',
-                border: '2px solid #2196F3'
+                border: `2px solid ${bgColor}`
               }}
               onClick={() => handleVerseClick(verseRef)}
               onMouseOver={(e) => {
-                e.target.style.backgroundColor = '#1976D2';
-                e.target.style.borderColor = '#1976D2';
+                e.target.style.backgroundColor = hoverColor;
+                e.target.style.borderColor = hoverColor;
                 e.target.style.transform = 'translateY(-1px)';
               }}
               onMouseOut={(e) => {
-                e.target.style.backgroundColor = '#2196F3';
-                e.target.style.borderColor = '#2196F3';
+                e.target.style.backgroundColor = bgColor;
+                e.target.style.borderColor = bgColor;
                 e.target.style.transform = 'translateY(0)';
               }}
               title={`Click to view subtitle section for ${verseRef}`}
@@ -137,6 +160,32 @@ const QuranVectorSearch = () => {
     return emojis[collection] || '📌';
   };
 
+  const performRegexSearch = () => {
+    if (!quranData || !searchTerm.trim()) return [];
+    
+    const searchWords = searchTerm.trim().toLowerCase().split(/\s+/);
+    
+    return quranData.filter(verse => {
+      const verseText = verse.english.toLowerCase();
+      
+      // For regex search, all words must be present but in any order
+      return searchWords.every(word => {
+        // Escape special regex characters for safety
+        const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`\\b${escapedWord}`, 'i');
+        return regex.test(verseText);
+      });
+    }).map(verse => ({
+      collection: 'FinalTestament',
+      title: `[${verse.sura_verse}] ${verse.english.substring(0, 50)}...`,
+      content: verse.english,
+      similarity_score: 1.0,
+      source: 'Final Testament (Regex Match)',
+      source_url: null,
+      youtube_link: null
+    }));
+  };
+
   const handleSearch = async () => {
     if (!searchTerm.trim()) {
       setError('Please enter a search term');
@@ -145,39 +194,55 @@ const QuranVectorSearch = () => {
 
     setLoading(true);
     setError('');
+    
+    // Clear previous results
+    setSearchResults([]);
+    setRegexResults([]);
 
     try {
-      const response = await fetch(`${API_URL}/search`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: searchTerm,
-          num_results: numResults,
-          include_rashad_media: includeRashadMedia,
-          include_final_testament: includeFinalTestament,
-          include_qurantalk: includeNewsletters,
-          include_newsletters: includeNewsletters,
-          include_arabic_verses: includeFinalTestament
-        })
-      });
+      if (useRegex && quranData) {
+        // Perform regex search locally
+        const regexMatches = performRegexSearch();
+        setRegexResults(regexMatches);
+        
+        if (regexMatches.length === 0) {
+          setError(`No regex matches found for "${searchTerm}"`);
+        }
+      } else {
+        // Perform semantic search via API
+        const response = await fetch(`${API_URL}/search`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: searchTerm,
+            num_results: numResults,
+            include_rashad_media: includeRashadMedia,
+            include_final_testament: includeFinalTestament,
+            include_qurantalk: includeNewsletters,
+            include_newsletters: includeNewsletters,
+            include_arabic_verses: includeFinalTestament
+          })
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Search failed');
-      }
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || 'Search failed');
+        }
 
-      const data = await response.json();
-      setSearchResults(data.results);
-      
-      if (data.results.length === 0) {
-        setError(`No results found for "${searchTerm}"`);
+        const data = await response.json();
+        setSearchResults(data.results);
+        
+        if (data.results.length === 0) {
+          setError(`No semantic results found for "${searchTerm}"`);
+        }
       }
     } catch (err) {
       console.error('Search error:', err);
       setError(err.message || 'An error occurred during search. Please make sure the API server is running.');
       setSearchResults([]);
+      setRegexResults([]);
     }
 
     setLoading(false);
@@ -313,6 +378,31 @@ const QuranVectorSearch = () => {
             <span style={{ color: '#9C27B0', fontWeight: 'bold' }}>📰 Newsletters & Articles</span>
           </label>
         </div>
+        
+        {/* Regex search option */}
+        <div style={{ 
+          marginTop: '15px', 
+          paddingTop: '15px', 
+          borderTop: '1px solid #e0e0e0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '20px'
+        }}>
+          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={useRegex}
+              onChange={(e) => setUseRegex(e.target.checked)}
+              style={{ marginRight: '8px' }}
+            />
+            <span style={{ fontWeight: 'bold' }}>🔍 Use Regex Search</span>
+          </label>
+          {useRegex && (
+            <span style={{ fontSize: '14px', color: '#666' }}>
+              (Searches Final Testament for all words in any order)
+            </span>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -328,14 +418,67 @@ const QuranVectorSearch = () => {
         </div>
       )}
 
-      {searchResults.length > 0 && (
+      {/* Display results */}
+      {(searchResults.length > 0 || regexResults.length > 0) && (
         <div style={{ maxWidth: '700px', margin: '0 auto' }}>
           <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
-            Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for "{searchTerm}"
+            Found {useRegex ? regexResults.length : searchResults.length} {useRegex ? 'regex' : 'semantic'} result{(useRegex ? regexResults.length : searchResults.length) !== 1 ? 's' : ''} for "{searchTerm}"
           </p>
           
-          {/* Group Arabic Verses separately */}
-          {searchResults.filter(r => r.collection === 'ArabicVerses').length > 0 && (
+          {/* Display regex results if using regex search */}
+          {useRegex && regexResults.length > 0 && (
+            <div>
+              {regexResults.map((result, index) => (
+                <div key={`regex-${index}`} style={{
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  backgroundColor: '#f9f9f9',
+                  marginBottom: '15px'
+                }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'flex-start',
+                    marginBottom: '10px'
+                  }}>
+                    <div>
+                      <span style={{
+                        backgroundColor: '#2196F3',
+                        color: 'white',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        marginRight: '10px'
+                      }}>
+                        📖 {result.source}
+                      </span>
+                      <h3 style={{ 
+                        color: '#333', 
+                        marginTop: '10px',
+                        marginBottom: '5px',
+                        fontSize: '18px'
+                      }}>
+                        {renderTitle(result)}
+                      </h3>
+                    </div>
+                  </div>
+                  
+                  <p style={{
+                    fontSize: '15px',
+                    lineHeight: '1.6',
+                    color: '#555',
+                    marginBottom: '10px'
+                  }}>
+                    {result.content}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* Group Arabic Verses separately for semantic search */}
+          {!useRegex && searchResults.filter(r => r.collection === 'ArabicVerses').length > 0 && (
             <div style={{ marginBottom: '30px' }}>
               <h3 style={{ 
                 color: '#7c3aed', 
@@ -398,8 +541,8 @@ const QuranVectorSearch = () => {
             </div>
           )}
           
-          {/* Group English/Other results */}
-          {searchResults.filter(r => r.collection !== 'ArabicVerses').length > 0 && (
+          {/* Group English/Other results for semantic search */}
+          {!useRegex && searchResults.filter(r => r.collection !== 'ArabicVerses').length > 0 && (
             <div>
               {searchResults.filter(r => r.collection === 'ArabicVerses').length > 0 && (
                 <h3 style={{ 

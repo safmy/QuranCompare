@@ -248,14 +248,21 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                         // Exact match - look for the exact phrase
                         return textToSearch.includes(searchLower);
                     } else {
-                        // Regex match
-                        try {
-                            const regex = new RegExp(searchTerm, 'i');
-                            return regex.test(verse.english);
-                        } catch (e) {
-                            // Invalid regex, fall back to includes
-                            return textToSearch.includes(searchLower);
-                        }
+                        // Regex match - search for all words in any order
+                        const searchWords = searchLower.split(/\s+/);
+                        
+                        // All words must be present but in any order
+                        return searchWords.every(word => {
+                            try {
+                                // Escape special regex characters for safety
+                                const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                const regex = new RegExp(`\\b${escapedWord}`, 'i');
+                                return regex.test(verse.english);
+                            } catch (e) {
+                                // Invalid regex, fall back to includes
+                                return textToSearch.includes(word);
+                            }
+                        });
                     }
                 });
                 
