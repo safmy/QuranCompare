@@ -567,10 +567,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                 <h2>📖 Quran Search</h2>
                 <div className="search-controls-row">
                     <p className="search-hint">
-                        {verses.length > 0 
-                            ? `Found ${verses.length} result${verses.length !== 1 ? 's' : ''}`
-                            : 'Enter verse (1:1-7) or search text'
-                        }
+                        Enter verse references (1:1-7, 2:5, chapter 3) or search for text within verses
                     </p>
                     <div className="control-buttons">
                         <label className="toggle-compact">

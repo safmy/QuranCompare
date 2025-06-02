@@ -255,7 +255,7 @@ def create_embedding(text: str, force_english: bool = False) -> np.ndarray:
         
         response = client.embeddings.create(
             input=query_text,
-            model="text-embedding-3-small"
+            model="text-embedding-ada-002"
         )
         return np.array(response.data[0].embedding).astype('float32')
     except Exception as e:
