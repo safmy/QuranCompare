@@ -29,6 +29,14 @@ TRANSLITERATION_MAP = {
     'la ilaha illallah': ['لا إله إلا الله', 'لَا إِلَٰهَ إِلَّا اللَّه'],
     'subhanallah': ['سبحان الله', 'سُبْحَانَ اللَّه'],
     'astaghfirullah': ['أستغفر الله', 'أَسْتَغْفِرُ اللَّه'],
+    
+    # Surah Al-Ikhlas (112) variations
+    'kul huwallahu ahad': ['قل هو الله أحد', 'قُلْ هُوَ اللَّهُ أَحَدٌ'],
+    'qul huwallahu ahad': ['قل هو الله أحد', 'قُلْ هُوَ اللَّهُ أَحَدٌ'],
+    'kulhuwallahu ahad': ['قل هو الله أحد', 'قُلْ هُوَ اللَّهُ أَحَدٌ'],
+    'qulhuwallahu ahad': ['قل هو الله أحد', 'قُلْ هُوَ اللَّهُ أَحَدٌ'],
+    'kul huwallah ahad': ['قل هو الله أحد', 'قُلْ هُوَ اللَّهُ أَحَدٌ'],
+    'qul huwallah ahad': ['قل هو الله أحد', 'قُلْ هُوَ اللَّهُ أَحَدٌ'],
 }
 
 # Arabic diacritics that can be removed for matching

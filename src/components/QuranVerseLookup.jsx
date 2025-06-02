@@ -567,17 +567,12 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                 <h2>📖 Quran Search</h2>
                 <div className="search-controls-row">
                     <p className="search-hint">
-                        Enter verse references (1:1-7, 2:5, chapter 3) or search for text within verses
+                        {verses.length > 0 
+                            ? `Found ${verses.length} verse${verses.length !== 1 ? 's' : ''} ${searchMode === 'text' ? `matching "${verseRange}"` : `in range ${verseRange}`}`
+                            : 'Enter verse references (1:1-7, 2:5, chapter 3) or search for text within verses'
+                        }
                     </p>
                     <div className="control-buttons">
-                        <label className="toggle-compact">
-                            <input
-                                type="checkbox"
-                                checked={showArabic}
-                                onChange={(e) => setShowArabic(e.target.checked)}
-                            />
-                            <span>Arabic</span>
-                        </label>
                         {searchMode === 'text' && (
                             <label className="toggle-compact">
                                 <input
@@ -601,6 +596,14 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                         placeholder="1:1-7, chapter 2, or search text..."
                         className="verse-input"
                     />
+                    <label className="toggle-compact" style={{ marginLeft: '10px', marginRight: '10px' }}>
+                        <input
+                            type="checkbox"
+                            checked={showArabic}
+                            onChange={(e) => setShowArabic(e.target.checked)}
+                        />
+                        <span>Arabic</span>
+                    </label>
                     <button type="submit" disabled={loading} className="lookup-button">
                         {loading ? '🔄' : '🔍'} Search
                     </button>
@@ -642,14 +645,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                     
                     return (
                         <div key={verse.sura_verse}>
-                            {/* Display subtitle if this verse has one and it's different from previous */}
-                            {showSubtitle && (
-                                <div className="subtitle-header">
-                                    <h3 className="subtitle-text">{verse.subtitle}</h3>
-                                </div>
-                            )}
-                            
-                            {/* Mobile hint for first verse with Arabic text */}
+                            {/* Mobile hint for first verse with Arabic text - show above subtitle */}
                             {isMobile && index === 0 && verse.arabic && showArabic && verse.roots && (
                                 <div className="mobile-hint" style={{
                                     padding: '10px',
@@ -661,6 +657,13 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                     textAlign: 'center'
                                 }}>
                                     💡 Tap Arabic words to see root/meaning, tap again to analyze
+                                </div>
+                            )}
+                            
+                            {/* Display subtitle if this verse has one and it's different from previous */}
+                            {showSubtitle && (
+                                <div className="subtitle-header">
+                                    <h3 className="subtitle-text">{verse.subtitle}</h3>
                                 </div>
                             )}
                         
