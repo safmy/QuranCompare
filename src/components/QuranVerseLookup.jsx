@@ -558,44 +558,28 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
         <div className="verse-lookup-container">
             <div className="verse-lookup-header">
                 <h2>📖 Quran Search</h2>
-                <p>Enter verse references (1:1-7, 2:5, chapter 3) or search for text within verses</p>
-                
-                {/* Simplified toggle controls */}
-                <div className="toggle-controls">
-                    <div className="unified-controls">
-                        <label className="toggle-label">
+                <div className="search-controls-row">
+                    <p className="search-hint">Enter verse (1:1-7) or search text</p>
+                    <div className="control-buttons">
+                        <label className="toggle-compact">
                             <input
                                 type="checkbox"
                                 checked={showArabic}
                                 onChange={(e) => setShowArabic(e.target.checked)}
-                                className="toggle-checkbox"
                             />
-                            <span className="toggle-text">Show Arabic Text</span>
+                            <span>Arabic</span>
                         </label>
-                        
                         {searchMode === 'text' && (
-                            <label className="toggle-label">
+                            <label className="toggle-compact">
                                 <input
                                     type="checkbox"
                                     checked={exactMatch}
                                     onChange={(e) => setExactMatch(e.target.checked)}
-                                    className="toggle-checkbox"
                                 />
-                                <span className="toggle-text">Exact Match</span>
+                                <span>Exact</span>
                             </label>
                         )}
                     </div>
-                    
-                    {searchMode === 'text' && (
-                        <div className="search-mode-indicator">
-                            📝 Text search {exactMatch ? '(exact phrase)' : '(flexible matching)'}
-                        </div>
-                    )}
-                    {searchMode === 'range' && (
-                        <div className="search-mode-indicator">
-                            📍 Verse range lookup
-                        </div>
-                    )}
                 </div>
             </div>
 
@@ -638,12 +622,6 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                 </div>
             )}
 
-            {!loading && verses.length > 0 && (
-                <div className="verse-info">
-                    📊 Showing {verses.length} verse{verses.length !== 1 ? 's' : ''} 
-                    {searchMode === 'text' ? `matching "${verseRange}"` : `for "${verseRange}"`}
-                </div>
-            )}
 
             <div className="verses-container">
                 {verses.map((verse, index) => {
@@ -783,6 +761,93 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                             <p><strong>Other verses with this root:</strong> {rootAnalysisData.totalRelated}</p>
                         </div>
                         
+                        {/* Compare Actions Section */}
+                        <div className="compare-actions-section" style={{
+                            padding: '20px',
+                            background: '#f0f7ff',
+                            borderBottom: '2px solid #e0e0e0',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '20px'
+                        }}>
+                            {/* Compare Selected Verses */}
+                            <div className="compare-action-card" style={{
+                                padding: '15px',
+                                background: 'white',
+                                borderRadius: '8px',
+                                border: '1px solid #ddd'
+                            }}>
+                                <h4 style={{ margin: '0 0 10px 0', color: '#2196f3' }}>
+                                    📊 Compare Selected Verses
+                                </h4>
+                                <p style={{ fontSize: '14px', color: '#666', margin: '0 0 10px 0' }}>
+                                    Compare the source verse with other occurrences of this root
+                                </p>
+                                <button
+                                    className="compare-btn"
+                                    style={{
+                                        padding: '10px 20px',
+                                        background: '#2196f3',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        fontSize: '14px',
+                                        cursor: 'pointer',
+                                        width: '100%'
+                                    }}
+                                    onClick={() => {
+                                        const versesToCompare = [
+                                            rootAnalysisData.sourceVerse,
+                                            ...rootAnalysisData.relatedVerses.slice(0, showAllRootVerses ? 10 : 5)
+                                        ];
+                                        navigateToCompare(versesToCompare);
+                                        setShowRootAnalysis(false);
+                                    }}
+                                >
+                                    Compare Verses
+                                </button>
+                            </div>
+
+                            {/* Compare by Meaning Variations */}
+                            <div className="compare-action-card" style={{
+                                padding: '15px',
+                                background: 'white',
+                                borderRadius: '8px',
+                                border: '1px solid #ddd'
+                            }}>
+                                <h4 style={{ margin: '0 0 10px 0', color: '#4caf50' }}>
+                                    🔤 Compare by Meaning Variations
+                                </h4>
+                                <p style={{ fontSize: '14px', color: '#666', margin: '0 0 10px 0' }}>
+                                    Compare one verse from each different meaning of "{rootAnalysisData.selectedRoot}"
+                                </p>
+                                <button
+                                    style={{
+                                        padding: '10px 20px',
+                                        background: '#4caf50',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        fontSize: '14px',
+                                        cursor: 'pointer',
+                                        width: '100%'
+                                    }}
+                                    onClick={() => {
+                                        const versesToCompare = [rootAnalysisData.sourceVerse];
+                                        rootAnalysisData.meaningVariations.forEach(([meaning, verses]) => {
+                                            if (verses.length > 0) {
+                                                versesToCompare.push(verses[0].verse);
+                                            }
+                                        });
+                                        navigateToCompare(versesToCompare.slice(0, 11));
+                                        setShowRootAnalysis(false);
+                                    }}
+                                >
+                                    Compare One from Each Meaning
+                                </button>
+                            </div>
+                        </div>
+
                         {/* Meaning variations section */}
                         {rootAnalysisData.meaningVariations && rootAnalysisData.meaningVariations.length > 0 && (
                             <div className="meaning-variations" style={{
@@ -819,62 +884,6 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                             )}
                                         </div>
                                     ))}
-                                </div>
-                                
-                                {/* Quick action buttons */}
-                                <div style={{ marginTop: '15px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                    <button
-                                        className="quick-action-btn"
-                                        style={{
-                                            padding: '8px 16px',
-                                            background: '#4caf50',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            fontSize: '14px',
-                                            cursor: 'pointer'
-                                        }}
-                                        onClick={() => {
-                                            // Select one verse from each meaning variation
-                                            const versesToCompare = [rootAnalysisData.sourceVerse];
-                                            rootAnalysisData.meaningVariations.forEach(([meaning, verses]) => {
-                                                if (verses.length > 0) {
-                                                    versesToCompare.push(verses[0].verse);
-                                                }
-                                            });
-                                            navigateToCompare(versesToCompare.slice(0, 11)); // Limit to 10 variations + source
-                                            setShowRootAnalysis(false);
-                                        }}
-                                    >
-                                        📊 Compare One from Each Meaning
-                                    </button>
-                                    
-                                    {selectedMeaningCategory && (
-                                        <button
-                                            className="quick-action-btn"
-                                            style={{
-                                                padding: '8px 16px',
-                                                background: '#2196f3',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '6px',
-                                                fontSize: '14px',
-                                                cursor: 'pointer'
-                                            }}
-                                            onClick={() => {
-                                                // Get all verses for selected meaning category
-                                                const categoryData = rootAnalysisData.meaningVariations.find(([meaning]) => meaning === selectedMeaningCategory);
-                                                if (categoryData) {
-                                                    const [, verses] = categoryData;
-                                                    const versesToCompare = verses.map(v => v.verse).slice(0, 10); // Limit to 10
-                                                    navigateToCompare(versesToCompare);
-                                                    setShowRootAnalysis(false);
-                                                }
-                                            }}
-                                        >
-                                            📚 View All "{selectedMeaningCategory}" Verses
-                                        </button>
-                                    )}
                                 </div>
                             </div>
                         )}
@@ -914,34 +923,23 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                 </div>
                             )}
                             
-                            {/* Sticky action buttons for mobile */}
-                            <div className="action-buttons" style={{
-                                position: isMobile ? 'sticky' : 'relative',
-                                bottom: isMobile ? 0 : 'auto',
-                                background: isMobile ? 'white' : 'transparent',
-                                padding: isMobile ? '15px' : '20px',
-                                paddingTop: '20px',
+                            {/* Close button */}
+                            <div style={{
+                                padding: '20px',
                                 borderTop: '1px solid #e8ecf0',
-                                display: 'flex',
-                                gap: '10px',
-                                flexDirection: isMobile ? 'column' : 'row',
-                                boxShadow: isMobile ? '0 -2px 10px rgba(0,0,0,0.1)' : 'none'
+                                textAlign: 'center'
                             }}>
                                 <button
-                                    className="compare-btn"
-                                    onClick={() => {
-                                        const versesToCompare = [
-                                            rootAnalysisData.sourceVerse,
-                                            ...rootAnalysisData.relatedVerses.slice(0, showAllRootVerses ? 10 : 5)
-                                        ];
-                                        navigateToCompare(versesToCompare);
-                                        setShowRootAnalysis(false);
-                                    }}
-                                >
-                                    📊 Compare Selected Verses
-                                </button>
-                                <button
                                     className="cancel-btn"
+                                    style={{
+                                        padding: '10px 30px',
+                                        background: '#f5f5f5',
+                                        color: '#666',
+                                        border: '1px solid #ddd',
+                                        borderRadius: '6px',
+                                        fontSize: '14px',
+                                        cursor: 'pointer'
+                                    }}
                                     onClick={() => {
                                         setShowRootAnalysis(false);
                                         setSelectedMeaningCategory(null);

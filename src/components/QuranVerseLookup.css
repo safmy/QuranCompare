@@ -6,19 +6,46 @@
 }
 
 .verse-lookup-header {
-    text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .verse-lookup-header h2 {
     color: #7c3aed;
     margin-bottom: 10px;
+    text-align: center;
 }
 
-.verse-lookup-header p {
+.search-controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.search-hint {
     color: #666;
     font-size: 14px;
-    margin-bottom: 15px;
+    margin: 0;
+}
+
+.control-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.toggle-compact {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+}
+
+.toggle-compact input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
 }
 
 .search-mode-toggle {
@@ -807,5 +834,21 @@
         background: #333;
         border-color: #404040;
         color: #b0b0b0;
+    }
+}
+/* Responsive design improvements */
+@media (max-width: 600px) {
+    .search-controls-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .control-buttons {
+        align-self: flex-end;
+    }
+    
+    .compare-actions-section {
+        flex-direction: column \!important;
     }
 }
