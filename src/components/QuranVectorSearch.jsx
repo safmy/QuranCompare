@@ -9,12 +9,10 @@ const QuranVectorSearch = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [numResults, setNumResults] = useState(5);
+  const [numResults, setNumResults] = useState(10);
   const [includeRashadMedia, setIncludeRashadMedia] = useState(false);
   const [includeFinalTestament, setIncludeFinalTestament] = useState(false);
-  const [includeQuranTalk, setIncludeQuranTalk] = useState(false);
   const [includeNewsletters, setIncludeNewsletters] = useState(false);
-  const [includeArabicVerses, setIncludeArabicVerses] = useState(false);
   
   const handleVerseClick = async (verseRef) => {
     try {
@@ -159,9 +157,9 @@ const QuranVectorSearch = () => {
           num_results: numResults,
           include_rashad_media: includeRashadMedia,
           include_final_testament: includeFinalTestament,
-          include_qurantalk: includeQuranTalk,
+          include_qurantalk: includeNewsletters,
           include_newsletters: includeNewsletters,
-          include_arabic_verses: includeArabicVerses
+          include_arabic_verses: includeFinalTestament
         })
       });
 
@@ -200,10 +198,10 @@ const QuranVectorSearch = () => {
   };
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px' }}>
       <h2 style={{ color: '#333', marginBottom: '20px' }}>Semantic Search</h2>
       <p style={{ color: '#666', marginBottom: '20px' }}>
-        Search across Rashad Khalifa Media, Final Testament, QuranTalk articles, and Rashad Khalifa Newsletters using AI-powered semantic search.
+        Search across Rashad Khalifa Media, Final Testament (English & Arabic), and Newsletters/Articles using AI-powered semantic search.
         <br />
         <span style={{ fontSize: '14px', color: '#888' }}>
           ✨ Supports Arabic text search and phonetic matching (e.g., "Kulhu" → "قل هو")
@@ -252,7 +250,7 @@ const QuranVectorSearch = () => {
               width: '100%'
             }}
           >
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20].map(num => (
               <option key={num} value={num}>{num}</option>
             ))}
           </select>
@@ -290,11 +288,11 @@ const QuranVectorSearch = () => {
           <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
             <input
               type="checkbox"
-              checked={includeArabicVerses}
-              onChange={(e) => setIncludeArabicVerses(e.target.checked)}
+              checked={includeFinalTestament}
+              onChange={(e) => setIncludeFinalTestament(e.target.checked)}
               style={{ marginRight: '8px' }}
             />
-            <span style={{ color: '#7c3aed', fontWeight: 'bold' }}>🕌 Quran Arabic Verses</span>
+            <span style={{ color: '#2196F3', fontWeight: 'bold' }}>📖 Final Testament</span>
           </label>
           <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
             <input
@@ -308,29 +306,11 @@ const QuranVectorSearch = () => {
           <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
             <input
               type="checkbox"
-              checked={includeFinalTestament}
-              onChange={(e) => setIncludeFinalTestament(e.target.checked)}
-              style={{ marginRight: '8px' }}
-            />
-            <span style={{ color: '#2196F3', fontWeight: 'bold' }}>📖 Final Testament</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={includeQuranTalk}
-              onChange={(e) => setIncludeQuranTalk(e.target.checked)}
-              style={{ marginRight: '8px' }}
-            />
-            <span style={{ color: '#FF9800', fontWeight: 'bold' }}>📄 QuranTalk Articles</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
               checked={includeNewsletters}
               onChange={(e) => setIncludeNewsletters(e.target.checked)}
               style={{ marginRight: '8px' }}
             />
-            <span style={{ color: '#9C27B0', fontWeight: 'bold' }}>📰 Rashad Khalifa Newsletters</span>
+            <span style={{ color: '#9C27B0', fontWeight: 'bold' }}>📰 Newsletters & Articles</span>
           </label>
         </div>
       </div>
@@ -349,7 +329,7 @@ const QuranVectorSearch = () => {
       )}
 
       {searchResults.length > 0 && (
-        <div>
+        <div style={{ maxWidth: '700px', margin: '0 auto' }}>
           <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
             Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for "{searchTerm}"
           </p>
@@ -409,7 +389,9 @@ const QuranVectorSearch = () => {
                       color: '#555',
                       marginBottom: '10px'
                     }}>
-                      {result.content}
+                      {result.content.startsWith('Arabic:') ? 
+                        result.content.split('\nEnglish: ')[1] : 
+                        result.content}
                     </p>
                   </div>
                 ))}
