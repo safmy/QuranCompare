@@ -37,6 +37,10 @@ TRANSLITERATION_MAP = {
     'qulhuwallahu ahad': ['قل هو الله أحد', 'قُلْ هُوَ اللَّهُ أَحَدٌ'],
     'kul huwallah ahad': ['قل هو الله أحد', 'قُلْ هُوَ اللَّهُ أَحَدٌ'],
     'qul huwallah ahad': ['قل هو الله أحد', 'قُلْ هُوَ اللَّهُ أَحَدٌ'],
+    
+    # Common phrase variations
+    'wahdahu': ['وحده', 'وَحْدَهُ', 'وَحْدَهُۥ'],  # alone/only
+    'dhukira allah wahdahu': ['ذُكِرَ اللَّهُ وَحْدَهُ', 'ذكر الله وحده'],  # Allah alone is mentioned
 }
 
 # Arabic diacritics that can be removed for matching
@@ -95,13 +99,33 @@ def is_arabic_text(text):
     arabic_pattern = re.compile(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]')
     return bool(arabic_pattern.search(text))
 
+def fix_common_arabic_typos(text):
+    """
+    Fix common Arabic typos and variants
+    """
+    # Common typos
+    typo_fixes = {
+        'وَهْدَهُ': 'وَحْدَهُ',  # Fix wahdahu typo
+        'وهده': 'وحده',        # Without diacritics
+        'الهه': 'الله',         # Allah typo
+    }
+    
+    result = text
+    for typo, correct in typo_fixes.items():
+        result = result.replace(typo, correct)
+    
+    return result
+
 def enhance_arabic_search_query(query):
     """
     Enhance search query to handle both Arabic and transliterated text
     """
-    # If query is in Arabic, normalize it
+    # If query is in Arabic, normalize it and fix typos
     if is_arabic_text(query):
-        normalized = normalize_arabic_text(query)
+        # First fix common typos
+        fixed_query = fix_common_arabic_typos(query)
+        # Then normalize
+        normalized = normalize_arabic_text(fixed_query)
         return normalized
     
     # If query is transliterated, try to convert to Arabic

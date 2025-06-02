@@ -229,7 +229,7 @@ def load_vector_collections():
     else:
         logger.error("❌ No embeddings to create combined index")
 
-def create_embedding(text: str, force_english: bool = False) -> np.ndarray:
+def create_embedding(text: str, force_english: bool = False, collection_name: str = None) -> np.ndarray:
     """Create embedding for text using OpenAI"""
     global client
     
@@ -253,9 +253,15 @@ def create_embedding(text: str, force_english: bool = False) -> np.ndarray:
             else:
                 query_text = text
         
+        # Use the correct embedding model for each collection
+        if collection_name == "ArabicVerses":
+            model = "text-embedding-3-small"  # Arabic verses use the newer model
+        else:
+            model = "text-embedding-ada-002"  # All other collections use ada-002
+        
         response = client.embeddings.create(
             input=query_text,
-            model="text-embedding-ada-002"
+            model=model
         )
         return np.array(response.data[0].embedding).astype('float32')
     except Exception as e:
@@ -594,11 +600,11 @@ async def vector_search(request: SearchRequest):
             
             # Create appropriate embedding for this collection
             if collection_name == "ArabicVerses":
-                # For Arabic verses, use regular embedding processing
-                query_embedding = create_embedding(request.query, force_english=False)
+                # For Arabic verses, use regular embedding processing with correct model
+                query_embedding = create_embedding(request.query, force_english=False, collection_name=collection_name)
             else:
-                # For English collections, force English processing
-                query_embedding = create_embedding(request.query, force_english=True)
+                # For English collections, force English processing with correct model
+                query_embedding = create_embedding(request.query, force_english=True, collection_name=collection_name)
             
             query_embedding = query_embedding.reshape(1, -1)
             
