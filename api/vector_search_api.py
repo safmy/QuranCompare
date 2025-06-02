@@ -149,14 +149,22 @@ def load_vector_collections():
     # Try loading from cloud first
     use_cloud = os.getenv("USE_CLOUD_VECTORS", "true").lower() == "true"
     
+    VECTOR_COLLECTIONS = {}
+    
     if use_cloud:
         logger.info("Attempting to load vectors from cloud storage...")
-        VECTOR_COLLECTIONS = load_vectors_from_cloud()
+        cloud_collections = load_vectors_from_cloud()
+        if cloud_collections:
+            VECTOR_COLLECTIONS.update(cloud_collections)
     
-    # Fallback to local if cloud fails or is disabled
-    if not VECTOR_COLLECTIONS:
-        logger.info("Loading vectors from local files...")
-        VECTOR_COLLECTIONS = load_vectors_from_local()
+    # Try to load missing collections from local files
+    logger.info("Checking for missing collections in local files...")
+    local_collections = load_vectors_from_local()
+    if local_collections:
+        for name, collection in local_collections.items():
+            if name not in VECTOR_COLLECTIONS:
+                logger.info(f"Adding {name} from local files")
+                VECTOR_COLLECTIONS[name] = collection
     
     if not VECTOR_COLLECTIONS:
         logger.error("❌ Failed to load any vector collections")

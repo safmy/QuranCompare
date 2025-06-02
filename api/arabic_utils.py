@@ -13,14 +13,14 @@ TRANSLITERATION_MAP = {
     'kul hu': ['قل هو', 'قُلْ هُوَ'],
     
     # Allah variations
-    'allah': ['الله', 'اللَّه', 'اللَّهُ', 'اللَّهِ', 'ٱللَّه'],
-    'allahu': ['الله', 'اللَّه', 'اللَّهُ'],
-    'allahi': ['اللَّهِ'],
+    'allah': ['الله', 'اللَّه', 'اللَّهُ', 'اللَّهِ', 'ٱللَّه', 'ٱللَّهِ'],
+    'allahu': ['الله', 'اللَّه', 'اللَّهُ', 'ٱللَّهُ'],
+    'allahi': ['اللَّهِ', 'ٱللَّهِ'],
     
     # Common words
-    'rahman': ['رحمن', 'الرحمن', 'رَحْمَٰن'],
-    'rahim': ['رحيم', 'الرحيم', 'رَحِيم'],
-    'bismillah': ['بسم الله', 'بِسْمِ اللَّه'],
+    'rahman': ['رحمن', 'الرحمن', 'رَحْمَٰن', 'ٱلرَّحْمَٰن'],
+    'rahim': ['رحيم', 'الرحيم', 'رَحِيم', 'ٱلرَّحِيم'],
+    'bismillah': ['بسم الله', 'بِسْمِ اللَّه', 'بِسْمِ ٱللَّهِ', 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ'],
     'alhamdulillah': ['الحمد لله', 'ٱلْحَمْدُ لِلَّه'],
     'inshallah': ['إن شاء الله', 'إِنْ شَاءَ اللَّه'],
     'mashallah': ['ما شاء الله', 'مَا شَاءَ اللَّه'],
@@ -41,8 +41,16 @@ def normalize_arabic_text(text):
     # Remove diacritics
     text = ARABIC_DIACRITICS.sub('', text)
     
-    # Normalize unicode
-    text = unicodedata.normalize('NFC', text)
+    # Normalize unicode - use NFKC for compatibility
+    text = unicodedata.normalize('NFKC', text)
+    
+    # Normalize different forms of the same letter
+    # Alif variations
+    text = text.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا').replace('ٱ', 'ا')
+    # Ta marbouta variations
+    text = text.replace('ة', 'ه')
+    # Yaa variations  
+    text = text.replace('ي', 'ى').replace('ئ', 'ى')
     
     # Remove extra spaces
     text = ' '.join(text.split())
@@ -60,10 +68,15 @@ def transliterate_to_arabic(text):
         return TRANSLITERATION_MAP[text_lower][0]
     
     # Check if the text contains any transliterated phrases
+    result = text_lower
     for translit, arabic_variations in TRANSLITERATION_MAP.items():
         if translit in text_lower:
             # Replace the transliteration with Arabic
-            text_lower = text_lower.replace(translit, arabic_variations[0])
+            result = result.replace(translit, arabic_variations[0])
+    
+    # If we made any replacements, return the result
+    if result != text_lower:
+        return result
     
     return text_lower
 
