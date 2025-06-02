@@ -567,57 +567,34 @@ async def vector_search(request: SearchRequest):
     request.num_results = min(max(1, request.num_results), 20)
     
     try:
-        # Detect if query is Arabic
-        query_is_arabic = is_arabic_text(request.query)
-        logger.info(f"Query: '{request.query}', Is Arabic: {query_is_arabic}")
-        
-        # Create query embedding - force English processing for non-Arabic queries
-        force_english = not query_is_arabic
-        query_embedding = create_embedding(request.query, force_english=force_english)
+        # Simple approach - just create embedding without language detection complexity
+        query_embedding = create_embedding(request.query, force_english=True)  # Always use clean English processing
         query_embedding = query_embedding.reshape(1, -1)
-        logger.info(f"Created embedding with force_english={force_english}")
         
-        # Adjust collection filter based on language
+        # Simple collection filter - revert to working approach
         collection_filter = {
             "RashadAllMedia": request.include_rashad_media,
-            "FinalTestament": request.include_final_testament and not query_is_arabic,
+            "FinalTestament": request.include_final_testament,
             "QuranTalkArticles": request.include_qurantalk,
             "Newsletters": request.include_newsletters,
-            "ArabicVerses": request.include_arabic_verses and query_is_arabic
+            "ArabicVerses": request.include_arabic_verses
         }
         
-        # If query is English but Final Testament is requested, ensure we search it
-        if not query_is_arabic and request.include_final_testament:
-            collection_filter["FinalTestament"] = True
-            collection_filter["ArabicVerses"] = False
+        logger.info(f"Query: '{request.query}', Collection filter: {collection_filter}")
         
-        # If query is Arabic but Arabic verses are requested, ensure we search them
-        if query_is_arabic and request.include_arabic_verses:
-            collection_filter["ArabicVerses"] = True
-            # Still allow Final Testament for Arabic queries if specifically requested
-            if request.include_final_testament:
-                collection_filter["FinalTestament"] = True
-        
-        # Log collection filter
-        logger.info(f"Collection filter: {collection_filter}")
-        
-        # For English queries searching Final Testament, search more broadly
-        if not query_is_arabic and request.include_final_testament:
-            search_count = min(500, COMBINED_INDEX.ntotal)  # Search more broadly for English
-        else:
-            search_count = min(request.num_results * 10, COMBINED_INDEX.ntotal)
-        
+        # Search more results than needed to account for filtering and deduplication
+        search_count = min(request.num_results * 5, COMBINED_INDEX.ntotal)
         distances, indices = COMBINED_INDEX.search(query_embedding, search_count)
         
         logger.info(f"Found {len(indices[0])} candidate results from combined index")
         
-        # Debug: Check what collections are in the first 50 results
+        # Debug: Check what collections are in the first 20 results
         collection_counts = {}
-        for i, idx in enumerate(indices[0][:50]):
+        for i, idx in enumerate(indices[0][:20]):
             if idx >= 0 and idx < len(COMBINED_METADATA):
                 collection = COMBINED_METADATA[idx]["collection"]
                 collection_counts[collection] = collection_counts.get(collection, 0) + 1
-        logger.info(f"Top 50 candidates by collection: {collection_counts}")
+        logger.info(f"Top 20 candidates by collection: {collection_counts}")
         
         results = []
         seen_content = set()  # Track unique content to avoid duplicates
