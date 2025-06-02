@@ -130,8 +130,13 @@ def load_vectors_from_cloud(cache_dir: str = "./vector_cache") -> Dict:
         
         try:
             # Define local cache paths
-            faiss_path = cache_path / f"{name}.faiss"
-            json_path = cache_path / f"{name}.json"
+            if name == "ArabicVerses":
+                # Special handling for Arabic verses - use original filename
+                faiss_path = cache_path / "arabic_verses.faiss"
+                json_path = cache_path / "arabic_verses.json"
+            else:
+                faiss_path = cache_path / f"{name}.faiss"
+                json_path = cache_path / f"{name}.json"
             
             # Download if not cached
             if not faiss_path.exists():
@@ -208,6 +213,22 @@ def load_vectors_from_cloud(cache_dir: str = "./vector_cache") -> Dict:
                                 "source": "Rashad Khalifa Newsletters",
                                 "id": i
                             })
+                    elif name == "ArabicVerses":
+                        # ArabicVerses - use the verse metadata from the separate metadata array
+                        verse_metadata_list = data.get("metadata", [])
+                        for i, text in enumerate(texts):
+                            if i < len(verse_metadata_list):
+                                verse_meta = verse_metadata_list[i]
+                                metadata.append(verse_meta)
+                            else:
+                                # Fallback if metadata is missing
+                                metadata.append({
+                                    "content": text,
+                                    "arabic": text,
+                                    "title": f"Arabic Verse {i+1}",
+                                    "sura_verse": f"Unknown:{i+1}",
+                                    "verse_index": i
+                                })
                     else:
                         # RashadAllMedia or default format
                         for i, text in enumerate(texts):
@@ -221,6 +242,9 @@ def load_vectors_from_cloud(cache_dir: str = "./vector_cache") -> Dict:
                     # Handle newsletter format or regular list
                     if name == "Newsletters" and len(data) > 0 and isinstance(data[0], dict) and 'title' in data[0]:
                         # Newsletter format with full metadata
+                        metadata = data
+                    elif name == "ArabicVerses" and len(data) > 0 and isinstance(data[0], dict) and 'sura_verse' in data[0]:
+                        # Arabic verses format with verse metadata
                         metadata = data
                     else:
                         # Regular list format
@@ -249,7 +273,7 @@ def load_vectors_from_cloud(cache_dir: str = "./vector_cache") -> Dict:
     logger.info(f"\nTotal collections loaded: {len(vector_collections)}")
     return vector_collections
 
-def load_vectors_from_local(base_dir: str = "../..") -> Dict:
+def load_vectors_from_local(base_dir: str = ".") -> Dict:
     """Load vector collections from local files (fallback)"""
     vector_collections = {}
     
@@ -269,22 +293,56 @@ def load_vectors_from_local(base_dir: str = "../..") -> Dict:
         "Newsletters": {
             "faiss": os.path.join(base_dir, "api/newsletter_data/newsletters_comprehensive.faiss"),
             "json": os.path.join(base_dir, "api/newsletter_data/newsletters_comprehensive.json")
+        },
+        "ArabicVerses": {
+            "faiss": os.path.join(base_dir, "arabic_embeddings/arabic_verses.faiss"),
+            "json": os.path.join(base_dir, "arabic_embeddings/arabic_verses.json")
         }
     }
+    
+    # Also check vector_cache directory for Arabic verses
+    vector_cache_paths = {
+        "ArabicVerses": {
+            "faiss": os.path.join(base_dir, "vector_cache/arabic_verses.faiss"),
+            "json": os.path.join(base_dir, "vector_cache/arabic_verses.json")
+        }
+    }
+    
+    # Merge vector_cache paths for Arabic verses
+    for name, paths in vector_cache_paths.items():
+        if name not in local_paths:
+            local_paths[name] = paths
+        elif os.path.exists(paths["faiss"]) and os.path.exists(paths["json"]):
+            # Use vector_cache if files exist there
+            local_paths[name] = paths
     
     for name, paths in local_paths.items():
         try:
             if os.path.exists(paths["faiss"]) and os.path.exists(paths["json"]):
+                logger.info(f"Loading {name} from local files...")
                 index = faiss.read_index(paths["faiss"])
                 with open(paths["json"], 'r', encoding='utf-8') as f:
-                    metadata = json.load(f)
+                    data = json.load(f)
+                
+                # Handle different JSON structures
+                if isinstance(data, dict) and "metadata" in data:
+                    # ArabicVerses format with separate metadata
+                    metadata = data.get("metadata", [])
+                    logger.info(f"  Using metadata array with {len(metadata)} entries")
+                elif isinstance(data, list):
+                    # Direct list format
+                    metadata = data
+                    logger.info(f"  Using direct list with {len(metadata)} entries")
+                else:
+                    logger.warning(f"  Unexpected JSON structure for {name}: {type(data)}")
+                    metadata = []
                 
                 vector_collections[name] = {
                     "index": index,
                     "metadata": metadata,
                     "size": index.ntotal
                 }
-                logger.info(f"✅ Loaded {name} from local: {index.ntotal} vectors")
+                logger.info(f"✅ Loaded {name} from local: {index.ntotal} vectors, {len(metadata)} metadata")
         except Exception as e:
             logger.error(f"Error loading local {name}: {e}")
     
