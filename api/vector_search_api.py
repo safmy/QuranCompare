@@ -296,7 +296,8 @@ async def startup_event():
     # Load vector collections
     load_vector_collections()
     
-    logger.info("🚀 Vector Search API ready!")
+    logger.info(f"🚀 Vector Search API ready! Loaded collections: {list(VECTOR_COLLECTIONS.keys())}")
+    logger.info(f"Combined index total vectors: {COMBINED_INDEX.ntotal if COMBINED_INDEX else 0}")
 
 @app.get("/")
 async def root():
@@ -568,6 +569,7 @@ async def vector_search(request: SearchRequest):
     try:
         # Detect if query is Arabic
         query_is_arabic = is_arabic_text(request.query)
+        logger.info(f"Query: '{request.query}', Is Arabic: {query_is_arabic}")
         
         # Create query embedding
         query_embedding = create_embedding(request.query)
@@ -594,12 +596,18 @@ async def vector_search(request: SearchRequest):
             if request.include_final_testament:
                 collection_filter["FinalTestament"] = True
         
+        # Log collection filter
+        logger.info(f"Collection filter: {collection_filter}")
+        
         # Search more results than needed to account for filtering and deduplication
         search_count = min(request.num_results * 10, COMBINED_INDEX.ntotal)
         distances, indices = COMBINED_INDEX.search(query_embedding, search_count)
         
+        logger.info(f"Found {len(indices[0])} candidate results from combined index")
+        
         results = []
         seen_content = set()  # Track unique content to avoid duplicates
+        final_testament_count = 0
         
         for i, (distance, idx) in enumerate(zip(distances[0], indices[0])):
             if idx < 0 or len(results) >= request.num_results:
@@ -612,6 +620,9 @@ async def vector_search(request: SearchRequest):
             # Skip if collection is filtered out
             if not collection_filter.get(collection, True):
                 continue
+            
+            if collection == "FinalTestament":
+                final_testament_count += 1
                 
             metadata = combined_meta["metadata"]
             
@@ -731,6 +742,8 @@ async def vector_search(request: SearchRequest):
                 source_url=source_url,
                 youtube_link=youtube_link
             ))
+        
+        logger.info(f"Final results: {len(results)} total, {final_testament_count} from Final Testament")
         
         return SearchResponse(
             results=results,
