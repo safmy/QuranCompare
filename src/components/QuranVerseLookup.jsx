@@ -564,6 +564,8 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     return (
         <div className="verse-lookup-container">
             <div className="verse-lookup-header compact">
+                <h2>📖 Quran Search</h2>
+            </div>
 
             <form onSubmit={handleSubmit} className="verse-lookup-form">
                 <div className="search-hint-inline">
