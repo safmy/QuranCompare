@@ -18,6 +18,79 @@ const QuranVectorSearch = () => {
   const [regexResults, setRegexResults] = useState([]);
   const [quranData, setQuranData] = useState(null);
   
+  // Long press functionality
+  const [longPressTimer, setLongPressTimer] = useState(null);
+  const [copiedVerse, setCopiedVerse] = useState(null);
+  
+  // Long press handlers
+  const handleLongPressStart = (result) => {
+    const timer = setTimeout(() => {
+      copyResultToClipboard(result);
+    }, 500); // 500ms for long press
+    setLongPressTimer(timer);
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  const copyResultToClipboard = async (result) => {
+    try {
+      let verseText = '';
+      
+      // Handle different result types
+      if (result.collection === 'FinalTestament' || result.collection === 'ArabicVerses') {
+        const verseMatch = result.title.match(/\[(\d+:\d+)\]/);
+        const verseRef = verseMatch ? verseMatch[1] : '';
+        
+        if (result.collection === 'ArabicVerses' && result.content.includes('\nEnglish: ')) {
+          // For Arabic verses, get the English part
+          const englishPart = result.content.split('\nEnglish: ')[1];
+          verseText = `[${verseRef}] ${englishPart}`;
+        } else if (quranData) {
+          // For subtitle/footnote results, get the complete verse
+          const completeVerse = getCompleteVerseData(verseRef);
+          verseText = completeVerse ? `[${verseRef}] ${completeVerse.english}` : `[${verseRef}] ${result.content}`;
+        } else {
+          verseText = `[${verseRef}] ${result.content}`;
+        }
+      } else {
+        // For other collections (articles, newsletters, etc.), just copy the content
+        verseText = result.content;
+      }
+      
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(verseText);
+      } else {
+        // Fallback for older browsers or non-secure contexts
+        const textArea = document.createElement('textarea');
+        textArea.value = verseText;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      
+      // Show feedback
+      const verseMatch = result.title.match(/\[(\d+:\d+)\]/);
+      const displayRef = verseMatch ? verseMatch[1] : 'Content';
+      setCopiedVerse(displayRef);
+      setTimeout(() => {
+        setCopiedVerse(null);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy result:', err);
+    }
+  };
+  
   // Helper function to highlight search terms in text
   const highlightSearchTerms = (text, searchQuery) => {
     if (!searchQuery || !text) return text;
@@ -495,13 +568,24 @@ const QuranVectorSearch = () => {
           {useRegex && regexResults.length > 0 && (
             <div>
               {regexResults.map((result, index) => (
-                <div key={`regex-${index}`} style={{
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  backgroundColor: '#f9f9f9',
-                  marginBottom: '15px'
-                }}>
+                <div 
+                  key={`regex-${index}`} 
+                  style={{
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    backgroundColor: '#f9f9f9',
+                    marginBottom: '15px',
+                    cursor: 'pointer',
+                    userSelect: 'none'
+                  }}
+                  onMouseDown={() => handleLongPressStart(result)}
+                  onMouseUp={handleLongPressEnd}
+                  onMouseLeave={handleLongPressEnd}
+                  onTouchStart={() => handleLongPressStart(result)}
+                  onTouchEnd={handleLongPressEnd}
+                  onTouchCancel={handleLongPressEnd}
+                >
                   <div style={{ 
                     display: 'flex', 
                     justifyContent: 'space-between', 
@@ -558,13 +642,24 @@ const QuranVectorSearch = () => {
               {searchResults
                 .filter(result => result.collection === 'ArabicVerses')
                 .map((result, index) => (
-                  <div key={`arabic-${index}`} style={{
-                    border: '1px solid #e0d4f7',
-                    borderRadius: '8px',
-                    padding: '20px',
-                    backgroundColor: '#f9f6ff',
-                    marginBottom: '15px'
-                  }}>
+                  <div 
+                    key={`arabic-${index}`} 
+                    style={{
+                      border: '1px solid #e0d4f7',
+                      borderRadius: '8px',
+                      padding: '20px',
+                      backgroundColor: '#f9f6ff',
+                      marginBottom: '15px',
+                      cursor: 'pointer',
+                      userSelect: 'none'
+                    }}
+                    onMouseDown={() => handleLongPressStart(result)}
+                    onMouseUp={handleLongPressEnd}
+                    onMouseLeave={handleLongPressEnd}
+                    onTouchStart={() => handleLongPressStart(result)}
+                    onTouchEnd={handleLongPressEnd}
+                    onTouchCancel={handleLongPressEnd}
+                  >
                     <div style={{ 
                       display: 'flex', 
                       justifyContent: 'space-between', 
@@ -624,13 +719,24 @@ const QuranVectorSearch = () => {
               {searchResults
                 .filter(result => result.collection !== 'ArabicVerses')
                 .map((result, index) => (
-            <div key={index} style={{
-              border: `2px solid ${getSourceBorderColor(result.source)}`,
-              borderRadius: '8px',
-              padding: '20px',
-              backgroundColor: getSourceBackgroundColor(result.source),
-              marginBottom: '15px'
-            }}>
+            <div 
+              key={index} 
+              style={{
+                border: `2px solid ${getSourceBorderColor(result.source)}`,
+                borderRadius: '8px',
+                padding: '20px',
+                backgroundColor: getSourceBackgroundColor(result.source),
+                marginBottom: '15px',
+                cursor: 'pointer',
+                userSelect: 'none'
+              }}
+              onMouseDown={() => handleLongPressStart(result)}
+              onMouseUp={handleLongPressEnd}
+              onMouseLeave={handleLongPressEnd}
+              onTouchStart={() => handleLongPressStart(result)}
+              onTouchEnd={handleLongPressEnd}
+              onTouchCancel={handleLongPressEnd}
+            >
               <div style={{ 
                 display: 'flex', 
                 justifyContent: 'space-between', 
@@ -862,6 +968,26 @@ const QuranVectorSearch = () => {
           ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Copy feedback */}
+      {copiedVerse && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: '#4caf50',
+          color: 'white',
+          padding: '10px 20px',
+          borderRadius: '6px',
+          zIndex: 1000,
+          fontSize: '14px',
+          fontWeight: 'bold',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+        }}>
+          📋 Copied [{copiedVerse}] to clipboard
         </div>
       )}
 

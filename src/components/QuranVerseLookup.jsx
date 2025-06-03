@@ -117,6 +117,56 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
     const [isMobile, setIsMobile] = useState(false);
     const [selectedMeaningCategory, setSelectedMeaningCategory] = useState(null);
     
+    // Long press functionality
+    const [longPressTimer, setLongPressTimer] = useState(null);
+    const [copiedVerse, setCopiedVerse] = useState(null);
+    
+    // Long press handlers
+    const handleLongPressStart = (verse) => {
+        const timer = setTimeout(() => {
+            copyVerseToClipboard(verse);
+        }, 500); // 500ms for long press
+        setLongPressTimer(timer);
+    };
+
+    const handleLongPressEnd = () => {
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            setLongPressTimer(null);
+        }
+    };
+
+    const copyVerseToClipboard = async (verse) => {
+        try {
+            const verseText = `[${verse.sura_verse}] ${getTranslationText(verse, currentLanguage)}`;
+            
+            // Try modern clipboard API first
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(verseText);
+            } else {
+                // Fallback for older browsers or non-secure contexts
+                const textArea = document.createElement('textarea');
+                textArea.value = verseText;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            }
+            
+            // Show feedback
+            setCopiedVerse(verse.sura_verse);
+            setTimeout(() => {
+                setCopiedVerse(null);
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy verse:', err);
+        }
+    };
+    
     const handleVerseClick = async (verseRef) => {
         try {
             // Get the subtitle range for this verse
@@ -660,7 +710,20 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                                 </div>
                             )}
                         
-                        <div className="verse-card">
+                        <div 
+                            className="verse-card"
+                            onMouseDown={() => handleLongPressStart(verse)}
+                            onMouseUp={handleLongPressEnd}
+                            onMouseLeave={handleLongPressEnd}
+                            onTouchStart={() => handleLongPressStart(verse)}
+                            onTouchEnd={handleLongPressEnd}
+                            onTouchCancel={handleLongPressEnd}
+                            style={{
+                                position: 'relative',
+                                cursor: 'pointer',
+                                userSelect: 'none'
+                            }}
+                        >
                             <div className="verse-header">
                                 <span 
                                     className="verse-ref"
@@ -705,6 +768,26 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                     );
                 })}
             </div>
+
+            {/* Copy feedback */}
+            {copiedVerse && (
+                <div style={{
+                    position: 'fixed',
+                    top: '20px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    backgroundColor: '#4caf50',
+                    color: 'white',
+                    padding: '10px 20px',
+                    borderRadius: '6px',
+                    zIndex: 1000,
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                }}>
+                    📋 Copied [{copiedVerse}] to clipboard
+                </div>
+            )}
 
             {/* Tooltip for word hover */}
             {hoveredWord && (
