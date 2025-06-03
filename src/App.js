@@ -95,7 +95,7 @@ function AppContent() {
       id: 'lookup', 
       label: 'Verse Lookup', 
       component: <QuranVerseLookup 
-        key={`${verseRangeForLookup}-${JSON.stringify(lookupState)}`} 
+        key={verseRangeForLookup} 
         initialRange={verseRangeForLookup}
         savedState={lookupState}
       /> 
@@ -103,8 +103,7 @@ function AppContent() {
     { 
       id: 'vectorsearch', 
       label: 'Semantic Search', 
-      component: <QuranVectorSearch 
-        key={JSON.stringify(vectorSearchState)}
+      component: <QuranVectorSearch
         savedState={vectorSearchState}
       /> 
     },
