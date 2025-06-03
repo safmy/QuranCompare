@@ -703,7 +703,7 @@ const QuranVectorSearch = () => {
                     if (completeVerse) {
                       return (
                         <div>
-                          {completeVerse.subtitle && (
+                          {completeVerse.subtitle && result.source?.includes('Subtitle') && (
                             <div style={{
                               padding: '10px',
                               backgroundColor: '#e8f5e9',
@@ -711,7 +711,7 @@ const QuranVectorSearch = () => {
                               marginBottom: '10px',
                               fontStyle: 'italic'
                             }}>
-                              <strong>Subtitle:</strong> {highlightSearchTerms(completeVerse.subtitle, searchTerm)}
+                              {highlightSearchTerms(completeVerse.subtitle, searchTerm)}
                             </div>
                           )}
                           <div style={{
@@ -722,7 +722,7 @@ const QuranVectorSearch = () => {
                           }}>
                             <strong>[{completeVerse.sura_verse}]</strong> {highlightSearchTerms(completeVerse.english, searchTerm)}
                           </div>
-                          {completeVerse.footnote && (
+                          {completeVerse.footnote && result.source?.includes('Footnote') && (
                             <div style={{
                               padding: '10px',
                               backgroundColor: '#fff3cd',
@@ -730,7 +730,7 @@ const QuranVectorSearch = () => {
                               fontSize: '14px',
                               fontStyle: 'italic'
                             }}>
-                              <strong>Footnote:</strong> {highlightSearchTerms(completeVerse.footnote, searchTerm)}
+                              {highlightSearchTerms(completeVerse.footnote, searchTerm)}
                             </div>
                           )}
                         </div>

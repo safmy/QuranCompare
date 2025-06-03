@@ -563,28 +563,22 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
 
     return (
         <div className="verse-lookup-container">
-            <div className="verse-lookup-header">
-                <h2>📖 Quran Search</h2>
-                <div className="search-controls-row">
-                    <p className="search-hint">
-                        Enter verse references (1:1-7, 2:5, chapter 3) or search for text within verses
-                    </p>
-                    <div className="control-buttons">
-                        {searchMode === 'text' && (
-                            <label className="toggle-compact">
-                                <input
-                                    type="checkbox"
-                                    checked={exactMatch}
-                                    onChange={(e) => setExactMatch(e.target.checked)}
-                                />
-                                <span>Exact</span>
-                            </label>
-                        )}
-                    </div>
-                </div>
-            </div>
+            <div className="verse-lookup-header compact">
 
             <form onSubmit={handleSubmit} className="verse-lookup-form">
+                <div className="search-hint-inline">
+                    Enter verse references (1:1-7, 2:5, chapter 3) or search for text within verses
+                    {searchMode === 'text' && (
+                        <label className="toggle-compact inline">
+                            <input
+                                type="checkbox"
+                                checked={exactMatch}
+                                onChange={(e) => setExactMatch(e.target.checked)}
+                            />
+                            <span>Exact</span>
+                        </label>
+                    )}
+                </div>
                 <div className="input-group">
                     <input
                         type="text"
@@ -634,23 +628,14 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
 
             {/* Result count and tap hint header */}
             {verses.length > 0 && (
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '10px 15px',
-                    backgroundColor: '#f5f5f5',
-                    borderRadius: '6px',
-                    marginBottom: '15px',
-                    fontSize: '14px'
-                }}>
-                    <div style={{ color: '#666', fontWeight: 'bold' }}>
-                        Found {verses.length} verse{verses.length !== 1 ? 's' : ''} {searchMode === 'text' ? `matching "${verseRange}"` : `in range ${verseRange}`}
-                    </div>
+                <div className="results-header">
+                    <span className="result-count">
+                        Found {verses.length} verse{verses.length !== 1 ? 's' : ''}
+                    </span>
                     {showArabic && verses.some(v => v.arabic && v.roots) && (
-                        <div style={{ color: '#1976d2', fontSize: '13px' }}>
-                            💡 Tap Arabic words to see root/meaning
-                        </div>
+                        <span className="tap-hint">
+                            💡 Tap Arabic words
+                        </span>
                     )}
                 </div>
             )}
