@@ -556,13 +556,23 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
         setShowAllRootVerses(false);
     };
     
-    const navigateToCompare = (verses) => {
+    const navigateToCompare = (verses, meaningData = null) => {
         // Store verses in sessionStorage to pass to Compare tab
         sessionStorage.setItem('compareVerses', JSON.stringify(verses.map(v => v.sura_verse)));
         
+        // Store meaning variations data if provided
+        if (meaningData) {
+            sessionStorage.setItem('compareMeaningData', JSON.stringify(meaningData));
+        } else {
+            sessionStorage.removeItem('compareMeaningData');
+        }
+        
         // Trigger navigation to Compare tab
         const event = new CustomEvent('navigateToCompare', { 
-            detail: { verses: verses.map(v => v.sura_verse) } 
+            detail: { 
+                verses: verses.map(v => v.sura_verse),
+                meaningData: meaningData
+            } 
         });
         window.dispatchEvent(event);
     };
@@ -1067,12 +1077,27 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                                     }}
                                     onClick={() => {
                                         const versesToCompare = [rootAnalysisData.sourceVerse];
+                                        const meaningMap = new Map();
+                                        
                                         rootAnalysisData.meaningVariations.forEach(([meaning, verses]) => {
                                             if (verses.length > 0) {
-                                                versesToCompare.push(verses[0].verse);
+                                                const verse = verses[0].verse;
+                                                versesToCompare.push(verse);
+                                                meaningMap.set(verse.sura_verse, {
+                                                    meaning: meaning,
+                                                    arabicWord: verses[0].arabicWord,
+                                                    occurrences: verses.length
+                                                });
                                             }
                                         });
-                                        navigateToCompare(versesToCompare.slice(0, 11));
+                                        
+                                        const meaningData = {
+                                            root: rootAnalysisData.selectedRoot,
+                                            sourceVerse: rootAnalysisData.sourceVerse.sura_verse,
+                                            variations: Object.fromEntries(meaningMap)
+                                        };
+                                        
+                                        navigateToCompare(versesToCompare.slice(0, 11), meaningData);
                                         setShowRootAnalysis(false);
                                     }}
                                 >

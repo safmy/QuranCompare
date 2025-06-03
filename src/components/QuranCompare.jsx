@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import './QuranCompare.css';
-import QuranAudioPlayerSimple from './QuranAudioPlayerSimple';
 import QuranAudioPlayerEnhanced from './QuranAudioPlayerEnhanced';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getLanguageConfig, getTranslationText, getFootnoteText } from '../config/languages';
@@ -17,6 +16,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
   const [highlightedRoot, setHighlightedRoot] = useState(null); // Root to highlight
   const [lockedRoot, setLockedRoot] = useState(null); // Locked root (click mode)
   const [hoveredRoot, setHoveredRoot] = useState(null); // Hovered root (hover mode)
+  const [meaningData, setMeaningData] = useState(null); // Meaning variations data
 
   useEffect(() => {
     // Load Quran data
@@ -41,6 +41,14 @@ const QuranCompare = ({ initialVerses = [] }) => {
     // Handle initial verses from navigation
     if (initialVerses.length > 0 && quranData) {
       setVerseInputs(initialVerses);
+      
+      // Check for meaning data in sessionStorage
+      const storedMeaningData = sessionStorage.getItem('compareMeaningData');
+      if (storedMeaningData) {
+        setMeaningData(JSON.parse(storedMeaningData));
+        sessionStorage.removeItem('compareMeaningData'); // Clean up
+      }
+      
       // Auto-load these verses
       setTimeout(() => {
         handleCompare();
@@ -354,6 +362,64 @@ const QuranCompare = ({ initialVerses = [] }) => {
             )}
           </h3>
           
+          {/* Meaning Variations Summary */}
+          {meaningData && (
+            <div style={{
+              marginBottom: '30px',
+              padding: '20px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '8px',
+              border: '1px solid #e0e0e0'
+            }}>
+              <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#333' }}>
+                📚 Root Analysis Summary: "{meaningData.root}"
+              </h4>
+              <p style={{ marginBottom: '15px', color: '#666' }}>
+                The following verses demonstrate different meanings of the root "{meaningData.root}" in the Quran:
+              </p>
+              <div style={{ display: 'grid', gap: '10px' }}>
+                {Object.entries(meaningData.variations).map(([verseRef, data]) => (
+                  <div key={verseRef} style={{
+                    padding: '10px',
+                    backgroundColor: verseRef === meaningData.sourceVerse ? '#e3f2fd' : 'white',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px'
+                  }}>
+                    <strong>[{verseRef}]</strong>
+                    {verseRef === meaningData.sourceVerse && (
+                      <span style={{ 
+                        marginLeft: '10px', 
+                        fontSize: '0.8em', 
+                        color: '#1976d2',
+                        fontWeight: 'normal'
+                      }}>
+                        (Source verse)
+                      </span>
+                    )}
+                    <br />
+                    <span style={{ color: '#2e7d32' }}>"{data.arabicWord}"</span> → 
+                    <strong style={{ marginLeft: '5px' }}>{data.meaning}</strong>
+                    <br />
+                    <small style={{ color: '#666' }}>
+                      This meaning appears in {data.occurrences} verse{data.occurrences !== 1 ? 's' : ''} total
+                    </small>
+                  </div>
+                ))}
+              </div>
+              <div style={{ 
+                marginTop: '15px', 
+                padding: '10px',
+                backgroundColor: '#fff3cd',
+                borderRadius: '4px',
+                fontSize: '0.9em'
+              }}>
+                💡 <strong>Tip:</strong> Each verse below shows one example of how the root "{meaningData.root}" 
+                is used with different meanings. This helps understand the semantic range and contextual 
+                flexibility of Arabic roots in the Quran.
+              </div>
+            </div>
+          )}
+          
           <div className="verses-grid" style={{
             display: 'grid',
             gridTemplateColumns: getGridLayout(verses.length),
@@ -383,10 +449,22 @@ const QuranCompare = ({ initialVerses = [] }) => {
                   </div>
                 )}
                 
-                <QuranAudioPlayerSimple 
-                  verseReference={verse.reference}
-                  arabicText={verse.arabic}
-                />
+                {/* Show meaning variation for this verse if available */}
+                {meaningData && meaningData.variations[verse.sura_verse] && (
+                  <div style={{
+                    marginTop: '10px',
+                    padding: '8px',
+                    backgroundColor: '#f0f7ff',
+                    borderRadius: '4px',
+                    fontSize: '0.85em'
+                  }}>
+                    <strong>Root "{meaningData.root}" meaning:</strong> {meaningData.variations[verse.sura_verse].meaning}
+                    <br />
+                    <small style={{ color: '#666' }}>
+                      ({meaningData.variations[verse.sura_verse].occurrences} occurrences in Quran)
+                    </small>
+                  </div>
+                )}
               </div>
             ))}
           </div>
