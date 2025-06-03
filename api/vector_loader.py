@@ -37,6 +37,10 @@ VECTOR_URLS = {
     "ArabicVerses": {
         "faiss": f"{GITHUB_RELEASE_BASE}/arabic_verses.faiss",
         "json": f"{GITHUB_RELEASE_BASE}/arabic_verses.json"
+    },
+    "FootnotesSubtitles": {
+        "faiss": f"{GITHUB_RELEASE_BASE}/footnotes_subtitles.faiss",
+        "json": f"{GITHUB_RELEASE_BASE}/footnotes_subtitles.json"
     }
 }
 
@@ -63,6 +67,10 @@ def get_vector_urls():
         "ArabicVerses": {
             "faiss": os.getenv("ARABIC_VERSES_FAISS_URL", VECTOR_URLS["ArabicVerses"]["faiss"]),
             "json": os.getenv("ARABIC_VERSES_JSON_URL", VECTOR_URLS["ArabicVerses"]["json"])
+        },
+        "FootnotesSubtitles": {
+            "faiss": os.getenv("FOOTNOTES_FAISS_URL", VECTOR_URLS["FootnotesSubtitles"]["faiss"]),
+            "json": os.getenv("FOOTNOTES_JSON_URL", VECTOR_URLS["FootnotesSubtitles"]["json"])
         }
     }
 
@@ -250,6 +258,21 @@ def load_vectors_from_cloud(cache_dir: str = "./vector_cache") -> Dict:
                                     "title": f"Arabic Verse {i+1}",
                                     "sura_verse": f"Unknown:{i+1}",
                                     "verse_index": i
+                                })
+                    elif name == "FootnotesSubtitles":
+                        # FootnotesSubtitles - use the metadata from the separate metadata array
+                        metadata_list = data.get("metadata", [])
+                        for i, text in enumerate(texts):
+                            if i < len(metadata_list):
+                                meta = metadata_list[i]
+                                metadata.append(meta)
+                            else:
+                                # Fallback if metadata is missing
+                                metadata.append({
+                                    "content": text,
+                                    "type": "unknown",
+                                    "title": f"Text {i+1}",
+                                    "id": i
                                 })
                     else:
                         # RashadAllMedia or default format

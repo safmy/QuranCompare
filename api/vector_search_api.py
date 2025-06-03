@@ -583,6 +583,10 @@ async def vector_search(request: SearchRequest):
         }
         
         selected_collections = [k for k, v in collection_filter.items() if v]
+        
+        # If FinalTestament is selected, also search FootnotesSubtitles
+        if request.include_final_testament and "FootnotesSubtitles" in VECTOR_COLLECTIONS:
+            selected_collections.append("FootnotesSubtitles")
         logger.info(f"Query: '{request.query}', Selected collections: {selected_collections}")
         
         if not selected_collections:
@@ -693,6 +697,29 @@ async def vector_search(request: SearchRequest):
                         similarity_score=similarity,
                         source=source,
                         source_url=article_url,
+                        youtube_link=None
+                    ))
+                    
+                elif collection_name == "FootnotesSubtitles":
+                    # Handle footnotes and subtitles
+                    meta_type = metadata.get("type", "unknown")
+                    sura_verse = metadata.get("sura_verse", "")
+                    content_text = metadata.get("content", "")
+                    
+                    if meta_type == "footnote":
+                        title = f"[{sura_verse}] Footnote"
+                        source = "Final Testament - Footnote"
+                    else:
+                        title = f"[{sura_verse}] {content_text[:50]}{'...' if len(content_text) > 50 else ''}"
+                        source = "Final Testament - Subtitle"
+                    
+                    all_results.append(SearchResult(
+                        collection="FinalTestament",  # Group with FinalTestament results
+                        title=title,
+                        content=content_text,
+                        similarity_score=similarity,
+                        source=source,
+                        source_url=None,
                         youtube_link=None
                     ))
                     
