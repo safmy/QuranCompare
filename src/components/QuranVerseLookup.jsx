@@ -567,10 +567,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                 <h2>📖 Quran Search</h2>
                 <div className="search-controls-row">
                     <p className="search-hint">
-                        {verses.length > 0 
-                            ? `Found ${verses.length} verse${verses.length !== 1 ? 's' : ''} ${searchMode === 'text' ? `matching "${verseRange}"` : `in range ${verseRange}`}`
-                            : 'Enter verse references (1:1-7, 2:5, chapter 3) or search for text within verses'
-                        }
+                        Enter verse references (1:1-7, 2:5, chapter 3) or search for text within verses
                     </p>
                     <div className="control-buttons">
                         {searchMode === 'text' && (
@@ -635,6 +632,29 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
             )}
 
 
+            {/* Result count and tap hint header */}
+            {verses.length > 0 && (
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '10px 15px',
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: '6px',
+                    marginBottom: '15px',
+                    fontSize: '14px'
+                }}>
+                    <div style={{ color: '#666', fontWeight: 'bold' }}>
+                        Found {verses.length} verse{verses.length !== 1 ? 's' : ''} {searchMode === 'text' ? `matching "${verseRange}"` : `in range ${verseRange}`}
+                    </div>
+                    {showArabic && verses.some(v => v.arabic && v.roots) && (
+                        <div style={{ color: '#1976d2', fontSize: '13px' }}>
+                            💡 Tap Arabic words to see root/meaning
+                        </div>
+                    )}
+                </div>
+            )}
+
             <div className="verses-container">
                 {verses.map((verse, index) => {
                     // Check if this is the first verse or if subtitle is different from previous
@@ -645,20 +665,6 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
                     
                     return (
                         <div key={verse.sura_verse}>
-                            {/* Mobile hint for first verse with Arabic text - show above subtitle */}
-                            {isMobile && index === 0 && verse.arabic && showArabic && verse.roots && (
-                                <div className="mobile-hint" style={{
-                                    padding: '10px',
-                                    background: '#e3f2fd',
-                                    borderRadius: '6px',
-                                    marginBottom: '15px',
-                                    fontSize: '14px',
-                                    color: '#1976d2',
-                                    textAlign: 'center'
-                                }}>
-                                    💡 Tap Arabic words to see root/meaning, tap again to analyze
-                                </div>
-                            )}
                             
                             {/* Display subtitle if this verse has one and it's different from previous */}
                             {showSubtitle && (

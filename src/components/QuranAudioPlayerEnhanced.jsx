@@ -92,14 +92,14 @@ const QuranAudioPlayerEnhanced = ({
 
     if (isLoopingRef.current) {
       // In memorization mode
-      const currentVerseIdx = versesToPlay[currentVerseIndexRef.current];
-      
       if (currentVerseIndexRef.current < versesToPlay.length - 1) {
         // Move to next verse after pause
         setTimeout(() => {
           currentVerseIndexRef.current++;
           setCurrentVerseIndex(currentVerseIndexRef.current);
-          playVerseAtIndex(versesToPlay[currentVerseIndexRef.current]);
+          const nextIndex = versesToPlay[currentVerseIndexRef.current];
+          console.log(`Playing next verse in chain: index ${nextIndex}, verse ${verseReferences[nextIndex]}`);
+          playVerseAtIndex(nextIndex);
         }, pauseBetweenVerses * 1000);
       } else {
         // All verses played, check if we need to loop
@@ -109,10 +109,13 @@ const QuranAudioPlayerEnhanced = ({
             setCurrentLoop(loopCountRef.current);
             currentVerseIndexRef.current = 0;
             setCurrentVerseIndex(0);
-            playVerseAtIndex(versesToPlay[0]);
+            const firstIndex = versesToPlay[0];
+            console.log(`Starting new loop ${loopCountRef.current}, playing verse ${verseReferences[firstIndex]}`);
+            playVerseAtIndex(firstIndex);
           }, pauseBetweenLoops * 1000);
         } else {
           // All loops completed
+          console.log('All loops completed');
           stopLooping();
         }
       }
@@ -123,7 +126,9 @@ const QuranAudioPlayerEnhanced = ({
         setTimeout(() => {
           currentVerseIndexRef.current++;
           setCurrentVerseIndex(currentVerseIndexRef.current);
-          playVerseAtIndex(versesToPlay[currentVerseIndexRef.current]);
+          const nextIndex = versesToPlay[currentVerseIndexRef.current];
+          console.log(`Playing next verse: index ${nextIndex}, verse ${verseReferences[nextIndex]}`);
+          playVerseAtIndex(nextIndex);
         }, pauseBetweenVerses * 1000);
       } else {
         // All verses played
@@ -135,17 +140,26 @@ const QuranAudioPlayerEnhanced = ({
   };
 
   const playVerseAtIndex = async (index) => {
-    if (index >= verseReferences.length) return;
+    if (index >= verseReferences.length) {
+      console.error(`Invalid verse index: ${index}, total verses: ${verseReferences.length}`);
+      setError(`Invalid verse index: ${index}`);
+      return;
+    }
     
     // Load audio if not already loaded
     if (!audioQueue.current[index].audio) {
+      console.log(`Loading audio for verse ${verseReferences[index]}`);
       loadAudio(index);
       // Wait a bit for audio to load
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
     
     const audio = audioQueue.current[index].audio;
-    if (!audio) return;
+    if (!audio) {
+      console.error(`Failed to load audio for verse ${verseReferences[index]}`);
+      setError(`Failed to load audio for verse ${verseReferences[index]}`);
+      return;
+    }
     
     audioRef.current = audio;
     audio.playbackRate = playbackSpeed;
@@ -154,7 +168,9 @@ const QuranAudioPlayerEnhanced = ({
       await audio.play();
       setIsPlaying(true);
       setError('');
+      console.log(`Successfully playing verse ${verseReferences[index]}`);
     } catch (err) {
+      console.error(`Error playing verse ${verseReferences[index]}:`, err);
       setError(`Failed to play verse ${verseReferences[index]}`);
       setIsPlaying(false);
     }
@@ -172,7 +188,9 @@ const QuranAudioPlayerEnhanced = ({
     
     currentVerseIndexRef.current = 0;
     setCurrentVerseIndex(0);
-    await playVerseAtIndex(versesToPlay[0]);
+    const firstIndex = versesToPlay[0];
+    console.log(`Starting playback with verse ${verseReferences[firstIndex]}`);
+    await playVerseAtIndex(firstIndex);
   };
 
   const pauseAudio = () => {

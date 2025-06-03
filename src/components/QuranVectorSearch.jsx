@@ -25,9 +25,9 @@ const QuranVectorSearch = () => {
     // Split search query into words
     const searchWords = searchQuery.trim().toLowerCase().split(/\s+/);
     
-    // Create a regex pattern that matches any of the search words
+    // Create a regex pattern that matches any of the search words with word boundaries
     const pattern = searchWords
-      .map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) // Escape special chars
+      .map(word => `\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`) // Escape special chars and add word boundaries
       .join('|');
     
     if (!pattern) return text;
@@ -45,6 +45,15 @@ const QuranVectorSearch = () => {
     } catch (e) {
       return text;
     }
+  };
+  
+  // Get complete verse data including subtitle and footnote
+  const getCompleteVerseData = (suraVerse) => {
+    if (!quranData || !suraVerse) return null;
+    
+    // Find the verse in quranData
+    const verse = quranData.find(v => v.sura_verse === suraVerse);
+    return verse || null;
   };
   
   // Load Quran data on component mount
@@ -416,7 +425,7 @@ const QuranVectorSearch = () => {
               onChange={(e) => setIncludeFinalTestament(e.target.checked)}
               style={{ marginRight: '8px' }}
             />
-            <span style={{ color: '#2196F3', fontWeight: 'bold' }}>📖 Final Testament (English)</span>
+            <span style={{ color: '#2196F3', fontWeight: 'bold' }}>📖 Final Testament</span>
           </label>
           <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
             <input
@@ -425,7 +434,7 @@ const QuranVectorSearch = () => {
               onChange={(e) => setIncludeArabicVerses(e.target.checked)}
               style={{ marginRight: '8px' }}
             />
-            <span style={{ color: '#7c3aed', fontWeight: 'bold' }}>🕌 Quran Arabic Verses</span>
+            <span style={{ color: '#7c3aed', fontWeight: 'bold' }}>🕌 Arabic Verses</span>
           </label>
           <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
             <input
@@ -445,17 +454,6 @@ const QuranVectorSearch = () => {
             />
             <span style={{ color: '#9C27B0', fontWeight: 'bold' }}>📰 Newsletters & Articles</span>
           </label>
-        </div>
-        
-        {/* Regex search option */}
-        <div style={{ 
-          marginTop: '15px', 
-          paddingTop: '15px', 
-          borderTop: '1px solid #e0e0e0',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '20px'
-        }}>
           <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
             <input
               type="checkbox"
@@ -463,14 +461,14 @@ const QuranVectorSearch = () => {
               onChange={(e) => setUseRegex(e.target.checked)}
               style={{ marginRight: '8px' }}
             />
-            <span style={{ fontWeight: 'bold' }}>🔍 Use Regex Search</span>
+            <span style={{ color: '#666', fontWeight: 'bold' }}>🔍 Regex Search</span>
           </label>
-          {useRegex && (
-            <span style={{ fontSize: '14px', color: '#666' }}>
-              (Searches Final Testament for all words in any order)
-            </span>
-          )}
         </div>
+        {useRegex && (
+          <p style={{ fontSize: '13px', color: '#666', marginTop: '8px', marginBottom: 0 }}>
+            Regex searches Final Testament for all words in any order
+          </p>
+        )}
       </div>
 
       {error && (
@@ -694,14 +692,72 @@ const QuranVectorSearch = () => {
                 </div>
               </div>
               
-              <p style={{
-                fontSize: '15px',
-                lineHeight: '1.6',
-                color: '#555',
-                marginBottom: '10px'
-              }}>
-                {highlightSearchTerms(result.content, searchTerm)}
-              </p>
+              {/* Show complete verse data for subtitle/footnote results */}
+              {(result.source?.includes('Subtitle') || result.source?.includes('Footnote')) && quranData ? (
+                <div>
+                  {(() => {
+                    const verseMatch = result.title.match(/\[([\d:]+)\]/);
+                    const suraVerse = verseMatch ? verseMatch[1] : null;
+                    const completeVerse = suraVerse ? getCompleteVerseData(suraVerse) : null;
+                    
+                    if (completeVerse) {
+                      return (
+                        <div>
+                          {completeVerse.subtitle && (
+                            <div style={{
+                              padding: '10px',
+                              backgroundColor: '#e8f5e9',
+                              borderRadius: '4px',
+                              marginBottom: '10px',
+                              fontStyle: 'italic'
+                            }}>
+                              <strong>Subtitle:</strong> {highlightSearchTerms(completeVerse.subtitle, searchTerm)}
+                            </div>
+                          )}
+                          <div style={{
+                            fontSize: '15px',
+                            lineHeight: '1.6',
+                            color: '#333',
+                            marginBottom: '10px'
+                          }}>
+                            <strong>[{completeVerse.sura_verse}]</strong> {highlightSearchTerms(completeVerse.english, searchTerm)}
+                          </div>
+                          {completeVerse.footnote && (
+                            <div style={{
+                              padding: '10px',
+                              backgroundColor: '#fff3cd',
+                              borderRadius: '4px',
+                              fontSize: '14px',
+                              fontStyle: 'italic'
+                            }}>
+                              <strong>Footnote:</strong> {highlightSearchTerms(completeVerse.footnote, searchTerm)}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+                    return (
+                      <p style={{
+                        fontSize: '15px',
+                        lineHeight: '1.6',
+                        color: '#555',
+                        marginBottom: '10px'
+                      }}>
+                        {highlightSearchTerms(result.content, searchTerm)}
+                      </p>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <p style={{
+                  fontSize: '15px',
+                  lineHeight: '1.6',
+                  color: '#555',
+                  marginBottom: '10px'
+                }}>
+                  {highlightSearchTerms(result.content, searchTerm)}
+                </p>
+              )}
               
               {result.source && (
                 <p style={{ fontSize: '13px', color: '#888', marginBottom: '5px' }}>
