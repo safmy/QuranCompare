@@ -18,6 +18,35 @@ const QuranVectorSearch = () => {
   const [regexResults, setRegexResults] = useState([]);
   const [quranData, setQuranData] = useState(null);
   
+  // Helper function to highlight search terms in text
+  const highlightSearchTerms = (text, searchQuery) => {
+    if (!searchQuery || !text) return text;
+    
+    // Split search query into words
+    const searchWords = searchQuery.trim().toLowerCase().split(/\s+/);
+    
+    // Create a regex pattern that matches any of the search words
+    const pattern = searchWords
+      .map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) // Escape special chars
+      .join('|');
+    
+    if (!pattern) return text;
+    
+    try {
+      const regex = new RegExp(`(${pattern})`, 'gi');
+      const parts = text.split(regex);
+      
+      return parts.map((part, index) => {
+        if (regex.test(part)) {
+          return <mark key={index} style={{ backgroundColor: '#ffeb3b', padding: '2px' }}>{part}</mark>;
+        }
+        return part;
+      });
+    } catch (e) {
+      return text;
+    }
+  };
+  
   // Load Quran data on component mount
   React.useEffect(() => {
     const loadQuranData = async () => {
@@ -159,6 +188,22 @@ const QuranVectorSearch = () => {
       'ArabicVerses': '🕌'
     };
     return emojis[collection] || '📌';
+  };
+  
+  // Get background color based on source type
+  const getSourceBackgroundColor = (source) => {
+    if (source?.includes('Footnote')) return '#fff3cd'; // Light yellow for footnotes
+    if (source?.includes('Subtitle')) return '#e8f5e9'; // Light green for subtitles
+    if (source === 'Final Testament') return '#e3f2fd'; // Light blue for verses
+    return '#f9f9f9'; // Default gray
+  };
+  
+  // Get border color based on source type
+  const getSourceBorderColor = (source) => {
+    if (source?.includes('Footnote')) return '#ffeaa7'; // Yellow for footnotes
+    if (source?.includes('Subtitle')) return '#81c784'; // Green for subtitles
+    if (source === 'Final Testament') return '#90caf9'; // Blue for verses
+    return '#ddd'; // Default gray
   };
 
   const performRegexSearch = () => {
@@ -556,8 +601,8 @@ const QuranVectorSearch = () => {
                       marginBottom: '10px'
                     }}>
                       {result.content.startsWith('Arabic:') ? 
-                        result.content.split('\nEnglish: ')[1] : 
-                        result.content}
+                        highlightSearchTerms(result.content.split('\nEnglish: ')[1], searchTerm) : 
+                        highlightSearchTerms(result.content, searchTerm)}
                     </p>
                   </div>
                 ))}
@@ -582,10 +627,10 @@ const QuranVectorSearch = () => {
                 .filter(result => result.collection !== 'ArabicVerses')
                 .map((result, index) => (
             <div key={index} style={{
-              border: '1px solid #ddd',
+              border: `2px solid ${getSourceBorderColor(result.source)}`,
               borderRadius: '8px',
               padding: '20px',
-              backgroundColor: '#f9f9f9',
+              backgroundColor: getSourceBackgroundColor(result.source),
               marginBottom: '15px'
             }}>
               <div style={{ 
@@ -605,6 +650,30 @@ const QuranVectorSearch = () => {
                   }}>
                     {getCollectionEmoji(result.collection)} {result.collection}
                   </span>
+                  {result.source?.includes('Footnote') && (
+                    <span style={{
+                      backgroundColor: '#ffc107',
+                      color: 'white',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      marginRight: '10px'
+                    }}>
+                      📝 Footnote
+                    </span>
+                  )}
+                  {result.source?.includes('Subtitle') && (
+                    <span style={{
+                      backgroundColor: '#4caf50',
+                      color: 'white',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      marginRight: '10px'
+                    }}>
+                      📑 Subtitle
+                    </span>
+                  )}
                   <h3 style={{ 
                     color: '#333', 
                     marginTop: '10px',
@@ -631,7 +700,7 @@ const QuranVectorSearch = () => {
                 color: '#555',
                 marginBottom: '10px'
               }}>
-                {result.content}
+                {highlightSearchTerms(result.content, searchTerm)}
               </p>
               
               {result.source && (

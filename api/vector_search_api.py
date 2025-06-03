@@ -710,7 +710,7 @@ async def vector_search(request: SearchRequest):
                         title = f"[{sura_verse}] Footnote"
                         source = "Final Testament - Footnote"
                     else:
-                        title = f"[{sura_verse}] {content_text[:50]}{'...' if len(content_text) > 50 else ''}"
+                        title = f"[{sura_verse}] Subtitle"
                         source = "Final Testament - Subtitle"
                     
                     all_results.append(SearchResult(

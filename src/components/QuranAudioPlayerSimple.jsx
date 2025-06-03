@@ -71,8 +71,10 @@ const QuranAudioPlayerSimple = ({
 
     audio.addEventListener('ended', handleAudioEnded);
 
-    audio.addEventListener('error', () => {
-      setError('Failed to load audio');
+    audio.addEventListener('error', (e) => {
+      console.error('Audio error details:', e);
+      console.error('Audio URL:', audioUrl);
+      setError('Failed to load audio - CDN may be unavailable');
       setIsLoading(false);
       setAudioLoaded(false);
     });
