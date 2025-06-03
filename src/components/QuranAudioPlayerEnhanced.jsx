@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { getAbsoluteVerseNumber, getVerseAudioUrl } from '../utils/verseMapping';
+import { getAbsoluteVerseNumber, getVerseAudioUrl, getAllVerseAudioUrls } from '../utils/verseMapping';
 
 const QuranAudioPlayerEnhanced = ({ 
   verseReferences = [], // Array of verse references like ["2:255", "2:256", "2:257"]
@@ -32,15 +32,14 @@ const QuranAudioPlayerEnhanced = ({
   // Initialize audio queue when verse references change
   useEffect(() => {
     if (verseReferences.length > 0) {
-      // Preload all audio URLs
+      // Reset audio queue
       audioQueue.current = verseReferences.map(ref => ({
         reference: ref,
-        url: getVerseAudioUrl(ref),
         audio: null
       }));
       
-      // Load the first audio
-      loadAudio(0);
+      // Don't preload immediately to avoid rate limiting
+      console.log(`Audio queue initialized with ${verseReferences.length} verses`);
     }
     
     return () => {
@@ -51,38 +50,77 @@ const QuranAudioPlayerEnhanced = ({
     };
   }, [verseReferences]);
 
-  const loadAudio = (index) => {
-    if (index >= audioQueue.current.length) return;
+  const loadAudio = async (index, providerIndex = 0) => {
+    if (index >= audioQueue.current.length) return false;
     
     const audioData = audioQueue.current[index];
-    if (!audioData.url) {
+    const audioUrls = getAllVerseAudioUrls(audioData.reference);
+    
+    if (!audioUrls.length) {
       setError(`Invalid verse reference: ${audioData.reference}`);
-      return;
+      return false;
     }
 
-    const audio = new Audio(audioData.url);
-    audioRef.current = audio;
-    audioQueue.current[index].audio = audio;
+    // Try loading from current provider
+    const audioUrl = audioUrls[providerIndex];
+    if (!audioUrl) {
+      // No more providers to try
+      setError(`Failed to load audio for verse ${audioData.reference} - all sources failed`);
+      return false;
+    }
 
-    audio.addEventListener('loadedmetadata', () => {
-      setAudioLoaded(true);
-      setDuration(audio.duration);
+    return new Promise((resolve) => {
+      const audio = new Audio(audioUrl);
+      
+      const handleLoadSuccess = () => {
+        // Clean up event listeners
+        audio.removeEventListener('loadedmetadata', handleLoadSuccess);
+        audio.removeEventListener('error', handleLoadError);
+        
+        audioRef.current = audio;
+        audioQueue.current[index].audio = audio;
+        
+        audio.addEventListener('loadedmetadata', () => {
+          setAudioLoaded(true);
+          setDuration(audio.duration);
+        });
+
+        audio.addEventListener('timeupdate', () => {
+          setCurrentTime(audio.currentTime);
+        });
+
+        audio.addEventListener('ended', handleAudioEnded);
+        
+        console.log(`Successfully loaded audio for ${audioData.reference} from provider ${providerIndex + 1}`);
+        resolve(true);
+      };
+      
+      const handleLoadError = async () => {
+        // Clean up event listeners
+        audio.removeEventListener('loadedmetadata', handleLoadSuccess);
+        audio.removeEventListener('error', handleLoadError);
+        
+        console.log(`Failed to load audio for ${audioData.reference} from provider ${providerIndex + 1}`);
+        
+        // Try next provider
+        if (providerIndex + 1 < audioUrls.length) {
+          console.log(`Trying next provider (${providerIndex + 2}/${audioUrls.length})`);
+          const success = await loadAudio(index, providerIndex + 1);
+          resolve(success);
+        } else {
+          setError(`Failed to load audio for verse ${audioData.reference} - all sources failed`);
+          setIsLoading(false);
+          setAudioLoaded(false);
+          resolve(false);
+        }
+      };
+      
+      audio.addEventListener('loadedmetadata', handleLoadSuccess);
+      audio.addEventListener('error', handleLoadError);
+      
+      // Preload the audio
+      audio.load();
     });
-
-    audio.addEventListener('timeupdate', () => {
-      setCurrentTime(audio.currentTime);
-    });
-
-    audio.addEventListener('ended', handleAudioEnded);
-
-    audio.addEventListener('error', () => {
-      setError(`Failed to load audio for verse ${audioData.reference}`);
-      setIsLoading(false);
-      setAudioLoaded(false);
-    });
-
-    // Preload the audio
-    audio.load();
   };
 
   const handleAudioEnded = () => {
@@ -146,18 +184,31 @@ const QuranAudioPlayerEnhanced = ({
       return;
     }
     
+    setIsLoading(true);
+    
     // Load audio if not already loaded
     if (!audioQueue.current[index].audio) {
       console.log(`Loading audio for verse ${verseReferences[index]}`);
-      loadAudio(index);
-      // Wait a bit for audio to load
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const loadSuccess = await loadAudio(index);
+      
+      if (!loadSuccess) {
+        console.error(`Failed to load audio for verse ${verseReferences[index]}`);
+        setIsLoading(false);
+        // Try to continue with next verse if available
+        if (isLoopingRef.current && currentVerseIndexRef.current < verseReferences.length - 1) {
+          currentVerseIndexRef.current++;
+          setCurrentVerseIndex(currentVerseIndexRef.current);
+          setTimeout(() => playVerseAtIndex(currentVerseIndexRef.current), 1000);
+        }
+        return;
+      }
     }
     
     const audio = audioQueue.current[index].audio;
     if (!audio) {
-      console.error(`Failed to load audio for verse ${verseReferences[index]}`);
+      console.error(`No audio available for verse ${verseReferences[index]}`);
       setError(`Failed to load audio for verse ${verseReferences[index]}`);
+      setIsLoading(false);
       return;
     }
     
@@ -165,6 +216,7 @@ const QuranAudioPlayerEnhanced = ({
     audio.playbackRate = playbackSpeed;
     
     try {
+      setIsLoading(false);
       await audio.play();
       setIsPlaying(true);
       setError('');
@@ -173,6 +225,14 @@ const QuranAudioPlayerEnhanced = ({
       console.error(`Error playing verse ${verseReferences[index]}:`, err);
       setError(`Failed to play verse ${verseReferences[index]}`);
       setIsPlaying(false);
+      setIsLoading(false);
+      
+      // Try to continue with next verse if available
+      if (isLoopingRef.current && currentVerseIndexRef.current < verseReferences.length - 1) {
+        currentVerseIndexRef.current++;
+        setCurrentVerseIndex(currentVerseIndexRef.current);
+        setTimeout(() => playVerseAtIndex(currentVerseIndexRef.current), 1000);
+      }
     }
   };
 

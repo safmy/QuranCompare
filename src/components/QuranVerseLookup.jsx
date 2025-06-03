@@ -234,6 +234,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
     const [searchMode, setSearchMode] = useState(savedState.searchMode || 'range');
     const [showArabic, setShowArabic] = useState(savedState.showArabic ?? true);
     const [exactMatch, setExactMatch] = useState(savedState.exactMatch ?? true);
+    const [excludeVerse0, setExcludeVerse0] = useState(savedState.excludeVerse0 ?? false);
     const [allVersesData, setAllVersesData] = useState([]);
     const [showRootAnalysis, setShowRootAnalysis] = useState(false);
     const [rootAnalysisData, setRootAnalysisData] = useState(null);
@@ -415,7 +416,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                 setError(null);
                 
                 // Perform local search
-                const matchedVerses = allVersesData.filter(verse => {
+                let matchedVerses = allVersesData.filter(verse => {
                     const textToSearch = verse.english.toLowerCase();
                     const searchLower = searchTerm.toLowerCase();
                     
@@ -440,6 +441,14 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                         });
                     }
                 });
+                
+                // Exclude verse 0 (Basmala) if option is enabled
+                if (excludeVerse0) {
+                    matchedVerses = matchedVerses.filter(verse => {
+                        const [, verseNum] = verse.sura_verse.split(':');
+                        return verseNum !== '0';
+                    });
+                }
                 
                 setVerses(matchedVerses);
                 setSearchMode('text'); // Update mode indicator
@@ -725,7 +734,8 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
             verses,
             searchMode,
             showArabic,
-            exactMatch
+            exactMatch,
+            excludeVerse0
         };
         
         // Emit state change to parent
@@ -733,7 +743,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
             detail: { component: 'lookup', state: currentState }
         });
         window.dispatchEvent(event);
-    }, [verseRange, verses, searchMode, showArabic, exactMatch]);
+    }, [verseRange, verses, searchMode, showArabic, exactMatch, excludeVerse0]);
 
     return (
         <div className="verse-lookup-container">
@@ -745,14 +755,24 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                 <div className="search-hint-inline">
                     Enter verse references (1:1-7, 2:5, chapter 3) or search for text within verses
                     {searchMode === 'text' && (
-                        <label className="toggle-compact inline">
-                            <input
-                                type="checkbox"
-                                checked={exactMatch}
-                                onChange={(e) => setExactMatch(e.target.checked)}
-                            />
-                            <span>Exact</span>
-                        </label>
+                        <>
+                            <label className="toggle-compact inline">
+                                <input
+                                    type="checkbox"
+                                    checked={exactMatch}
+                                    onChange={(e) => setExactMatch(e.target.checked)}
+                                />
+                                <span>Exact</span>
+                            </label>
+                            <label className="toggle-compact inline" style={{ marginLeft: '10px' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={excludeVerse0}
+                                    onChange={(e) => setExcludeVerse0(e.target.checked)}
+                                />
+                                <span>Exclude verse 0</span>
+                            </label>
+                        </>
                     )}
                 </div>
                 <div className="input-group">
