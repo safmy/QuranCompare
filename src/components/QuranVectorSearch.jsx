@@ -638,48 +638,44 @@ const QuranVectorSearch = () => {
                 marginBottom: '10px'
               }}>
                 <div>
-                  <span style={{
-                    backgroundColor: getCollectionColor(result.collection),
-                    color: 'white',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    marginRight: '10px'
-                  }}>
-                    {getCollectionEmoji(result.collection)} {result.collection}
-                  </span>
-                  {result.source?.includes('Footnote') && (
+                  {/* Only show collection badge for non-subtitle/footnote results */}
+                  {!(result.source?.includes('Subtitle') || result.source?.includes('Footnote')) && (
+                    <>
+                      <span style={{
+                        backgroundColor: getCollectionColor(result.collection),
+                        color: 'white',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        marginRight: '10px'
+                      }}>
+                        {getCollectionEmoji(result.collection)} {result.collection}
+                      </span>
+                      <h3 style={{ 
+                        color: '#333', 
+                        marginTop: '10px',
+                        marginBottom: '5px',
+                        fontSize: '18px'
+                      }}>
+                        {renderTitle(result)}
+                      </h3>
+                    </>
+                  )}
+                  
+                  {/* Show simplified collection badge for subtitle/footnote results */}
+                  {(result.source?.includes('Subtitle') || result.source?.includes('Footnote')) && (
                     <span style={{
-                      backgroundColor: '#ffc107',
+                      backgroundColor: getCollectionColor(result.collection),
                       color: 'white',
                       padding: '4px 8px',
                       borderRadius: '4px',
                       fontSize: '12px',
-                      marginRight: '10px'
+                      marginBottom: '10px',
+                      display: 'inline-block'
                     }}>
-                      📝 Footnote
+                      {getCollectionEmoji(result.collection)} {result.collection}
                     </span>
                   )}
-                  {result.source?.includes('Subtitle') && (
-                    <span style={{
-                      backgroundColor: '#4caf50',
-                      color: 'white',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      marginRight: '10px'
-                    }}>
-                      📑 Subtitle
-                    </span>
-                  )}
-                  <h3 style={{ 
-                    color: '#333', 
-                    marginTop: '10px',
-                    marginBottom: '5px',
-                    fontSize: '18px'
-                  }}>
-                    {renderTitle(result)}
-                  </h3>
                 </div>
                 <div style={{
                   backgroundColor: '#e8f5e9',
@@ -692,7 +688,7 @@ const QuranVectorSearch = () => {
                 </div>
               </div>
               
-              {/* Show complete verse data for subtitle/footnote results */}
+              {/* Show streamlined subtitle/footnote content */}
               {(result.source?.includes('Subtitle') || result.source?.includes('Footnote')) && quranData ? (
                 <div>
                   {(() => {
@@ -703,36 +699,100 @@ const QuranVectorSearch = () => {
                     if (completeVerse) {
                       return (
                         <div>
+                          {/* Show subtitle content for subtitle results */}
                           {completeVerse.subtitle && result.source?.includes('Subtitle') && (
                             <div style={{
-                              padding: '10px',
-                              backgroundColor: '#e8f5e9',
-                              borderRadius: '4px',
-                              marginBottom: '10px',
-                              fontStyle: 'italic'
+                              fontSize: '16px',
+                              lineHeight: '1.6',
+                              color: '#333',
+                              marginBottom: '12px',
+                              fontWeight: '500'
                             }}>
+                              <span 
+                                style={{
+                                  backgroundColor: '#4caf50',
+                                  color: 'white',
+                                  padding: '3px 8px',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontWeight: 'bold',
+                                  fontSize: '13px',
+                                  marginRight: '8px',
+                                  transition: 'all 0.2s',
+                                  border: '2px solid #4caf50'
+                                }}
+                                onClick={() => handleVerseClick(suraVerse)}
+                                onMouseOver={(e) => {
+                                  e.target.style.backgroundColor = '#45a049';
+                                  e.target.style.borderColor = '#45a049';
+                                  e.target.style.transform = 'translateY(-1px)';
+                                }}
+                                onMouseOut={(e) => {
+                                  e.target.style.backgroundColor = '#4caf50';
+                                  e.target.style.borderColor = '#4caf50';
+                                  e.target.style.transform = 'translateY(0)';
+                                }}
+                                title={`Click to view subtitle section for ${suraVerse}`}
+                              >
+                                [{suraVerse}]
+                              </span>
                               {highlightSearchTerms(completeVerse.subtitle, searchTerm)}
                             </div>
                           )}
-                          <div style={{
-                            fontSize: '15px',
-                            lineHeight: '1.6',
-                            color: '#333',
-                            marginBottom: '10px'
-                          }}>
-                            <strong>[{completeVerse.sura_verse}]</strong> {highlightSearchTerms(completeVerse.english, searchTerm)}
-                          </div>
+                          
+                          {/* Show footnote content for footnote results */}
                           {completeVerse.footnote && result.source?.includes('Footnote') && (
                             <div style={{
-                              padding: '10px',
-                              backgroundColor: '#fff3cd',
-                              borderRadius: '4px',
-                              fontSize: '14px',
-                              fontStyle: 'italic'
+                              fontSize: '16px',
+                              lineHeight: '1.6',
+                              color: '#333',
+                              marginBottom: '12px',
+                              fontWeight: '500'
                             }}>
+                              <span 
+                                style={{
+                                  backgroundColor: '#ffc107',
+                                  color: 'white',
+                                  padding: '3px 8px',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontWeight: 'bold',
+                                  fontSize: '13px',
+                                  marginRight: '8px',
+                                  transition: 'all 0.2s',
+                                  border: '2px solid #ffc107'
+                                }}
+                                onClick={() => handleVerseClick(suraVerse)}
+                                onMouseOver={(e) => {
+                                  e.target.style.backgroundColor = '#e0a800';
+                                  e.target.style.borderColor = '#e0a800';
+                                  e.target.style.transform = 'translateY(-1px)';
+                                }}
+                                onMouseOut={(e) => {
+                                  e.target.style.backgroundColor = '#ffc107';
+                                  e.target.style.borderColor = '#ffc107';
+                                  e.target.style.transform = 'translateY(0)';
+                                }}
+                                title={`Click to view subtitle section for ${suraVerse}`}
+                              >
+                                [{suraVerse}]
+                              </span>
                               {highlightSearchTerms(completeVerse.footnote, searchTerm)}
                             </div>
                           )}
+                          
+                          {/* Show verse content */}
+                          <div style={{
+                            fontSize: '15px',
+                            lineHeight: '1.6',
+                            color: '#555',
+                            padding: '12px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                            borderRadius: '6px',
+                            border: '1px solid #e8ecf0'
+                          }}>
+                            {highlightSearchTerms(completeVerse.english, searchTerm)}
+                          </div>
                         </div>
                       );
                     }
