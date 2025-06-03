@@ -4,18 +4,18 @@ import VoiceSearchButtonEnhanced from './VoiceSearchButtonEnhanced';
 // API endpoint - change this to your deployed API URL in production
 const API_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
 
-const QuranVectorSearch = () => {
-  const [searchResults, setSearchResults] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+const QuranVectorSearch = ({ savedState = {} }) => {
+  const [searchResults, setSearchResults] = useState(savedState.searchResults || []);
+  const [searchTerm, setSearchTerm] = useState(savedState.searchTerm || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [numResults, setNumResults] = useState(10);
-  const [includeRashadMedia, setIncludeRashadMedia] = useState(false);
-  const [includeFinalTestament, setIncludeFinalTestament] = useState(true);
-  const [includeNewsletters, setIncludeNewsletters] = useState(false);
-  const [includeArabicVerses, setIncludeArabicVerses] = useState(false); // Disabled by default
-  const [useRegex, setUseRegex] = useState(false);
-  const [regexResults, setRegexResults] = useState([]);
+  const [numResults, setNumResults] = useState(savedState.numResults || 10);
+  const [includeRashadMedia, setIncludeRashadMedia] = useState(savedState.includeRashadMedia ?? false);
+  const [includeFinalTestament, setIncludeFinalTestament] = useState(savedState.includeFinalTestament ?? true);
+  const [includeNewsletters, setIncludeNewsletters] = useState(savedState.includeNewsletters ?? false);
+  const [includeArabicVerses, setIncludeArabicVerses] = useState(savedState.includeArabicVerses ?? false);
+  const [useRegex, setUseRegex] = useState(savedState.useRegex ?? false);
+  const [regexResults, setRegexResults] = useState(savedState.regexResults || []);
   const [quranData, setQuranData] = useState(null);
   
   // Long press functionality
@@ -402,6 +402,27 @@ const QuranVectorSearch = () => {
       handleSearch();
     }, 100);
   };
+
+  // Save state changes to parent component
+  React.useEffect(() => {
+    const currentState = {
+      searchResults,
+      searchTerm,
+      numResults,
+      includeRashadMedia,
+      includeFinalTestament,
+      includeNewsletters,
+      includeArabicVerses,
+      useRegex,
+      regexResults
+    };
+    
+    // Emit state change to parent
+    const event = new CustomEvent('updateComponentState', {
+      detail: { component: 'vectorSearch', state: currentState }
+    });
+    window.dispatchEvent(event);
+  }, [searchResults, searchTerm, numResults, includeRashadMedia, includeFinalTestament, includeNewsletters, includeArabicVerses, useRegex, regexResults]);
 
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px' }}>

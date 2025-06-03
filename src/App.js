@@ -10,12 +10,51 @@ import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 
 function AppContent() {
   const { currentLanguage, changeLanguage } = useLanguage();
-  const [activeTab, setActiveTab] = useState('lookup');
-  const [verseRangeForLookup, setVerseRangeForLookup] = useState('');
-  const [compareVerses, setCompareVerses] = useState([]);
+  const [activeTab, setActiveTab] = useState(() => {
+    return sessionStorage.getItem('activeTab') || 'lookup';
+  });
+  const [verseRangeForLookup, setVerseRangeForLookup] = useState(() => {
+    return sessionStorage.getItem('verseRangeForLookup') || '';
+  });
+  const [compareVerses, setCompareVerses] = useState(() => {
+    const saved = sessionStorage.getItem('compareVerses');
+    return saved ? JSON.parse(saved) : [];
+  });
+  
+  // Component state persistence
+  const [lookupState, setLookupState] = useState(() => {
+    const saved = sessionStorage.getItem('lookupState');
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [vectorSearchState, setVectorSearchState] = useState(() => {
+    const saved = sessionStorage.getItem('vectorSearchState');
+    return saved ? JSON.parse(saved) : {};
+  });
+  
   const verseLookupRef = useRef(null);
   const compareRef = useRef(null);
   
+  // Save state to sessionStorage when values change
+  useEffect(() => {
+    sessionStorage.setItem('activeTab', activeTab);
+  }, [activeTab]);
+  
+  useEffect(() => {
+    sessionStorage.setItem('verseRangeForLookup', verseRangeForLookup);
+  }, [verseRangeForLookup]);
+  
+  useEffect(() => {
+    sessionStorage.setItem('compareVerses', JSON.stringify(compareVerses));
+  }, [compareVerses]);
+  
+  useEffect(() => {
+    sessionStorage.setItem('lookupState', JSON.stringify(lookupState));
+  }, [lookupState]);
+  
+  useEffect(() => {
+    sessionStorage.setItem('vectorSearchState', JSON.stringify(vectorSearchState));
+  }, [vectorSearchState]);
+
   useEffect(() => {
     // Listen for verse range events from other components
     const handleOpenVerseRange = (event) => {
@@ -30,18 +69,45 @@ function AppContent() {
       setActiveTab('compare');
     };
     
+    // Listen for state updates from child components
+    const handleStateUpdate = (event) => {
+      const { component, state } = event.detail;
+      if (component === 'lookup') {
+        setLookupState(state);
+      } else if (component === 'vectorSearch') {
+        setVectorSearchState(state);
+      }
+    };
+    
     window.addEventListener('openVerseRange', handleOpenVerseRange);
     window.addEventListener('navigateToCompare', handleNavigateToCompare);
+    window.addEventListener('updateComponentState', handleStateUpdate);
     
     return () => {
       window.removeEventListener('openVerseRange', handleOpenVerseRange);
       window.removeEventListener('navigateToCompare', handleNavigateToCompare);
+      window.removeEventListener('updateComponentState', handleStateUpdate);
     };
   }, []);
 
   const tabs = [
-    { id: 'lookup', label: 'Verse Lookup', component: <QuranVerseLookup key={verseRangeForLookup} initialRange={verseRangeForLookup} /> },
-    { id: 'vectorsearch', label: 'Semantic Search', component: <QuranVectorSearch /> },
+    { 
+      id: 'lookup', 
+      label: 'Verse Lookup', 
+      component: <QuranVerseLookup 
+        key={`${verseRangeForLookup}-${JSON.stringify(lookupState)}`} 
+        initialRange={verseRangeForLookup}
+        savedState={lookupState}
+      /> 
+    },
+    { 
+      id: 'vectorsearch', 
+      label: 'Semantic Search', 
+      component: <QuranVectorSearch 
+        key={JSON.stringify(vectorSearchState)}
+        savedState={vectorSearchState}
+      /> 
+    },
     { id: 'compare', label: 'Compare', component: <QuranCompare key={compareVerses.join(',')} initialVerses={compareVerses} /> },
     { id: 'manuscript', label: 'Manuscript Analysis', component: <QuranManuscriptAnalysis /> }
   ];

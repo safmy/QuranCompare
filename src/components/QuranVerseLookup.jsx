@@ -7,52 +7,144 @@ import { getVerseAudioUrl } from '../utils/verseMapping';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
 
+// Global audio manager to prevent rate limiting
+const AudioManager = {
+    currentAudio: null,
+    playQueue: [],
+    isPlaying: false,
+    lastPlayTime: 0,
+    minInterval: 1000, // Minimum 1 second between plays
+    
+    async playAudio(audioUrl, onStart, onEnd, onError) {
+        // Stop current audio
+        if (this.currentAudio) {
+            this.currentAudio.pause();
+            this.currentAudio = null;
+        }
+        
+        // Rate limiting
+        const now = Date.now();
+        if (now - this.lastPlayTime < this.minInterval) {
+            const delay = this.minInterval - (now - this.lastPlayTime);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+        
+        try {
+            this.isPlaying = true;
+            this.lastPlayTime = Date.now();
+            onStart();
+            
+            this.currentAudio = new Audio(audioUrl);
+            
+            this.currentAudio.addEventListener('ended', () => {
+                this.isPlaying = false;
+                this.currentAudio = null;
+                onEnd();
+            });
+            
+            this.currentAudio.addEventListener('error', (e) => {
+                this.isPlaying = false;
+                this.currentAudio = null;
+                onError(e);
+            });
+            
+            await this.currentAudio.play();
+        } catch (error) {
+            this.isPlaying = false;
+            this.currentAudio = null;
+            onError(error);
+        }
+    },
+    
+    stopAudio() {
+        if (this.currentAudio) {
+            this.currentAudio.pause();
+            this.currentAudio = null;
+            this.isPlaying = false;
+        }
+    }
+};
+
 // Minimal audio button component
 const MinimalAudioButton = ({ verseReference }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const audioRef = useRef(null);
+    const [error, setError] = useState(null);
+    const [retryCount, setRetryCount] = useState(0);
+    const maxRetries = 3;
     
     useEffect(() => {
-        // Cleanup audio on unmount
+        // Cleanup on unmount
         return () => {
-            if (audioRef.current) {
-                audioRef.current.pause();
-                audioRef.current = null;
+            if (AudioManager.currentAudio) {
+                AudioManager.stopAudio();
             }
         };
     }, []);
     
-    const togglePlay = () => {
-        if (!audioRef.current) {
-            const audioUrl = getVerseAudioUrl(verseReference);
-            if (!audioUrl) return;
-            
-            audioRef.current = new Audio(audioUrl);
-            audioRef.current.addEventListener('ended', () => {
-                setIsPlaying(false);
-            });
-            audioRef.current.addEventListener('loadstart', () => {
-                setIsLoading(true);
-            });
-            audioRef.current.addEventListener('canplay', () => {
-                setIsLoading(false);
-            });
+    const playWithRetry = async (attempt = 0) => {
+        const audioUrl = getVerseAudioUrl(verseReference, 64); // Use lower bitrate to reduce bandwidth
+        if (!audioUrl) {
+            setError('Audio URL not available');
+            return;
         }
         
+        try {
+            await AudioManager.playAudio(
+                audioUrl,
+                () => {
+                    setIsLoading(false);
+                    setIsPlaying(true);
+                    setError(null);
+                    setRetryCount(0);
+                },
+                () => {
+                    setIsPlaying(false);
+                },
+                (err) => {
+                    setIsPlaying(false);
+                    setIsLoading(false);
+                    
+                    if (attempt < maxRetries) {
+                        console.log(`Audio failed, retrying... (${attempt + 1}/${maxRetries})`);
+                        setRetryCount(attempt + 1);
+                        setTimeout(() => playWithRetry(attempt + 1), 2000 * (attempt + 1)); // Exponential backoff
+                    } else {
+                        setError('Failed to load audio');
+                        console.error('Audio playback failed after retries:', err);
+                    }
+                }
+            );
+        } catch (err) {
+            console.error('Audio playback error:', err);
+            setError('Audio unavailable');
+            setIsLoading(false);
+            setIsPlaying(false);
+        }
+    };
+    
+    const togglePlay = () => {
         if (isPlaying) {
-            audioRef.current.pause();
+            AudioManager.stopAudio();
             setIsPlaying(false);
         } else {
-            // Stop all other audio players first
-            document.querySelectorAll('audio').forEach(audio => {
-                if (audio !== audioRef.current) {
-                    audio.pause();
-                }
-            });
-            audioRef.current.play();
-            setIsPlaying(true);
+            setIsLoading(true);
+            setError(null);
+            playWithRetry();
         }
+    };
+    
+    const getButtonContent = () => {
+        if (error) return '❌';
+        if (isLoading) return retryCount > 0 ? `${retryCount}⏳` : '⏳';
+        return isPlaying ? '⏸' : '▶';
+    };
+    
+    const getButtonTitle = () => {
+        if (error) return `Audio error: ${error}`;
+        if (isLoading && retryCount > 0) return `Retrying... (${retryCount}/${maxRetries})`;
+        if (isLoading) return 'Loading audio...';
+        return isPlaying ? 'Pause' : 'Play Mishary recitation';
     };
     
     return (
@@ -60,9 +152,13 @@ const MinimalAudioButton = ({ verseReference }) => {
             className="minimal-audio-btn"
             onClick={togglePlay}
             disabled={isLoading}
-            title={isPlaying ? 'Pause' : 'Play Mishary recitation'}
+            title={getButtonTitle()}
+            style={{
+                opacity: error ? 0.5 : 1,
+                color: error ? '#ff4444' : (isPlaying ? '#4caf50' : '#666')
+            }}
         >
-            {isLoading ? '⏳' : (isPlaying ? '⏸' : '▶')}
+            {getButtonContent()}
         </button>
     );
 };
@@ -98,18 +194,18 @@ const parseVerseRangeFromLocal = (range, versesData) => {
     });
 };
 
-const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
+const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
     const { currentLanguage, changeLanguage } = useLanguage();
-    const [verseRange, setVerseRange] = useState(initialRange || '1:1-7');
-    const [verses, setVerses] = useState([]);
+    const [verseRange, setVerseRange] = useState(savedState.verseRange || initialRange || '1:1-7');
+    const [verses, setVerses] = useState(savedState.verses || []);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [hoveredWord, setHoveredWord] = useState(null);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-    const [searchMode, setSearchMode] = useState('range'); // 'range' or 'text'
-    const [showArabic, setShowArabic] = useState(true); // New state for show/hide Arabic
-    const [exactMatch, setExactMatch] = useState(true); // New state for exact vs regex match
-    const [allVersesData, setAllVersesData] = useState([]); // Store all verses for text search
+    const [searchMode, setSearchMode] = useState(savedState.searchMode || 'range');
+    const [showArabic, setShowArabic] = useState(savedState.showArabic ?? true);
+    const [exactMatch, setExactMatch] = useState(savedState.exactMatch ?? true);
+    const [allVersesData, setAllVersesData] = useState([]);
     const [showRootAnalysis, setShowRootAnalysis] = useState(false);
     const [rootAnalysisData, setRootAnalysisData] = useState(null);
     const [showAllRootVerses, setShowAllRootVerses] = useState(false);
@@ -610,6 +706,23 @@ const QuranVerseLookup = ({ initialRange = '1:1-7' }) => {
         // This ensures the component re-renders with new language
         // The actual translation change happens in the render function
     }, [currentLanguage]);
+
+    // Save state changes to parent component
+    useEffect(() => {
+        const currentState = {
+            verseRange,
+            verses,
+            searchMode,
+            showArabic,
+            exactMatch
+        };
+        
+        // Emit state change to parent
+        const event = new CustomEvent('updateComponentState', {
+            detail: { component: 'lookup', state: currentState }
+        });
+        window.dispatchEvent(event);
+    }, [verseRange, verses, searchMode, showArabic, exactMatch]);
 
     return (
         <div className="verse-lookup-container">
