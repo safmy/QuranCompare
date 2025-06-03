@@ -451,6 +451,7 @@ const QuranVectorSearch = ({ savedState = {} }) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={handleKeyPress}
+            onFocus={(e) => e.target.select()}
             style={{
               padding: '10px 15px',
               border: '1px solid #ddd',

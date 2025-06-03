@@ -148,14 +148,48 @@ export const getAbsoluteVerseNumber = (reference) => {
 };
 
 /**
- * Get the audio URL for a verse from Al-Quran Cloud CDN
+ * Get the audio URL for a verse from multiple CDN providers with fallback
  * @param {string} reference - Verse reference like "2:255"
  * @param {number} bitrate - Audio quality (192, 128, 64, 48, 40, 32)
+ * @param {number} provider - Provider index (0=primary, 1=fallback1, 2=fallback2)
  * @returns {string|null} - Audio URL or null if invalid reference
  */
-export const getVerseAudioUrl = (reference, bitrate = 128) => {
+export const getVerseAudioUrl = (reference, bitrate = 64, provider = 0) => {
   const verseNumber = getAbsoluteVerseNumber(reference);
   if (!verseNumber) return null;
   
-  return `https://cdn.islamic.network/quran/audio/${bitrate}/ar.alafasy/${verseNumber}.mp3`;
+  // Multiple CDN providers for better reliability
+  const providers = [
+    // Primary: Al-Quran Cloud (good quality, some rate limiting)
+    `https://cdn.islamic.network/quran/audio/${bitrate}/ar.alafasy/${verseNumber}.mp3`,
+    
+    // Fallback 1: EveryAyah.com (reliable, different server)
+    `https://everyayah.com/data/Alafasy_128kbps/${String(verseNumber).padStart(6, '0')}.mp3`,
+    
+    // Fallback 2: Quran.com CDN (if available)
+    `https://audio.qurancdn.com/Alafasy/Warsh/${String(verseNumber).padStart(3, '0')}.mp3`,
+    
+    // Fallback 3: Archive.org backup
+    `https://ia902709.us.archive.org/13/items/mishary-rashid-alafasy-complete-quran/${String(verseNumber).padStart(3, '0')}.mp3`
+  ];
+  
+  return providers[provider] || providers[0];
+};
+
+/**
+ * Get all available audio URLs for a verse (for fallback purposes)
+ * @param {string} reference - Verse reference like "2:255"
+ * @param {number} bitrate - Audio quality
+ * @returns {Array} - Array of audio URLs
+ */
+export const getAllVerseAudioUrls = (reference, bitrate = 64) => {
+  const verseNumber = getAbsoluteVerseNumber(reference);
+  if (!verseNumber) return [];
+  
+  return [
+    getVerseAudioUrl(reference, bitrate, 0),
+    getVerseAudioUrl(reference, bitrate, 1),
+    getVerseAudioUrl(reference, bitrate, 2),
+    getVerseAudioUrl(reference, bitrate, 3)
+  ].filter(Boolean);
 };

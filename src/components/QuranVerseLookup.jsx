@@ -3,7 +3,7 @@ import './QuranVerseLookup.css';
 import VoiceSearchButton from './VoiceSearchButton';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getLanguageConfig, getTranslationText, getFootnoteText } from '../config/languages';
-import { getVerseAudioUrl } from '../utils/verseMapping';
+import { getVerseAudioUrl, getAllVerseAudioUrls } from '../utils/verseMapping';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
 
@@ -82,11 +82,27 @@ const MinimalAudioButton = ({ verseReference }) => {
         };
     }, []);
     
-    const playWithRetry = async (attempt = 0) => {
-        const audioUrl = getVerseAudioUrl(verseReference, 64); // Use lower bitrate to reduce bandwidth
-        if (!audioUrl) {
-            setError('Audio URL not available');
+    const playWithRetry = async (attempt = 0, providerIndex = 0) => {
+        // Get all available audio URLs
+        const audioUrls = getAllVerseAudioUrls(verseReference, 64);
+        
+        if (!audioUrls.length) {
+            setError('No audio sources available');
             return;
+        }
+        
+        // Try current provider
+        const audioUrl = audioUrls[providerIndex];
+        if (!audioUrl) {
+            // Move to next provider if available
+            if (providerIndex + 1 < audioUrls.length) {
+                console.log(`Trying next audio provider (${providerIndex + 1}/${audioUrls.length})`);
+                setRetryCount(providerIndex + 1);
+                return playWithRetry(0, providerIndex + 1);
+            } else {
+                setError('All audio sources failed');
+                return;
+            }
         }
         
         try {
@@ -105,21 +121,34 @@ const MinimalAudioButton = ({ verseReference }) => {
                     setIsPlaying(false);
                     setIsLoading(false);
                     
-                    if (attempt < maxRetries) {
-                        console.log(`Audio failed, retrying... (${attempt + 1}/${maxRetries})`);
+                    console.log(`Audio failed from provider ${providerIndex + 1}: ${audioUrl}`);
+                    
+                    // Try next provider first
+                    if (providerIndex + 1 < audioUrls.length) {
+                        console.log(`Switching to provider ${providerIndex + 2}/${audioUrls.length}`);
+                        setRetryCount(providerIndex + 1);
+                        setTimeout(() => playWithRetry(0, providerIndex + 1), 1000);
+                    } else if (attempt < maxRetries) {
+                        // Retry with same provider if no more providers
+                        console.log(`Retrying provider 1 (attempt ${attempt + 1}/${maxRetries})`);
                         setRetryCount(attempt + 1);
-                        setTimeout(() => playWithRetry(attempt + 1), 2000 * (attempt + 1)); // Exponential backoff
+                        setTimeout(() => playWithRetry(attempt + 1, 0), 2000 * (attempt + 1));
                     } else {
-                        setError('Failed to load audio');
-                        console.error('Audio playback failed after retries:', err);
+                        setError('All audio sources failed');
+                        console.error('Audio playback failed from all providers');
                     }
                 }
             );
         } catch (err) {
             console.error('Audio playback error:', err);
-            setError('Audio unavailable');
-            setIsLoading(false);
-            setIsPlaying(false);
+            // Try next provider
+            if (providerIndex + 1 < audioUrls.length) {
+                setTimeout(() => playWithRetry(0, providerIndex + 1), 1000);
+            } else {
+                setError('Audio unavailable');
+                setIsLoading(false);
+                setIsPlaying(false);
+            }
         }
     };
     
@@ -142,9 +171,9 @@ const MinimalAudioButton = ({ verseReference }) => {
     
     const getButtonTitle = () => {
         if (error) return `Audio error: ${error}`;
-        if (isLoading && retryCount > 0) return `Retrying... (${retryCount}/${maxRetries})`;
+        if (isLoading && retryCount > 0) return `Trying source ${retryCount}...`;
         if (isLoading) return 'Loading audio...';
-        return isPlaying ? 'Pause' : 'Play Mishary recitation';
+        return isPlaying ? 'Pause' : 'Play Mishary recitation (multiple sources)';
     };
     
     return (
@@ -681,25 +710,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
         fetchVerses();
     }, [initialRange]);
     
-    useEffect(() => {
-        // Fetch verses when verseRange, searchMode, or exactMatch changes
-        if (verseRange) {
-            // Only auto-search if it's a verse range or if text search has 3+ characters
-            const isVerseRange = detectSearchType(verseRange);
-            if (isVerseRange || verseRange.trim().length >= 3) {
-                fetchVerses();
-            } else if (!isVerseRange && verseRange.trim().length > 0 && verseRange.trim().length < 3) {
-                // Show the minimum character message without searching
-                setVerses([]);
-                setError(`Please enter at least 3 characters to search (currently ${verseRange.trim().length})`);
-                setSearchMode('text');
-            } else {
-                // Clear everything if empty
-                setVerses([]);
-                setError(null);
-            }
-        }
-    }, [verseRange, searchMode, exactMatch]);
+    // Removed auto-search behavior - users must manually search
 
     // Force re-render when language changes (for display purposes)
     useEffect(() => {
@@ -749,6 +760,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                         type="text"
                         value={verseRange}
                         onChange={(e) => setVerseRange(e.target.value)}
+                        onFocus={(e) => e.target.select()}
                         placeholder="1:1-7, chapter 2, or search text..."
                         className="verse-input"
                     />
