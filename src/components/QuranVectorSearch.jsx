@@ -51,9 +51,23 @@ const QuranVectorSearch = ({ savedState = {} }) => {
           const englishPart = result.content.split('\nEnglish: ')[1];
           verseText = `[${verseRef}] ${englishPart}`;
         } else if (quranData) {
-          // For subtitle/footnote results, get the complete verse
+          // For subtitle/footnote results, get the complete verse with subtitle and footnote
           const completeVerse = getCompleteVerseData(verseRef);
-          verseText = completeVerse ? `[${verseRef}] ${completeVerse.english}` : `[${verseRef}] ${result.content}`;
+          if (completeVerse) {
+            verseText = `[${verseRef}] ${completeVerse.english}`;
+            
+            // Add subtitle if present
+            if (completeVerse.subtitle) {
+              verseText = `${completeVerse.subtitle}\n\n${verseText}`;
+            }
+            
+            // Add footnote if present
+            if (completeVerse.footnote) {
+              verseText += `\n\nFootnote: ${completeVerse.footnote}`;
+            }
+          } else {
+            verseText = `[${verseRef}] ${result.content}`;
+          }
         } else {
           verseText = `[${verseRef}] ${result.content}`;
         }

@@ -264,7 +264,19 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
 
     const copyVerseToClipboard = async (verse) => {
         try {
-            const verseText = `[${verse.sura_verse}] ${getTranslationText(verse, currentLanguage)}`;
+            // Build complete verse text with subtitle and footnote
+            let verseText = `[${verse.sura_verse}] ${getTranslationText(verse, currentLanguage)}`;
+            
+            // Add subtitle if present
+            if (verse.subtitle) {
+                verseText = `${verse.subtitle}\n\n${verseText}`;
+            }
+            
+            // Add footnote if present
+            const footnoteText = getFootnoteText(verse, currentLanguage);
+            if (footnoteText) {
+                verseText += `\n\nFootnote: ${footnoteText}`;
+            }
             
             // Try modern clipboard API first
             if (navigator.clipboard && window.isSecureContext) {
