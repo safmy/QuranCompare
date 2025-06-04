@@ -76,32 +76,73 @@ const QuranVectorSearch = ({ savedState = {} }) => {
         verseText = result.content;
       }
       
-      // Try modern clipboard API first
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(verseText);
-      } else {
-        // Fallback for older browsers or non-secure contexts
-        const textArea = document.createElement('textarea');
-        textArea.value = verseText;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
+      // Enhanced clipboard handling for iOS and mobile browsers
+      let copySuccess = false;
+      
+      // Method 1: Try modern clipboard API with proper error handling
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(verseText);
+          copySuccess = true;
+        } catch (clipboardErr) {
+          console.log('Clipboard API failed, trying fallback:', clipboardErr);
+        }
+      }
+      
+      // Method 2: Fallback for iOS and older browsers
+      if (!copySuccess) {
+        try {
+          const textArea = document.createElement('textarea');
+          textArea.value = verseText;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          textArea.style.opacity = '0';
+          textArea.style.pointerEvents = 'none';
+          textArea.readOnly = true;
+          document.body.appendChild(textArea);
+          
+          // For iOS, we need to use setSelectionRange
+          if (navigator.userAgent.match(/ipad|iphone/i)) {
+            textArea.contentEditable = true;
+            textArea.readOnly = false;
+            const range = document.createRange();
+            range.selectNodeContents(textArea);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            textArea.setSelectionRange(0, textArea.value.length);
+          } else {
+            textArea.select();
+          }
+          
+          copySuccess = document.execCommand('copy');
+          document.body.removeChild(textArea);
+        } catch (fallbackErr) {
+          console.error('Fallback copy failed:', fallbackErr);
+        }
       }
       
       // Show feedback
-      const verseMatch = result.title.match(/\[(\d+:\d+)\]/);
-      const displayRef = verseMatch ? verseMatch[1] : 'Content';
-      setCopiedVerse(displayRef);
-      setTimeout(() => {
-        setCopiedVerse(null);
-      }, 2000);
+      if (copySuccess) {
+        const verseMatch = result.title.match(/\[(\d+:\d+)\]/);
+        const displayRef = verseMatch ? verseMatch[1] : 'Content';
+        setCopiedVerse(displayRef);
+        setTimeout(() => {
+          setCopiedVerse(null);
+        }, 2000);
+      } else {
+        setCopiedVerse('error');
+        setTimeout(() => {
+          setCopiedVerse(null);
+        }, 3000);
+      }
     } catch (err) {
       console.error('Failed to copy result:', err);
+      setCopiedVerse('error');
+      setTimeout(() => {
+        setCopiedVerse(null);
+      }, 3000);
     }
   };
   
@@ -1014,7 +1055,7 @@ const QuranVectorSearch = ({ savedState = {} }) => {
           top: '20px',
           left: '50%',
           transform: 'translateX(-50%)',
-          backgroundColor: '#4caf50',
+          backgroundColor: copiedVerse === 'error' ? '#f44336' : '#4caf50',
           color: 'white',
           padding: '10px 20px',
           borderRadius: '6px',
@@ -1023,7 +1064,10 @@ const QuranVectorSearch = ({ savedState = {} }) => {
           fontWeight: 'bold',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
         }}>
-          📋 Copied [{copiedVerse}] to clipboard
+          {copiedVerse === 'error' ? 
+            '❌ Copy failed - try selecting text manually' : 
+            `📋 Copied [${copiedVerse}] to clipboard`
+          }
         </div>
       )}
 
