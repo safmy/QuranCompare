@@ -653,7 +653,22 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
 
     // Parse Arabic text with roots and meanings for hover functionality
     const parseArabicText = (arabic, roots, meanings, verse) => {
-        if (!arabic || !roots || !meanings) return arabic;
+        if (!arabic) return arabic;
+        
+        // Debug logging
+        console.log('ParseArabicText called with:', {
+            verse: verse.sura_verse,
+            hasArabic: !!arabic,
+            hasRoots: !!roots,
+            hasMeanings: !!meanings,
+            roots: roots,
+            meanings: meanings
+        });
+        
+        if (!roots || !meanings) {
+            // If no roots/meanings, just return plain Arabic text
+            return arabic;
+        }
 
         const arabicWords = arabic.split(/\s+/);
         const rootsArray = roots.split(',').map(r => r.trim());
@@ -960,6 +975,44 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                                     <MinimalAudioButton 
                                         verseReference={verse.sura_verse}
                                     />
+                                    <button
+                                        className="memorize-btn"
+                                        onClick={() => {
+                                            // Navigate to compare with memorization mode
+                                            const event = new CustomEvent('navigateToCompare', {
+                                                detail: {
+                                                    verses: [verse],
+                                                    enableMemorization: true
+                                                }
+                                            });
+                                            window.dispatchEvent(event);
+                                        }}
+                                        title="Memorize this verse"
+                                        style={{
+                                            background: 'rgba(76, 175, 80, 0.1)',
+                                            border: '1px solid #4caf50',
+                                            borderRadius: '50%',
+                                            width: '32px',
+                                            height: '32px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            fontSize: '16px',
+                                            marginLeft: '8px',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.target.style.background = '#4caf50';
+                                            e.target.style.color = 'white';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.target.style.background = 'rgba(76, 175, 80, 0.1)';
+                                            e.target.style.color = 'inherit';
+                                        }}
+                                    >
+                                        🧠
+                                    </button>
                                 </div>
                             </div>
                             

@@ -4,12 +4,13 @@ import { getAbsoluteVerseNumber, getVerseAudioUrl, getAllVerseAudioUrls } from '
 const QuranAudioPlayerEnhanced = ({ 
   verseReferences = [], // Array of verse references like ["2:255", "2:256", "2:257"]
   arabicTexts = [], // Array of Arabic texts corresponding to each verse
+  defaultMemorizationMode = false,
   onMemorizationModeChange = () => {}
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [memorizationMode, setMemorizationMode] = useState(false);
+  const [memorizationMode, setMemorizationMode] = useState(defaultMemorizationMode);
   const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
   const [loopCount, setLoopCount] = useState(5);
   const [pauseBetweenLoops, setPauseBetweenLoops] = useState(3);

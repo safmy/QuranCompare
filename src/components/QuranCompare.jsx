@@ -17,6 +17,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
   const [lockedRoot, setLockedRoot] = useState(null); // Locked root (click mode)
   const [hoveredRoot, setHoveredRoot] = useState(null); // Hovered root (hover mode)
   const [meaningData, setMeaningData] = useState(null); // Meaning variations data
+  const [memorizationMode, setMemorizationMode] = useState(false); // Enable memorization mode
 
   useEffect(() => {
     // Load Quran data
@@ -47,6 +48,13 @@ const QuranCompare = ({ initialVerses = [] }) => {
       if (storedMeaningData) {
         setMeaningData(JSON.parse(storedMeaningData));
         sessionStorage.removeItem('compareMeaningData'); // Clean up
+      }
+      
+      // Check for memorization mode
+      const enableMemorization = sessionStorage.getItem('enableMemorization');
+      if (enableMemorization === 'true') {
+        setMemorizationMode(true);
+        sessionStorage.removeItem('enableMemorization'); // Clean up
       }
       
       // Auto-load these verses
@@ -469,12 +477,14 @@ const QuranCompare = ({ initialVerses = [] }) => {
             ))}
           </div>
           
-          {/* Enhanced Audio Player for Multiple Verses */}
-          {verses.length > 1 && (
+          {/* Enhanced Audio Player */}
+          {verses.length > 0 && (
             <div style={{ marginTop: '30px' }}>
               <QuranAudioPlayerEnhanced
-                verseReferences={verses.map(v => v.reference)}
+                verseReferences={verses.map(v => v.sura_verse)}
                 arabicTexts={verses.map(v => v.arabic || '')}
+                defaultMemorizationMode={memorizationMode}
+                onMemorizationModeChange={(mode) => setMemorizationMode(mode)}
               />
             </div>
           )}

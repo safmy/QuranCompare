@@ -312,6 +312,9 @@
 .verse-audio-player {
     opacity: 0.6;
     transition: opacity 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .verse-audio-player:hover {

@@ -66,6 +66,12 @@ function AppContent() {
     const handleNavigateToCompare = (event) => {
       const verses = event.detail.verses || JSON.parse(sessionStorage.getItem('compareVerses') || '[]');
       setCompareVerses(verses);
+      
+      // Store memorization mode if enabled
+      if (event.detail.enableMemorization) {
+        sessionStorage.setItem('enableMemorization', 'true');
+      }
+      
       setActiveTab('compare');
     };
     
