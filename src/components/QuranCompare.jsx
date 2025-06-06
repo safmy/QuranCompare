@@ -41,7 +41,14 @@ const QuranCompare = ({ initialVerses = [] }) => {
   useEffect(() => {
     // Handle initial verses from navigation
     if (initialVerses.length > 0 && quranData) {
-      setVerseInputs(initialVerses);
+      // Convert verse objects to sura:verse format strings
+      const verseStrings = initialVerses.map(v => {
+        if (typeof v === 'string') return v;
+        if (v && v.sura_verse) return v.sura_verse;
+        return '';
+      }).filter(v => v);
+      
+      setVerseInputs(verseStrings);
       
       // Check for meaning data in sessionStorage
       const storedMeaningData = sessionStorage.getItem('compareMeaningData');
@@ -131,8 +138,8 @@ const QuranCompare = ({ initialVerses = [] }) => {
 
     const nonEmptyInputs = verseInputs.filter(input => input.trim());
     
-    if (nonEmptyInputs.length < 2) {
-      setError('Please enter at least 2 verse references to compare');
+    if (nonEmptyInputs.length < 1) {
+      setError('Please enter at least 1 verse reference');
       return;
     }
 
@@ -162,7 +169,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
         setError(`Could not find verses: ${notFound.join(', ')}`);
       }
 
-      if (foundVerses.length >= 2) {
+      if (foundVerses.length >= 1) {
         setVerses(foundVerses);
         if (notFound.length === 0) {
           setError('');
@@ -170,7 +177,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
       } else {
         setVerses([]);
         if (!error) {
-          setError('Need at least 2 valid verses to compare');
+          setError('No valid verses found');
         }
       }
     } catch (err) {
