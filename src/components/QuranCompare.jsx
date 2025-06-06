@@ -11,11 +11,16 @@ const VerseAudioButton = ({ verseReference }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentAudio, setCurrentAudio] = useState(null);
+  const [showMemorizeMode, setShowMemorizeMode] = useState(false);
+  const [isLooping, setIsLooping] = useState(false);
+  const [loopCount, setLoopCount] = useState(5);
+  const [currentLoop, setCurrentLoop] = useState(0);
 
   const playAudio = async () => {
     if (isPlaying && currentAudio) {
       currentAudio.pause();
       setIsPlaying(false);
+      setIsLooping(false);
       return;
     }
 
@@ -42,8 +47,22 @@ const VerseAudioButton = ({ verseReference }) => {
         });
 
         audio.addEventListener('ended', () => {
-          setIsPlaying(false);
-          setCurrentAudio(null);
+          if (isLooping && currentLoop < loopCount) {
+            // Continue looping
+            setCurrentLoop(prev => prev + 1);
+            setTimeout(() => {
+              if (isLooping) {
+                audio.currentTime = 0;
+                audio.play();
+              }
+            }, 2000); // 2 second pause between loops
+          } else {
+            // Stop playing
+            setIsPlaying(false);
+            setCurrentAudio(null);
+            setIsLooping(false);
+            setCurrentLoop(0);
+          }
         });
 
         audio.addEventListener('error', () => {
@@ -61,6 +80,21 @@ const VerseAudioButton = ({ verseReference }) => {
     tryPlayAudio();
   };
 
+  const startMemorization = () => {
+    setIsLooping(true);
+    setCurrentLoop(1);
+    playAudio();
+  };
+
+  const stopMemorization = () => {
+    setIsLooping(false);
+    setCurrentLoop(0);
+    if (currentAudio) {
+      currentAudio.pause();
+      setIsPlaying(false);
+    }
+  };
+
   const getButtonContent = () => {
     if (error) return '❌';
     if (isLoading) return '⏳';
@@ -68,39 +102,131 @@ const VerseAudioButton = ({ verseReference }) => {
   };
 
   return (
-    <button
-      onClick={playAudio}
-      disabled={isLoading}
-      style={{
-        background: 'rgba(124, 58, 237, 0.1)',
-        border: '1px solid #7c3aed',
-        borderRadius: '50%',
-        width: '36px',
-        height: '36px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: isLoading ? 'not-allowed' : 'pointer',
-        fontSize: '16px',
-        color: error ? '#ff4444' : (isPlaying ? '#4caf50' : '#7c3aed'),
-        transition: 'all 0.2s ease'
-      }}
-      title={error ? `Audio error: ${error}` : (isLoading ? 'Loading...' : (isPlaying ? 'Pause' : `Play ${verseReference}`))}
-      onMouseEnter={(e) => {
-        if (!isLoading && !error) {
-          e.target.style.background = '#7c3aed';
-          e.target.style.color = 'white';
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isLoading && !error) {
-          e.target.style.background = 'rgba(124, 58, 237, 0.1)';
-          e.target.style.color = isPlaying ? '#4caf50' : '#7c3aed';
-        }
-      }}
-    >
-      {getButtonContent()}
-    </button>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      {/* Main play button */}
+      <button
+        onClick={playAudio}
+        disabled={isLoading}
+        style={{
+          background: 'rgba(124, 58, 237, 0.1)',
+          border: '1px solid #7c3aed',
+          borderRadius: '50%',
+          width: '36px',
+          height: '36px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: isLoading ? 'not-allowed' : 'pointer',
+          fontSize: '16px',
+          color: error ? '#ff4444' : (isPlaying ? '#4caf50' : '#7c3aed'),
+          transition: 'all 0.2s ease'
+        }}
+        title={error ? `Audio error: ${error}` : (isLoading ? 'Loading...' : (isPlaying ? 'Pause' : `Play ${verseReference}`))}
+        onMouseEnter={(e) => {
+          if (!isLoading && !error) {
+            e.target.style.background = '#7c3aed';
+            e.target.style.color = 'white';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isLoading && !error) {
+            e.target.style.background = 'rgba(124, 58, 237, 0.1)';
+            e.target.style.color = isPlaying ? '#4caf50' : '#7c3aed';
+          }
+        }}
+      >
+        {getButtonContent()}
+      </button>
+
+      {/* Memorization toggle */}
+      <button
+        onClick={() => setShowMemorizeMode(!showMemorizeMode)}
+        style={{
+          background: showMemorizeMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.1)',
+          border: '1px solid #4caf50',
+          borderRadius: '50%',
+          width: '32px',
+          height: '32px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          fontSize: '14px',
+          color: '#4caf50',
+          transition: 'all 0.2s ease'
+        }}
+        title="Toggle memorization controls"
+      >
+        🧠
+      </button>
+
+      {/* Memorization controls */}
+      {showMemorizeMode && (
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '6px',
+          padding: '4px 8px',
+          background: '#f0f8ff',
+          borderRadius: '6px',
+          border: '1px solid #e0e8f0'
+        }}>
+          {isLooping ? (
+            <>
+              <button
+                onClick={stopMemorization}
+                style={{
+                  padding: '4px 8px',
+                  background: '#f44336',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  cursor: 'pointer'
+                }}
+              >
+                Stop Loop
+              </button>
+              <span style={{ fontSize: '12px', color: '#666' }}>
+                {currentLoop}/{loopCount}
+              </span>
+            </>
+          ) : (
+            <>
+              <input
+                type="number"
+                min="1"
+                max="50"
+                value={loopCount}
+                onChange={(e) => setLoopCount(parseInt(e.target.value) || 5)}
+                style={{
+                  width: '40px',
+                  padding: '2px 4px',
+                  border: '1px solid #ccc',
+                  borderRadius: '3px',
+                  fontSize: '12px'
+                }}
+              />
+              <button
+                onClick={startMemorization}
+                disabled={isLoading}
+                style={{
+                  padding: '4px 8px',
+                  background: '#4caf50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  cursor: isLoading ? 'not-allowed' : 'pointer'
+                }}
+              >
+                Loop {loopCount}x
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 

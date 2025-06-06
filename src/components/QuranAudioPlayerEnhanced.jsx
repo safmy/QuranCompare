@@ -39,8 +39,13 @@ const QuranAudioPlayerEnhanced = ({
         audio: null
       }));
       
-      // Don't preload immediately to avoid rate limiting
-      console.log(`Audio queue initialized with ${verseReferences.length} verses`);
+      // Reset states
+      setAudioLoaded(false);
+      setIsLoading(false);
+      setIsPlaying(false);
+      setError('');
+      
+      console.log(`Audio queue initialized with ${verseReferences.length} verses:`, verseReferences);
     }
     
     return () => {
@@ -55,73 +60,62 @@ const QuranAudioPlayerEnhanced = ({
     if (index >= audioQueue.current.length) return false;
     
     const audioData = audioQueue.current[index];
-    const audioUrls = getAllVerseAudioUrls(audioData.reference);
+    const audioUrls = getAllVerseAudioUrls(audioData.reference, 64);
     
     if (!audioUrls.length) {
       setError(`Invalid verse reference: ${audioData.reference}`);
       return false;
     }
 
-    // Try loading from current provider
-    const audioUrl = audioUrls[providerIndex];
-    if (!audioUrl) {
-      // No more providers to try
-      setError(`Failed to load audio for verse ${audioData.reference} - all sources failed`);
-      return false;
-    }
+    const tryLoadFromProvider = async (urlIndex) => {
+      if (urlIndex >= audioUrls.length) {
+        setError(`Failed to load audio for verse ${audioData.reference} - all sources failed`);
+        return false;
+      }
 
-    return new Promise((resolve) => {
-      const audio = new Audio(audioUrl);
-      
-      const handleLoadSuccess = () => {
-        // Clean up event listeners
-        audio.removeEventListener('loadedmetadata', handleLoadSuccess);
-        audio.removeEventListener('error', handleLoadError);
-        
-        audioRef.current = audio;
-        audioQueue.current[index].audio = audio;
-        
-        audio.addEventListener('loadedmetadata', () => {
-          setAudioLoaded(true);
-          setDuration(audio.duration);
-        });
+      const audioUrl = audioUrls[urlIndex];
+      console.log(`Trying to load ${audioData.reference} from provider ${urlIndex + 1}: ${audioUrl}`);
 
-        audio.addEventListener('timeupdate', () => {
-          setCurrentTime(audio.currentTime);
-        });
+      return new Promise((resolve) => {
+        const audio = new Audio(audioUrl);
+        
+        const handleLoadSuccess = () => {
+          console.log(`Successfully loaded audio for ${audioData.reference} from provider ${urlIndex + 1}`);
+          
+          // Store the audio
+          audioQueue.current[index].audio = audio;
+          
+          // Set up event listeners
+          audio.addEventListener('loadedmetadata', () => {
+            setAudioLoaded(true);
+            setDuration(audio.duration);
+          });
 
-        audio.addEventListener('ended', handleAudioEnded);
+          audio.addEventListener('timeupdate', () => {
+            setCurrentTime(audio.currentTime);
+          });
+
+          audio.addEventListener('ended', handleAudioEnded);
+          
+          resolve(true);
+        };
         
-        console.log(`Successfully loaded audio for ${audioData.reference} from provider ${providerIndex + 1}`);
-        resolve(true);
-      };
-      
-      const handleLoadError = async () => {
-        // Clean up event listeners
-        audio.removeEventListener('loadedmetadata', handleLoadSuccess);
-        audio.removeEventListener('error', handleLoadError);
-        
-        console.log(`Failed to load audio for ${audioData.reference} from provider ${providerIndex + 1}`);
-        
-        // Try next provider
-        if (providerIndex + 1 < audioUrls.length) {
-          console.log(`Trying next provider (${providerIndex + 2}/${audioUrls.length})`);
-          const success = await loadAudio(index, providerIndex + 1);
+        const handleLoadError = async () => {
+          console.log(`Failed to load audio for ${audioData.reference} from provider ${urlIndex + 1}`);
+          // Try next provider
+          const success = await tryLoadFromProvider(urlIndex + 1);
           resolve(success);
-        } else {
-          setError(`Failed to load audio for verse ${audioData.reference} - all sources failed`);
-          setIsLoading(false);
-          setAudioLoaded(false);
-          resolve(false);
-        }
-      };
-      
-      audio.addEventListener('loadedmetadata', handleLoadSuccess);
-      audio.addEventListener('error', handleLoadError);
-      
-      // Preload the audio
-      audio.load();
-    });
+        };
+        
+        audio.addEventListener('canplaythrough', handleLoadSuccess);
+        audio.addEventListener('error', handleLoadError);
+        
+        // Start loading
+        audio.load();
+      });
+    };
+
+    return await tryLoadFromProvider(providerIndex);
   };
 
   const handleAudioEnded = () => {
