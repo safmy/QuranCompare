@@ -4,13 +4,12 @@ import { getAbsoluteVerseNumber, getVerseAudioUrl, getAllVerseAudioUrls } from '
 const QuranAudioPlayerEnhanced = ({ 
   verseReferences = [], // Array of verse references like ["2:255", "2:256", "2:257"]
   arabicTexts = [], // Array of Arabic texts corresponding to each verse
-  defaultMemorizationMode = false,
   onMemorizationModeChange = () => {}
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [memorizationMode, setMemorizationMode] = useState(defaultMemorizationMode);
+  const [memorizationMode, setMemorizationMode] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
   const [loopCount, setLoopCount] = useState(5);
   const [pauseBetweenLoops, setPauseBetweenLoops] = useState(3);
@@ -39,13 +38,8 @@ const QuranAudioPlayerEnhanced = ({
         audio: null
       }));
       
-      // Reset states
-      setAudioLoaded(false);
-      setIsLoading(false);
-      setIsPlaying(false);
-      setError('');
-      
-      console.log(`Audio queue initialized with ${verseReferences.length} verses:`, verseReferences);
+      // Don't preload immediately to avoid rate limiting
+      console.log(`Audio queue initialized with ${verseReferences.length} verses`);
     }
     
     return () => {
@@ -60,89 +54,73 @@ const QuranAudioPlayerEnhanced = ({
     if (index >= audioQueue.current.length) return false;
     
     const audioData = audioQueue.current[index];
-    const audioUrls = getAllVerseAudioUrls(audioData.reference, 64);
+    const audioUrls = getAllVerseAudioUrls(audioData.reference);
     
     if (!audioUrls.length) {
       setError(`Invalid verse reference: ${audioData.reference}`);
       return false;
     }
 
-    const tryLoadFromProvider = async (urlIndex) => {
-      if (urlIndex >= audioUrls.length) {
-        setError(`Failed to load audio for verse ${audioData.reference} - all sources failed`);
-        return false;
-      }
+    // Try loading from current provider
+    const audioUrl = audioUrls[providerIndex];
+    if (!audioUrl) {
+      // No more providers to try
+      setError(`Failed to load audio for verse ${audioData.reference} - all sources failed`);
+      return false;
+    }
 
-      const audioUrl = audioUrls[urlIndex];
-      console.log(`Trying to load ${audioData.reference} from provider ${urlIndex + 1}: ${audioUrl}`);
-
-      return new Promise((resolve) => {
-        const audio = new Audio(audioUrl);
-        let resolved = false;
+    return new Promise((resolve) => {
+      const audio = new Audio(audioUrl);
+      
+      const handleLoadSuccess = () => {
+        // Clean up event listeners
+        audio.removeEventListener('loadedmetadata', handleLoadSuccess);
+        audio.removeEventListener('error', handleLoadError);
         
-        const handleLoadSuccess = () => {
-          if (resolved) return;
-          resolved = true;
-          
-          console.log(`Successfully loaded audio for ${audioData.reference} from provider ${urlIndex + 1}`);
-          
-          // Clean up listeners
-          audio.removeEventListener('loadeddata', handleLoadSuccess);
-          audio.removeEventListener('error', handleLoadError);
-          
-          // Store the audio
-          audioQueue.current[index].audio = audio;
-          
-          // Set up event listeners
-          audio.addEventListener('loadedmetadata', () => {
-            setAudioLoaded(true);
-            setDuration(audio.duration);
-          });
-
-          audio.addEventListener('timeupdate', () => {
-            setCurrentTime(audio.currentTime);
-          });
-
-          audio.addEventListener('ended', handleAudioEnded);
-          
-          resolve(true);
-        };
+        audioRef.current = audio;
+        audioQueue.current[index].audio = audio;
         
-        const handleLoadError = async () => {
-          if (resolved) return;
-          resolved = true;
-          
-          console.log(`Failed to load audio for ${audioData.reference} from provider ${urlIndex + 1}`);
-          
-          // Clean up listeners
-          audio.removeEventListener('loadeddata', handleLoadSuccess);
-          audio.removeEventListener('error', handleLoadError);
-          
-          // Try next provider
-          const success = await tryLoadFromProvider(urlIndex + 1);
+        audio.addEventListener('loadedmetadata', () => {
+          setAudioLoaded(true);
+          setDuration(audio.duration);
+        });
+
+        audio.addEventListener('timeupdate', () => {
+          setCurrentTime(audio.currentTime);
+        });
+
+        audio.addEventListener('ended', handleAudioEnded);
+        
+        console.log(`Successfully loaded audio for ${audioData.reference} from provider ${providerIndex + 1}`);
+        resolve(true);
+      };
+      
+      const handleLoadError = async () => {
+        // Clean up event listeners
+        audio.removeEventListener('loadedmetadata', handleLoadSuccess);
+        audio.removeEventListener('error', handleLoadError);
+        
+        console.log(`Failed to load audio for ${audioData.reference} from provider ${providerIndex + 1}`);
+        
+        // Try next provider
+        if (providerIndex + 1 < audioUrls.length) {
+          console.log(`Trying next provider (${providerIndex + 2}/${audioUrls.length})`);
+          const success = await loadAudio(index, providerIndex + 1);
           resolve(success);
-        };
-        
-        // Set up loading timeout
-        const timeout = setTimeout(() => {
-          if (!resolved) {
-            console.log(`Timeout loading audio for ${audioData.reference} from provider ${urlIndex + 1}`);
-            handleLoadError();
-          }
-        }, 5000); // 5 second timeout
-        
-        audio.addEventListener('loadeddata', handleLoadSuccess);
-        audio.addEventListener('error', handleLoadError);
-        
-        // Clear timeout on success
-        audio.addEventListener('loadeddata', () => clearTimeout(timeout));
-        
-        // Start loading
-        audio.load();
-      });
-    };
-
-    return await tryLoadFromProvider(providerIndex);
+        } else {
+          setError(`Failed to load audio for verse ${audioData.reference} - all sources failed`);
+          setIsLoading(false);
+          setAudioLoaded(false);
+          resolve(false);
+        }
+      };
+      
+      audio.addEventListener('loadedmetadata', handleLoadSuccess);
+      audio.addEventListener('error', handleLoadError);
+      
+      // Preload the audio
+      audio.load();
+    });
   };
 
   const handleAudioEnded = () => {
@@ -206,76 +184,56 @@ const QuranAudioPlayerEnhanced = ({
       return;
     }
     
-    console.log(`Playing verse at index ${index}: ${verseReferences[index]}`);
     setIsLoading(true);
-    setError('');
     
-    // Simple direct audio creation
-    const verseRef = verseReferences[index];
-    const audioUrls = getAllVerseAudioUrls(verseRef, 64);
+    // Load audio if not already loaded
+    if (!audioQueue.current[index].audio) {
+      console.log(`Loading audio for verse ${verseReferences[index]}`);
+      const loadSuccess = await loadAudio(index);
+      
+      if (!loadSuccess) {
+        console.error(`Failed to load audio for verse ${verseReferences[index]}`);
+        setIsLoading(false);
+        // Try to continue with next verse if available
+        if (isLoopingRef.current && currentVerseIndexRef.current < verseReferences.length - 1) {
+          currentVerseIndexRef.current++;
+          setCurrentVerseIndex(currentVerseIndexRef.current);
+          setTimeout(() => playVerseAtIndex(currentVerseIndexRef.current), 1000);
+        }
+        return;
+      }
+    }
     
-    if (!audioUrls.length) {
-      setError(`No audio URLs found for ${verseRef}`);
+    const audio = audioQueue.current[index].audio;
+    if (!audio) {
+      console.error(`No audio available for verse ${verseReferences[index]}`);
+      setError(`Failed to load audio for verse ${verseReferences[index]}`);
       setIsLoading(false);
       return;
     }
     
-    // Try each audio URL until one works
-    for (let i = 0; i < audioUrls.length; i++) {
-      try {
-        const audio = new Audio(audioUrls[i]);
-        console.log(`Trying audio URL ${i + 1} for ${verseRef}: ${audioUrls[i]}`);
-        
-        // Wait for audio to be ready
-        await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Timeout')), 5000);
-          
-          audio.addEventListener('loadeddata', () => {
-            clearTimeout(timeout);
-            resolve();
-          });
-          
-          audio.addEventListener('error', () => {
-            clearTimeout(timeout);
-            reject(new Error('Audio load error'));
-          });
-          
-          audio.load();
-        });
-        
-        // Audio loaded successfully
-        audioRef.current = audio;
-        audioQueue.current[index].audio = audio;
-        audio.playbackRate = playbackSpeed;
-        
-        // Set up event listeners
-        audio.addEventListener('loadedmetadata', () => {
-          setAudioLoaded(true);
-          setDuration(audio.duration);
-        });
-
-        audio.addEventListener('timeupdate', () => {
-          setCurrentTime(audio.currentTime);
-        });
-
-        audio.addEventListener('ended', handleAudioEnded);
-        
-        setIsLoading(false);
-        await audio.play();
-        setIsPlaying(true);
-        setError('');
-        console.log(`Successfully playing verse ${verseReferences[index]}`);
-        return; // Success - exit the loop
-        
-      } catch (error) {
-        console.log(`Failed to load audio from source ${i + 1}: ${error.message}`);
-        // Continue to next URL
+    audioRef.current = audio;
+    audio.playbackRate = playbackSpeed;
+    
+    try {
+      setIsLoading(false);
+      await audio.play();
+      setIsPlaying(true);
+      setError('');
+      console.log(`Successfully playing verse ${verseReferences[index]}`);
+    } catch (err) {
+      console.error(`Error playing verse ${verseReferences[index]}:`, err);
+      setError(`Failed to play verse ${verseReferences[index]}`);
+      setIsPlaying(false);
+      setIsLoading(false);
+      
+      // Try to continue with next verse if available
+      if (isLoopingRef.current && currentVerseIndexRef.current < verseReferences.length - 1) {
+        currentVerseIndexRef.current++;
+        setCurrentVerseIndex(currentVerseIndexRef.current);
+        setTimeout(() => playVerseAtIndex(currentVerseIndexRef.current), 1000);
       }
     }
-    
-    // If we get here, all URLs failed
-    setError(`Failed to load audio for ${verseRef} from all sources`);
-    setIsLoading(false);
   };
 
   const playAudio = async () => {
