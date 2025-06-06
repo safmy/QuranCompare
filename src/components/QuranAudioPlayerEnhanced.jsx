@@ -536,29 +536,29 @@ const QuranAudioPlayerEnhanced = ({
           <>
             <button
               onClick={() => isPlaying ? pauseAudio() : playAudio()}
-              disabled={!audioLoaded || (playMode === 'selected' && selectedVerses.size === 0)}
+              disabled={isLoading || (playMode === 'selected' && selectedVerses.size === 0)}
               style={{
                 padding: '8px 15px',
-                backgroundColor: !audioLoaded || (playMode === 'selected' && selectedVerses.size === 0) ? '#ccc' : (isPlaying ? '#ff9800' : '#7c3aed'),
+                backgroundColor: isLoading || (playMode === 'selected' && selectedVerses.size === 0) ? '#ccc' : (isPlaying ? '#ff9800' : '#7c3aed'),
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
-                cursor: !audioLoaded || (playMode === 'selected' && selectedVerses.size === 0) ? 'not-allowed' : 'pointer'
+                cursor: isLoading || (playMode === 'selected' && selectedVerses.size === 0) ? 'not-allowed' : 'pointer'
               }}
             >
-              {!audioLoaded ? '⏳ Loading...' : (isPlaying ? '⏸️ Pause' : '▶️ Play')}
+              {isLoading ? '⏳ Loading...' : (isPlaying ? '⏸️ Pause' : '▶️ Play')}
             </button>
             
             <button
               onClick={stopAudio}
-              disabled={!audioLoaded}
+              disabled={isLoading}
               style={{
                 padding: '8px 15px',
-                backgroundColor: !audioLoaded ? '#ccc' : '#f44336',
+                backgroundColor: isLoading ? '#ccc' : '#f44336',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
-                cursor: !audioLoaded ? 'not-allowed' : 'pointer'
+                cursor: isLoading ? 'not-allowed' : 'pointer'
               }}
             >
               ⏹️ Stop
@@ -567,17 +567,17 @@ const QuranAudioPlayerEnhanced = ({
         ) : (
           <button
             onClick={isLooping ? stopLooping : startLooping}
-            disabled={!audioLoaded || (playMode === 'selected' && selectedVerses.size === 0)}
+            disabled={isLoading || (playMode === 'selected' && selectedVerses.size === 0)}
             style={{
               padding: '8px 15px',
-              backgroundColor: !audioLoaded || (playMode === 'selected' && selectedVerses.size === 0) ? '#ccc' : (isLooping ? '#f44336' : '#2196F3'),
+              backgroundColor: isLoading || (playMode === 'selected' && selectedVerses.size === 0) ? '#ccc' : (isLooping ? '#f44336' : '#2196F3'),
               color: 'white',
               border: 'none',
               borderRadius: '4px',
-              cursor: !audioLoaded || (playMode === 'selected' && selectedVerses.size === 0) ? 'not-allowed' : 'pointer'
+              cursor: isLoading || (playMode === 'selected' && selectedVerses.size === 0) ? 'not-allowed' : 'pointer'
             }}
           >
-            {!audioLoaded ? '⏳ Loading...' : (isLooping ? '⏹️ Stop Loop' : '🔁 Start Loop')}
+            {isLoading ? '⏳ Loading...' : (isLooping ? '⏹️ Stop Loop' : '🔁 Start Loop')}
           </button>
         )}
       </div>

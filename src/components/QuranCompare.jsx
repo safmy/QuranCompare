@@ -445,17 +445,10 @@ const QuranCompare = ({ initialVerses = [] }) => {
           }}>
             {verses.map((verse, index) => (
               <div key={`${verse.sura_verse}-${index}`} className="verse-card compact">
-                <div className="verse-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <div className="verse-header" style={{ marginBottom: '15px' }}>
                   <h4 className="verse-reference" style={{ margin: 0 }}>
                     {verse.reference}
                   </h4>
-                  {/* Individual verse audio player */}
-                  <div className="verse-audio-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <QuranAudioPlayerSimple 
-                      verseReference={verse.sura_verse}
-                      arabicText={verse.arabic || ''}
-                    />
-                  </div>
                 </div>
                 
                 {verse.arabic && (
@@ -492,6 +485,14 @@ const QuranCompare = ({ initialVerses = [] }) => {
                     </small>
                   </div>
                 )}
+                
+                {/* Individual verse audio player - positioned below content */}
+                <div style={{ marginTop: '15px' }}>
+                  <QuranAudioPlayerSimple 
+                    verseReference={verse.sura_verse}
+                    arabicText={verse.arabic || ''}
+                  />
+                </div>
               </div>
             ))}
           </div>
