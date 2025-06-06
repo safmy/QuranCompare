@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import VoiceSearchButtonEnhanced from './VoiceSearchButtonEnhanced';
+import { Clipboard } from '@capacitor/clipboard';
 
 // API endpoint - change this to your deployed API URL in production
 const API_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
@@ -79,47 +80,69 @@ const QuranVectorSearch = ({ savedState = {} }) => {
       // Enhanced clipboard handling for iOS and mobile browsers
       let copySuccess = false;
       
-      // Method 1: Try modern clipboard API with proper error handling
-      if (navigator.clipboard && navigator.clipboard.writeText) {
+      // Method 1: Try Capacitor Clipboard plugin (works best in iOS app)
+      try {
+        // Check if we're in a Capacitor environment
+        if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+          await Clipboard.write({
+            string: verseText
+          });
+          copySuccess = true;
+          console.log('Successfully copied using Capacitor Clipboard plugin');
+        }
+      } catch (capacitorErr) {
+        console.log('Capacitor Clipboard failed, trying web API:', capacitorErr);
+      }
+      
+      // Method 2: Try modern clipboard API (for web)
+      if (!copySuccess && navigator.clipboard && navigator.clipboard.writeText) {
         try {
           await navigator.clipboard.writeText(verseText);
           copySuccess = true;
+          console.log('Successfully copied using Web Clipboard API');
         } catch (clipboardErr) {
-          console.log('Clipboard API failed, trying fallback:', clipboardErr);
+          console.log('Web Clipboard API failed, trying fallback:', clipboardErr);
         }
       }
       
-      // Method 2: Fallback for iOS and older browsers
+      // Method 3: Improved fallback for older browsers and edge cases
       if (!copySuccess) {
         try {
           const textArea = document.createElement('textarea');
           textArea.value = verseText;
-          textArea.style.position = 'fixed';
-          textArea.style.left = '-999999px';
-          textArea.style.top = '-999999px';
-          textArea.style.opacity = '0';
-          textArea.style.pointerEvents = 'none';
-          textArea.readOnly = true;
+          
+          // Better positioning and styling for iOS
+          textArea.style.position = 'absolute';
+          textArea.style.left = '50%';
+          textArea.style.top = '50%';
+          textArea.style.transform = 'translate(-50%, -50%)';
+          textArea.style.width = '1px';
+          textArea.style.height = '1px';
+          textArea.style.padding = '0';
+          textArea.style.border = 'none';
+          textArea.style.outline = 'none';
+          textArea.style.boxShadow = 'none';
+          textArea.style.background = 'transparent';
+          textArea.style.fontSize = '16px'; // Prevents zoom on iOS
+          textArea.readOnly = false;
+          textArea.contentEditable = true;
+          
           document.body.appendChild(textArea);
           
-          // For iOS, we need to use setSelectionRange
-          if (navigator.userAgent.match(/ipad|iphone/i)) {
-            textArea.contentEditable = true;
-            textArea.readOnly = false;
-            const range = document.createRange();
-            range.selectNodeContents(textArea);
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-            textArea.setSelectionRange(0, textArea.value.length);
-          } else {
-            textArea.select();
-          }
+          // Focus and select
+          textArea.focus();
+          textArea.select();
+          textArea.setSelectionRange(0, textArea.value.length);
           
+          // Try to copy
           copySuccess = document.execCommand('copy');
           document.body.removeChild(textArea);
+          
+          if (copySuccess) {
+            console.log('Successfully copied using fallback method');
+          }
         } catch (fallbackErr) {
-          console.error('Fallback copy failed:', fallbackErr);
+          console.error('All copy methods failed:', fallbackErr);
         }
       }
       
