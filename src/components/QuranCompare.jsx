@@ -47,12 +47,16 @@ const VerseAudioButton = ({ verseReference }) => {
         });
 
         audio.addEventListener('ended', () => {
+          console.log(`Audio ended. isLooping: ${isLooping}, currentLoop: ${currentLoop}, loopCount: ${loopCount}`);
+          
           if (isLooping && currentLoop < loopCount) {
             // Continue looping
             console.log(`Loop ${currentLoop}/${loopCount} completed, starting next loop...`);
             setTimeout(() => {
               if (isLooping) {
-                setCurrentLoop(prev => prev + 1);
+                const nextLoop = currentLoop + 1;
+                setCurrentLoop(nextLoop);
+                console.log(`Starting loop ${nextLoop}/${loopCount}`);
                 audio.currentTime = 0;
                 audio.play();
               }
@@ -85,6 +89,7 @@ const VerseAudioButton = ({ verseReference }) => {
   const startMemorization = () => {
     setIsLooping(true);
     setCurrentLoop(1);
+    setIsPlaying(false); // Reset playing state
     playAudio();
   };
 
