@@ -49,15 +49,17 @@ const VerseAudioButton = ({ verseReference }) => {
         audio.addEventListener('ended', () => {
           if (isLooping && currentLoop < loopCount) {
             // Continue looping
-            setCurrentLoop(prev => prev + 1);
+            console.log(`Loop ${currentLoop}/${loopCount} completed, starting next loop...`);
             setTimeout(() => {
               if (isLooping) {
+                setCurrentLoop(prev => prev + 1);
                 audio.currentTime = 0;
                 audio.play();
               }
             }, 2000); // 2 second pause between loops
           } else {
             // Stop playing
+            console.log(`Looping completed: ${currentLoop}/${loopCount}`);
             setIsPlaying(false);
             setCurrentAudio(null);
             setIsLooping(false);

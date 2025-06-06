@@ -78,9 +78,17 @@ const QuranAudioPlayerEnhanced = ({
 
       return new Promise((resolve) => {
         const audio = new Audio(audioUrl);
+        let resolved = false;
         
         const handleLoadSuccess = () => {
+          if (resolved) return;
+          resolved = true;
+          
           console.log(`Successfully loaded audio for ${audioData.reference} from provider ${urlIndex + 1}`);
+          
+          // Clean up listeners
+          audio.removeEventListener('loadeddata', handleLoadSuccess);
+          audio.removeEventListener('error', handleLoadError);
           
           // Store the audio
           audioQueue.current[index].audio = audio;
@@ -101,14 +109,33 @@ const QuranAudioPlayerEnhanced = ({
         };
         
         const handleLoadError = async () => {
+          if (resolved) return;
+          resolved = true;
+          
           console.log(`Failed to load audio for ${audioData.reference} from provider ${urlIndex + 1}`);
+          
+          // Clean up listeners
+          audio.removeEventListener('loadeddata', handleLoadSuccess);
+          audio.removeEventListener('error', handleLoadError);
+          
           // Try next provider
           const success = await tryLoadFromProvider(urlIndex + 1);
           resolve(success);
         };
         
-        audio.addEventListener('canplaythrough', handleLoadSuccess);
+        // Set up loading timeout
+        const timeout = setTimeout(() => {
+          if (!resolved) {
+            console.log(`Timeout loading audio for ${audioData.reference} from provider ${urlIndex + 1}`);
+            handleLoadError();
+          }
+        }, 5000); // 5 second timeout
+        
+        audio.addEventListener('loadeddata', handleLoadSuccess);
         audio.addEventListener('error', handleLoadError);
+        
+        // Clear timeout on success
+        audio.addEventListener('loadeddata', () => clearTimeout(timeout));
         
         // Start loading
         audio.load();
