@@ -3,6 +3,106 @@ import './QuranCompare.css';
 import QuranAudioPlayerEnhanced from './QuranAudioPlayerEnhanced';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getLanguageConfig, getTranslationText, getFootnoteText } from '../config/languages';
+import { getAllVerseAudioUrls } from '../utils/verseMapping';
+
+// Simple verse audio button component
+const VerseAudioButton = ({ verseReference }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [currentAudio, setCurrentAudio] = useState(null);
+
+  const playAudio = async () => {
+    if (isPlaying && currentAudio) {
+      currentAudio.pause();
+      setIsPlaying(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    
+    const audioUrls = getAllVerseAudioUrls(verseReference, 64);
+    
+    const tryPlayAudio = async (urlIndex = 0) => {
+      if (urlIndex >= audioUrls.length) {
+        setError('Audio unavailable');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const audio = new Audio(audioUrls[urlIndex]);
+        
+        audio.addEventListener('loadeddata', () => {
+          setIsLoading(false);
+          setIsPlaying(true);
+          setCurrentAudio(audio);
+          audio.play();
+        });
+
+        audio.addEventListener('ended', () => {
+          setIsPlaying(false);
+          setCurrentAudio(null);
+        });
+
+        audio.addEventListener('error', () => {
+          console.log(`Audio failed from source ${urlIndex + 1}, trying next...`);
+          tryPlayAudio(urlIndex + 1);
+        });
+
+        audio.load();
+      } catch (err) {
+        console.error('Audio error:', err);
+        tryPlayAudio(urlIndex + 1);
+      }
+    };
+
+    tryPlayAudio();
+  };
+
+  const getButtonContent = () => {
+    if (error) return '❌';
+    if (isLoading) return '⏳';
+    return isPlaying ? '⏸' : '▶';
+  };
+
+  return (
+    <button
+      onClick={playAudio}
+      disabled={isLoading}
+      style={{
+        background: 'rgba(124, 58, 237, 0.1)',
+        border: '1px solid #7c3aed',
+        borderRadius: '50%',
+        width: '36px',
+        height: '36px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: isLoading ? 'not-allowed' : 'pointer',
+        fontSize: '16px',
+        color: error ? '#ff4444' : (isPlaying ? '#4caf50' : '#7c3aed'),
+        transition: 'all 0.2s ease'
+      }}
+      title={error ? `Audio error: ${error}` : (isLoading ? 'Loading...' : (isPlaying ? 'Pause' : `Play ${verseReference}`))}
+      onMouseEnter={(e) => {
+        if (!isLoading && !error) {
+          e.target.style.background = '#7c3aed';
+          e.target.style.color = 'white';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isLoading && !error) {
+          e.target.style.background = 'rgba(124, 58, 237, 0.1)';
+          e.target.style.color = isPlaying ? '#4caf50' : '#7c3aed';
+        }
+      }}
+    >
+      {getButtonContent()}
+    </button>
+  );
+};
 
 const QuranCompare = ({ initialVerses = [] }) => {
   const { currentLanguage, changeLanguage } = useLanguage();
@@ -18,6 +118,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
   const [hoveredRoot, setHoveredRoot] = useState(null); // Hovered root (hover mode)
   const [meaningData, setMeaningData] = useState(null); // Meaning variations data
   const [memorizationMode, setMemorizationMode] = useState(false); // Enable memorization mode
+  const [showEnhancedPlayer, setShowEnhancedPlayer] = useState(false); // Show enhanced player for single verses
 
   useEffect(() => {
     // Load Quran data
@@ -442,9 +543,15 @@ const QuranCompare = ({ initialVerses = [] }) => {
           }}>
             {verses.map((verse, index) => (
               <div key={`${verse.sura_verse}-${index}`} className="verse-card compact">
-                <h4 className="verse-reference">
-                  {verse.reference}
-                </h4>
+                <div className="verse-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                  <h4 className="verse-reference" style={{ margin: 0 }}>
+                    {verse.reference}
+                  </h4>
+                  {/* Individual verse audio player */}
+                  <div className="verse-audio-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <VerseAudioButton verseReference={verse.sura_verse} />
+                  </div>
+                </div>
                 
                 {verse.arabic && (
                   <div className="arabic-text" dir="rtl">
@@ -484,8 +591,28 @@ const QuranCompare = ({ initialVerses = [] }) => {
             ))}
           </div>
           
-          {/* Enhanced Audio Player */}
-          {verses.length > 0 && (
+          {/* Enhanced Audio Player Controls */}
+          {verses.length === 1 && !memorizationMode && (
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <button
+                onClick={() => setShowEnhancedPlayer(!showEnhancedPlayer)}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: showEnhancedPlayer ? '#ff9800' : '#7c3aed',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                {showEnhancedPlayer ? '🎵 Hide Advanced Player' : '🎵 Show Advanced Player'}
+              </button>
+            </div>
+          )}
+
+          {/* Enhanced Audio Player - Show when memorization mode is enabled, for multiple verses, or explicitly requested */}
+          {verses.length > 0 && (memorizationMode || verses.length > 1 || showEnhancedPlayer) && (
             <div style={{ marginTop: '30px' }}>
               <QuranAudioPlayerEnhanced
                 verseReferences={verses.map(v => v.sura_verse)}
