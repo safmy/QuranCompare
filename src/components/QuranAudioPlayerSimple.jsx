@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { getAbsoluteVerseNumber, getVerseAudioUrl } from '../utils/verseMapping';
+import ChunkAudioPlayerBackend from './ChunkAudioPlayerBackend';
+import { setDeveloperAccess } from '../config/premium';
 
 const QuranAudioPlayerSimple = ({ 
   verseReference, 
@@ -18,11 +20,17 @@ const QuranAudioPlayerSimple = ({
   const [audioLoaded, setAudioLoaded] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [showPremiumPrompt, setShowPremiumPrompt] = useState(false);
   
   const audioRef = useRef(null);
   const loopIntervalRef = useRef(null);
   const loopCountRef = useRef(0);
   const isLoopingRef = useRef(false);
+  
+  // Enable developer access for testing (remove in production)
+  useEffect(() => {
+    setDeveloperAccess(true);
+  }, []);
 
   // Initialize audio on component mount
   useEffect(() => {
@@ -412,19 +420,25 @@ const QuranAudioPlayerSimple = ({
             backgroundColor: '#f5f5f5',
             borderRadius: '4px'
           }}>
-            <h6 style={{ margin: '0 0 10px 0', color: '#333' }}>Verse Word Groups:</h6>
-            <div style={{ direction: 'rtl', fontSize: '16px', lineHeight: '1.8' }}>
+            <h6 style={{ margin: '0 0 10px 0', color: '#333' }}>
+              Verse Word Groups:
+              <span style={{ 
+                fontSize: '11px', 
+                color: '#2196F3', 
+                marginLeft: '10px',
+                fontWeight: 'normal'
+              }}>
+                (Click chunks to hear pronunciation)
+              </span>
+            </h6>
+            <div style={{ direction: 'rtl', fontSize: '16px', lineHeight: '2.5' }}>
               {getArabicWordGroups().map((group, index) => (
-                <div key={index} style={{
-                  display: 'inline-block',
-                  padding: '5px 10px',
-                  margin: '3px',
-                  backgroundColor: '#fff',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px'
-                }}>
-                  <strong style={{ fontSize: '12px', color: '#666' }}>{index + 1}.</strong> {group}
-                </div>
+                <ChunkAudioPlayerBackend
+                  key={index}
+                  arabicText={group}
+                  chunkIndex={index + 1}
+                  onUnauthorized={() => setShowPremiumPrompt(true)}
+                />
               ))}
             </div>
             <p style={{ fontSize: '12px', color: '#666', marginTop: '10px', marginBottom: 0 }}>
@@ -444,6 +458,88 @@ const QuranAudioPlayerSimple = ({
           marginTop: '10px'
         }}>
           {error}
+        </div>
+      )}
+      
+      {/* Premium Feature Prompt */}
+      {showPremiumPrompt && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '30px',
+            maxWidth: '400px',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+            textAlign: 'center'
+          }}>
+            <h3 style={{ marginTop: 0, color: '#1976d2' }}>
+              🎯 Premium Feature
+            </h3>
+            <p style={{ marginBottom: '20px', color: '#666' }}>
+              Individual chunk audio playback is a premium feature that helps you memorize verses more effectively.
+            </p>
+            <div style={{
+              backgroundColor: '#f5f5f5',
+              borderRadius: '8px',
+              padding: '15px',
+              marginBottom: '20px'
+            }}>
+              <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>
+                Premium Features Include:
+              </h4>
+              <ul style={{ textAlign: 'left', margin: 0, paddingLeft: '20px' }}>
+                <li>Individual chunk audio playback</li>
+                <li>Custom TTS voice options</li>
+                <li>Unlimited memorization sessions</li>
+                <li>Advanced learning analytics</li>
+              </ul>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setShowPremiumPrompt(false)}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#f5f5f5',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Maybe Later
+              </button>
+              <button
+                onClick={() => {
+                  // TODO: Implement purchase flow
+                  alert('Purchase flow coming soon!');
+                  setShowPremiumPrompt(false);
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#2196F3',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold'
+                }}
+              >
+                Upgrade Now
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
