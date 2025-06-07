@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { getAbsoluteVerseNumber, getVerseAudioUrl } from '../utils/verseMapping';
 import ChunkAudioPlayerBackend from './ChunkAudioPlayerBackend';
+import InteractiveChunkEditor from './InteractiveChunkEditor';
 import { setDeveloperAccess } from '../config/premium';
 
 const QuranAudioPlayerSimple = ({ 
@@ -414,39 +415,12 @@ const QuranAudioPlayerSimple = ({
             </div>
           )}
           
-          <div style={{
-            marginTop: '15px',
-            padding: '15px',
-            backgroundColor: '#f5f5f5',
-            borderRadius: '4px'
-          }}>
-            <h6 style={{ margin: '0 0 10px 0', color: '#333' }}>
-              Verse Word Groups:
-              <span style={{ 
-                fontSize: '11px', 
-                color: '#2196F3', 
-                marginLeft: '10px',
-                fontWeight: 'normal'
-              }}>
-                (🔊 Play once, 🔁 Repeat {Math.min(loopCount, 5)} times)
-              </span>
-            </h6>
-            <div style={{ direction: 'rtl', fontSize: '16px', lineHeight: '2.5' }}>
-              {getArabicWordGroups().map((group, index) => (
-                <ChunkAudioPlayerBackend
-                  key={index}
-                  arabicText={group}
-                  chunkIndex={index + 1}
-                  repeatCount={Math.min(loopCount, 5)} // Use verse repeat count but cap at 5 for chunks
-                  pauseBetweenRepeats={pauseBetweenLoops}
-                  onUnauthorized={() => setShowPremiumPrompt(true)}
-                />
-              ))}
-            </div>
-            <p style={{ fontSize: '12px', color: '#666', marginTop: '10px', marginBottom: 0 }}>
-              Practice by repeating these word groups along with the audio
-            </p>
-          </div>
+          <InteractiveChunkEditor
+            arabicText={arabicText}
+            repeatCount={loopCount}
+            pauseBetweenRepeats={pauseBetweenLoops}
+            onUnauthorized={() => setShowPremiumPrompt(true)}
+          />
         </div>
       )}
 
