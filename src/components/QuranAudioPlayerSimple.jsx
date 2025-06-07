@@ -428,7 +428,7 @@ const QuranAudioPlayerSimple = ({
                 marginLeft: '10px',
                 fontWeight: 'normal'
               }}>
-                (Click chunks to hear pronunciation)
+                (🔊 Play once, 🔁 Repeat {Math.min(loopCount, 5)} times)
               </span>
             </h6>
             <div style={{ direction: 'rtl', fontSize: '16px', lineHeight: '2.5' }}>
@@ -437,6 +437,8 @@ const QuranAudioPlayerSimple = ({
                   key={index}
                   arabicText={group}
                   chunkIndex={index + 1}
+                  repeatCount={Math.min(loopCount, 5)} // Use verse repeat count but cap at 5 for chunks
+                  pauseBetweenRepeats={pauseBetweenLoops}
                   onUnauthorized={() => setShowPremiumPrompt(true)}
                 />
               ))}

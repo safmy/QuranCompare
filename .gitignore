@@ -24,3 +24,6 @@ yarn-error.log*
 
 # Large data files
 verses_array_roots_meanings_subtitles_footnotes.json
+
+# Local Netlify folder
+.netlify
