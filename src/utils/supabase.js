@@ -98,9 +98,9 @@ export const createOrUpdateUser = async (email) => {
         .insert([
           {
             email: email,
-            status: email === 'safmy@example.com' ? 'active' : 'inactive',
-            tier: email === 'safmy@example.com' ? 'premium' : 'free',
-            expires_at: email === 'safmy@example.com' 
+            status: email === 'syedahmadfahmybinsyedsalim@gmail.com' ? 'active' : 'inactive',
+            tier: email === 'syedahmadfahmybinsyedsalim@gmail.com' ? 'premium' : 'free',
+            expires_at: email === 'syedahmadfahmybinsyedsalim@gmail.com' 
               ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
               : null,
             created_at: new Date().toISOString()

@@ -91,15 +91,20 @@ Thank you!`
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 10000
+      zIndex: 10000,
+      overflowY: 'auto',
+      padding: '20px'
     }}>
       <div style={{
         backgroundColor: 'white',
         borderRadius: '12px',
-        padding: '40px',
+        padding: '30px',
         maxWidth: '500px',
         width: '90%',
-        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+        margin: 'auto'
       }}>
         <h2 style={{ marginTop: 0, marginBottom: '20px', textAlign: 'center', color: '#1976d2' }}>
           🤖 Subscribe to AI Debater Bot

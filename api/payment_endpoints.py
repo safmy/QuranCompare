@@ -170,33 +170,24 @@ async def get_user_subscription(email: str):
         # Check if user exists and has active subscription
         response = supabase.table('user_subscriptions').select('*').eq('email', email).execute()
         
-        if not response.data:
-            # User doesn't exist, create free tier user
-            user_data = {
-                'email': email,
-                'status': 'active' if email == 'syedahmadfahmybinsyedsalim@gmail.com' else 'inactive',
-                'tier': 'premium' if email == 'syedahmadfahmybinsyedsalim@gmail.com' else 'free',
-                'expires_at': (datetime.now() + timedelta(days=365)).isoformat() if email == 'syedahmadfahmybinsyedsalim@gmail.com' else None,
-                'created_at': datetime.now().isoformat(),
-                'updated_at': datetime.now().isoformat()
-            }
-            
-            create_response = supabase.table('user_subscriptions').insert(user_data).execute()
-            
-            # Check if this user should have premium access
-            has_subscription = (
-                user_data.get('status') == 'active' and 
-                user_data.get('expires_at') and 
-                datetime.fromisoformat(user_data['expires_at']) > datetime.now()
-            )
-            
+        if not response.data or len(response.data) == 0:
+            # User doesn't exist, just return that info without creating
+            logger.info(f"User {email} not found in database")
             return {
-                "hasSubscription": has_subscription,
-                "user": create_response.data[0] if create_response.data else user_data,
+                "hasSubscription": False,
+                "user": None,
                 "error": None
             }
         
-        user = response.data[0]
+        # If multiple entries exist, use the most recent one
+        if len(response.data) > 1:
+            logger.warning(f"Multiple entries found for {email}, using most recent")
+            # Sort by created_at descending and take the first
+            users = sorted(response.data, key=lambda x: x.get('created_at', ''), reverse=True)
+            user = users[0]
+        else:
+            user = response.data[0]
+            
         has_subscription = (
             user.get('status') == 'active' and 
             user.get('expires_at') and 
@@ -237,8 +228,13 @@ async def create_or_update_user(request: dict):
         # Check if user exists
         existing_response = supabase.table('user_subscriptions').select('*').eq('email', email).execute()
         
-        if existing_response.data:
+        if existing_response.data and len(existing_response.data) > 0:
+            # User already exists, just return the existing user
+            logger.info(f"User {email} already exists, returning existing user")
             return {"success": True, "user": existing_response.data[0]}
+        
+        # Only create new user if they don't exist
+        logger.info(f"Creating new user for {email}")
         
         # Create new user with free tier (unless special case)
         user_data = {
