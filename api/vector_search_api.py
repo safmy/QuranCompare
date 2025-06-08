@@ -935,8 +935,8 @@ Remember: The goal is productive discourse that helps both parties think more de
             })
         
         # Generate AI response
-        response = await client.chat.completions.create(
-            model="gpt-4o",
+        response = client.chat.completions.create(
+            model="gpt-4-turbo-preview",  # Use stable model name
             messages=messages,
             max_tokens=1000,
             temperature=0.7,

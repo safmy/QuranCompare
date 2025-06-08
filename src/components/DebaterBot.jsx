@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { checkPremiumAccess, PREMIUM_FEATURES, hasActiveSubscription, getSubscriptionInfo, setTestSubscription } from '../config/premium';
+import LoginForm from './LoginForm';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
 
@@ -11,6 +13,8 @@ const DebaterBot = () => {
   const [debateMode, setDebateMode] = useState(false);
   const [currentTopic, setCurrentTopic] = useState('');
   const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const { user, isAuthenticated, hasActiveSubscription: authHasSubscription } = useAuth();
   const messagesEndRef = useRef(null);
 
   const subscriptionInfo = getSubscriptionInfo();
@@ -26,13 +30,23 @@ const DebaterBot = () => {
 
   // Check access on component mount
   useEffect(() => {
+    if (!isAuthenticated) {
+      setShowLogin(true);
+      return;
+    }
+    
     const hasAccess = checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT);
     if (!hasAccess) {
       setShowSubscriptionPrompt(true);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   const startDebate = async (topic) => {
+    if (!isAuthenticated) {
+      setShowLogin(true);
+      return;
+    }
+    
     if (!checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT)) {
       setShowSubscriptionPrompt(true);
       return;
@@ -89,6 +103,11 @@ const DebaterBot = () => {
 
   const sendMessage = async () => {
     if (!inputText.trim() || isLoading) return;
+    
+    if (!isAuthenticated) {
+      setShowLogin(true);
+      return;
+    }
     
     if (!checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT)) {
       setShowSubscriptionPrompt(true);
@@ -174,6 +193,27 @@ const DebaterBot = () => {
     "Evolution vs creation",
     "The problem of evil"
   ];
+
+  // Show login form if not authenticated
+  if (showLogin && !isAuthenticated) {
+    return (
+      <>
+        <LoginForm onClose={() => setShowLogin(false)} />
+        <div style={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f5f5f5'
+        }}>
+          <div style={{ textAlign: 'center', color: '#666' }}>
+            <h2>Please log in to access the AI Debater Bot</h2>
+            <p>Premium subscription required for unlimited debates.</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   if (showSubscriptionPrompt && !checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT)) {
     return (
@@ -336,9 +376,13 @@ const DebaterBot = () => {
               fontSize: '12px',
               padding: '8px 12px',
               backgroundColor: 'rgba(255,255,255,0.2)',
-              borderRadius: '4px'
+              borderRadius: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
             }}>
-              ✅ Premium
+              {user?.email && <span>👤 {user.email}</span>}
+              {authHasSubscription ? <span>✅ Premium</span> : <span>🔓 Free</span>}
             </div>
           </div>
         </div>

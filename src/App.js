@@ -8,6 +8,7 @@ import QuranManuscriptAnalysis from './components/QuranManuscriptAnalysis';
 import DebaterBot from './components/DebaterBot';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { checkPremiumAccess, PREMIUM_FEATURES } from './config/premium';
 
 function AppContent() {
@@ -204,9 +205,11 @@ function AppContent() {
 
 function App() {
   return (
-    <LanguageProvider>
-      <AppContent />
-    </LanguageProvider>
+    <AuthProvider>
+      <LanguageProvider>
+        <AppContent />
+      </LanguageProvider>
+    </AuthProvider>
   );
 }
 
