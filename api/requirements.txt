@@ -9,7 +9,7 @@ python-multipart==0.0.6
 python-dotenv==1.0.0
 requests==2.31.0
 stripe>=7.8.2,<8.0.0
-supabase==2.8.0
+supabase==1.5.0
 
 # Optional cloud storage libraries (uncomment as needed)
 # boto3==1.29.0  # For AWS S3

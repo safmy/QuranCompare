@@ -31,11 +31,26 @@ supabase = None
 supabase_error = None
 if supabase_key and supabase_key.strip():
     try:
-        supabase = create_client(supabase_url, supabase_key)
-        logger.info("✅ Supabase client initialized successfully")
+        # Try different initialization approaches
+        try:
+            # Method 1: Basic initialization
+            supabase = create_client(supabase_url, supabase_key)
+            logger.info("✅ Supabase client initialized successfully (method 1)")
+        except Exception as e1:
+            logger.warning(f"Method 1 failed: {e1}")
+            try:
+                # Method 2: With explicit parameters
+                from supabase import Client
+                supabase = Client(supabase_url, supabase_key)
+                logger.info("✅ Supabase client initialized successfully (method 2)")
+            except Exception as e2:
+                logger.warning(f"Method 2 failed: {e2}")
+                raise e1  # Re-raise the original error
+                
     except Exception as e:
         logger.error(f"❌ Failed to initialize Supabase client: {e}")
         logger.error(f"Error type: {type(e).__name__}")
+        logger.error(f"Error args: {e.args}")
         supabase_error = str(e)
         supabase = None
 else:
