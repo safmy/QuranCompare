@@ -29,27 +29,7 @@ const AuthModal = ({ onClose, onSuccess }) => {
     }
   };
 
-  const handleMicrosoftAuth = async () => {
-    try {
-      setIsLoading(true);
-      setError('');
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'azure',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
-      
-      if (error) throw error;
-      
-    } catch (err) {
-      console.error('Microsoft auth error:', err);
-      setError('Failed to sign in with Microsoft. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Microsoft OAuth removed - no Azure permissions available
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();
@@ -117,7 +97,7 @@ const AuthModal = ({ onClose, onSuccess }) => {
         </h2>
         
         <p style={{ marginBottom: '30px', color: '#666', textAlign: 'center', lineHeight: '1.6' }}>
-          Choose your preferred sign-in method to access premium features
+          Sign in with Google for instant access, or use email magic link for any email provider
         </p>
 
         {/* Social Auth Buttons */}
@@ -145,27 +125,6 @@ const AuthModal = ({ onClose, onSuccess }) => {
             📧 Continue with Google
           </button>
 
-          <button
-            onClick={handleMicrosoftAuth}
-            disabled={isLoading}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: '#0078d4',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px'
-            }}
-          >
-            🏢 Continue with Microsoft
-          </button>
         </div>
 
         {/* Divider */}
