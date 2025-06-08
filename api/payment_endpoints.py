@@ -135,3 +135,126 @@ async def get_stripe_config():
     return {
         "publishable_key": os.getenv('STRIPE_PUBLISHABLE_KEY')
     }
+
+# User subscription management endpoints
+@router.get("/user/subscription/{email}")
+async def get_user_subscription(email: str):
+    """Get user subscription status"""
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Database not configured")
+    
+    try:
+        # Check if user exists and has active subscription
+        response = supabase.table('user_subscriptions').select('*').eq('email', email).execute()
+        
+        if not response.data:
+            # User doesn't exist, create free tier user
+            user_data = {
+                'email': email,
+                'status': 'active' if email == 'syedahmadfahmybinsyedsalim@gmail.com' else 'inactive',
+                'tier': 'premium' if email == 'syedahmadfahmybinsyedsalim@gmail.com' else 'free',
+                'expires_at': (datetime.now() + timedelta(days=365)).isoformat() if email == 'syedahmadfahmybinsyedsalim@gmail.com' else None,
+                'created_at': datetime.now().isoformat(),
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            create_response = supabase.table('user_subscriptions').insert(user_data).execute()
+            
+            # Check if this user should have premium access
+            has_subscription = (
+                user_data.get('status') == 'active' and 
+                user_data.get('expires_at') and 
+                datetime.fromisoformat(user_data['expires_at']) > datetime.now()
+            )
+            
+            return {
+                "hasSubscription": has_subscription,
+                "user": create_response.data[0] if create_response.data else user_data,
+                "error": None
+            }
+        
+        user = response.data[0]
+        has_subscription = (
+            user.get('status') == 'active' and 
+            user.get('expires_at') and 
+            datetime.fromisoformat(user['expires_at'].replace('Z', '+00:00')) > datetime.now()
+        )
+        
+        return {
+            "hasSubscription": has_subscription,
+            "user": user,
+            "error": None
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting user subscription: {e}")
+        return {
+            "hasSubscription": False,
+            "user": None,
+            "error": str(e)
+        }
+
+@router.post("/user/subscription")
+async def create_or_update_user(request: dict):
+    """Create or update user subscription"""
+    logger.info(f"POST /user/subscription called with: {request}")
+    
+    if not supabase:
+        logger.error("Supabase not configured")
+        raise HTTPException(status_code=500, detail="Database not configured")
+    
+    try:
+        email = request.get('email')
+        if not email:
+            logger.error("No email provided in request")
+            raise HTTPException(status_code=400, detail="Email is required")
+        
+        logger.info(f"Processing subscription request for email: {email}")
+        
+        # Check if user exists
+        existing_response = supabase.table('user_subscriptions').select('*').eq('email', email).execute()
+        
+        if existing_response.data:
+            return {"success": True, "user": existing_response.data[0]}
+        
+        # Create new user with free tier (unless special case)
+        user_data = {
+            'email': email,
+            'status': 'active' if email == 'syedahmadfahmybinsyedsalim@gmail.com' else 'inactive',
+            'tier': 'premium' if email == 'syedahmadfahmybinsyedsalim@gmail.com' else 'free',
+            'expires_at': (datetime.now() + timedelta(days=365)).isoformat() if email == 'syedahmadfahmybinsyedsalim@gmail.com' else None,
+            'created_at': datetime.now().isoformat(),
+            'updated_at': datetime.now().isoformat()
+        }
+        
+        response = supabase.table('user_subscriptions').insert(user_data).execute()
+        
+        if response.data:
+            return {"success": True, "user": response.data[0]}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to create user")
+            
+    except Exception as e:
+        logger.error(f"Error creating/updating user: {e}")
+        return {"success": False, "error": str(e)}
+
+@router.get("/user/check-subscription/{email}")
+async def check_user_subscription_api(email: str):
+    """Alternative endpoint for checking subscription (for compatibility)"""
+    return await get_user_subscription(email)
+
+@router.get("/test")
+async def test_payment_router():
+    """Test endpoint to verify payment router is working"""
+    return {
+        "status": "success",
+        "message": "Payment router is working",
+        "supabase_configured": supabase is not None,
+        "endpoints": [
+            "/api/payment/create-checkout-session",
+            "/api/payment/user/subscription/{email}",
+            "/api/payment/user/subscription",
+            "/api/payment/webhook",
+            "/api/payment/config"
+        ]
+    }
