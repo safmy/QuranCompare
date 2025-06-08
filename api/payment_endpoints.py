@@ -21,17 +21,23 @@ router = APIRouter(prefix="/api/payment", tags=["payment"])
 supabase_url = os.getenv('SUPABASE_URL', 'https://fsubmqjevlfpcirgsbhi.supabase.co')
 supabase_key = os.getenv('SUPABASE_SERVICE_KEY', '')  # Need service key for server-side ops
 
+logger.info(f"Initializing payment endpoints...")
+logger.info(f"SUPABASE_URL: {supabase_url}")
+logger.info(f"SUPABASE_SERVICE_KEY present: {bool(supabase_key)}")
+logger.info(f"SUPABASE_SERVICE_KEY length: {len(supabase_key) if supabase_key else 0}")
+
 # Initialize Supabase client only if service key is provided
 supabase = None
 if supabase_key and supabase_key.strip():
     try:
         supabase = create_client(supabase_url, supabase_key)
-        logger.info("Supabase client initialized successfully")
+        logger.info("✅ Supabase client initialized successfully")
     except Exception as e:
-        logger.error(f"Failed to initialize Supabase client: {e}")
+        logger.error(f"❌ Failed to initialize Supabase client: {e}")
+        logger.error(f"Error type: {type(e).__name__}")
         supabase = None
 else:
-    logger.warning("SUPABASE_SERVICE_KEY not provided - webhook database updates will be disabled")
+    logger.warning("⚠️ SUPABASE_SERVICE_KEY not provided - database operations will fail")
 
 # Request models
 class CreateCheckoutRequest(BaseModel):
@@ -246,10 +252,26 @@ async def check_user_subscription_api(email: str):
 @router.get("/test")
 async def test_payment_router():
     """Test endpoint to verify payment router is working"""
+    import stripe
+    
+    supabase_status = "configured" if supabase is not None else "not_configured"
+    stripe_status = "configured" if stripe.api_key else "not_configured"
+    
+    env_vars = {
+        "SUPABASE_URL": bool(os.getenv('SUPABASE_URL')),
+        "SUPABASE_SERVICE_KEY": bool(os.getenv('SUPABASE_SERVICE_KEY')),
+        "STRIPE_SECRET_KEY": bool(os.getenv('STRIPE_SECRET_KEY')),
+        "STRIPE_PUBLISHABLE_KEY": bool(os.getenv('STRIPE_PUBLISHABLE_KEY')),
+        "STRIPE_DEBATER_PRICE_ID": bool(os.getenv('STRIPE_DEBATER_PRICE_ID'))
+    }
+    
     return {
         "status": "success",
         "message": "Payment router is working",
         "supabase_configured": supabase is not None,
+        "supabase_status": supabase_status,
+        "stripe_status": stripe_status,
+        "environment_variables": env_vars,
         "endpoints": [
             "/api/payment/create-checkout-session",
             "/api/payment/user/subscription/{email}",
