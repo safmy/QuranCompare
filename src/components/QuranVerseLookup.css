@@ -748,6 +748,11 @@
     padding: 12px;
 }
 
+.related-verse-item.source-verse {
+    background: #e3f2fd;
+    border: 2px solid #1976d2;
+}
+
 .related-verse-header {
     display: flex;
     align-items: center;
@@ -767,6 +772,13 @@
     border-radius: 4px;
     font-size: 12px;
     font-weight: bold;
+}
+
+.source-indicator {
+    color: #1976d2;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 5px;
 }
 
 .matching-roots {

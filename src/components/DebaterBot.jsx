@@ -23,6 +23,9 @@ const DebaterBot = () => {
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [showTopicInput, setShowTopicInput] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [hoveredChatId, setHoveredChatId] = useState(null);
+  const [deletingChatId, setDeletingChatId] = useState(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
   const { user, isAuthenticated, hasActiveSubscription: authHasSubscription } = useAuth();
   const messagesEndRef = useRef(null);
 
@@ -181,6 +184,47 @@ const DebaterBot = () => {
     setDebateMode(false);
     setShowChatHistory(false);
     setError(null);
+  };
+  
+  // Delete chat function
+  const deleteChat = async (chatId) => {
+    const confirmDelete = window.confirm('Are you sure you want to delete this chat? This action cannot be undone.');
+    
+    if (!confirmDelete) return;
+    
+    setDeletingChatId(chatId);
+    
+    try {
+      const { error } = await supabase
+        .from('chat_history')
+        .delete()
+        .eq('id', chatId)
+        .eq('user_email', user.email); // Ensure user can only delete their own chats
+        
+      if (error) {
+        console.error('Error deleting chat:', error);
+        setError('Failed to delete chat');
+        return;
+      }
+      
+      // Remove from local state
+      setPreviousChats(prev => prev.filter(chat => chat.id !== chatId));
+      
+      // If the deleted chat was currently active, reset to new chat
+      if (chatHistoryId === chatId) {
+        startNewChat();
+      }
+      
+      // Show success message
+      setDeleteSuccess(true);
+      setTimeout(() => setDeleteSuccess(false), 2000);
+      
+    } catch (err) {
+      console.error('Error deleting chat:', err);
+      setError('Failed to delete chat');
+    } finally {
+      setDeletingChatId(null);
+    }
   };
 
   const startDebate = async (topic) => {
@@ -578,6 +622,19 @@ const DebaterBot = () => {
             backgroundColor: '#f5f5f5'
           }}>
             <h3 style={{ margin: 0, fontSize: '16px', color: '#333' }}>Chat History</h3>
+            {deleteSuccess && (
+              <div style={{
+                marginTop: '8px',
+                padding: '6px 10px',
+                backgroundColor: '#4caf50',
+                color: 'white',
+                borderRadius: '4px',
+                fontSize: '12px',
+                textAlign: 'center'
+              }}>
+                Chat deleted successfully
+              </div>
+            )}
           </div>
           <div style={{
             flex: 1,
@@ -592,7 +649,6 @@ const DebaterBot = () => {
               previousChats.map((chat) => (
                 <div
                   key={chat.id}
-                  onClick={() => loadPreviousChat(chat)}
                   style={{
                     padding: '12px',
                     marginBottom: '8px',
@@ -600,25 +656,77 @@ const DebaterBot = () => {
                     borderRadius: '8px',
                     cursor: 'pointer',
                     transition: 'background-color 0.2s',
-                    border: '1px solid #e0e0e0'
+                    border: '1px solid #e0e0e0',
+                    position: 'relative'
                   }}
                   onMouseEnter={(e) => {
+                    setHoveredChatId(chat.id);
                     if (chatHistoryId !== chat.id) {
                       e.currentTarget.style.backgroundColor = '#f0f0f0';
                     }
                   }}
                   onMouseLeave={(e) => {
+                    setHoveredChatId(null);
                     if (chatHistoryId !== chat.id) {
                       e.currentTarget.style.backgroundColor = '#f9f9f9';
                     }
                   }}
                 >
-                  <div style={{ fontSize: '14px', fontWeight: '500', color: '#333', marginBottom: '4px' }}>
-                    {chat.topic || 'Untitled Chat'}
+                  <div
+                    onClick={() => loadPreviousChat(chat)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#333', marginBottom: '4px', paddingRight: '30px' }}>
+                      {chat.topic || 'Untitled Chat'}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#666' }}>
+                      {formatChatDate(chat.updated_at || chat.created_at)}
+                    </div>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>
-                    {formatChatDate(chat.updated_at || chat.created_at)}
-                  </div>
+                  
+                  {/* Delete button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteChat(chat.id);
+                    }}
+                    disabled={deletingChatId === chat.id}
+                    style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '10px',
+                      padding: '4px 8px',
+                      backgroundColor: deletingChatId === chat.id ? '#ccc' : '#ff4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: deletingChatId === chat.id ? 'not-allowed' : 'pointer',
+                      fontSize: '12px',
+                      opacity: (isMobile || hoveredChatId === chat.id) ? 1 : 0,
+                      transition: 'all 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minWidth: '24px',
+                      height: '24px',
+                      boxShadow: (isMobile || hoveredChatId === chat.id) ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!deletingChatId) {
+                        e.currentTarget.style.backgroundColor = '#ff6666';
+                        e.currentTarget.style.transform = 'scale(1.1)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!deletingChatId) {
+                        e.currentTarget.style.backgroundColor = '#ff4444';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }
+                    }}
+                    title="Delete chat"
+                  >
+                    {deletingChatId === chat.id ? '...' : '🗑️'}
+                  </button>
                 </div>
               ))
             )}

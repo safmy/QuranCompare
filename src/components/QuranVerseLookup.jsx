@@ -583,41 +583,41 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
         allVersesData.forEach(v => {
             if (v.roots && v.roots.includes(root)) {
                 totalCount++;
-                if (v.sura_verse !== verse.sura_verse) {
-                    // Extract meanings for this root in this verse
-                    const rootsArray = v.roots.split(',').map(r => r.trim());
-                    const meaningsArray = v.meanings ? v.meanings.split(',').map(m => m.trim()) : [];
-                    const arabicWords = v.arabic ? v.arabic.split(/\s+/) : [];
-                    
-                    // Find all occurrences of this root and their meanings
-                    rootsArray.forEach((r, idx) => {
-                        if (r === root && meaningsArray[idx]) {
-                            const meaning = meaningsArray[idx];
-                            const arabicWord = arabicWords[idx] || '';
-                            
-                            // Group by meaning variation
-                            if (!meaningVariations.has(meaning)) {
-                                meaningVariations.set(meaning, []);
-                            }
-                            
-                            // Check if this verse is already in this meaning group
-                            const existingVerse = meaningVariations.get(meaning).find(item => item.verse.sura_verse === v.sura_verse);
-                            if (!existingVerse) {
-                                meaningVariations.get(meaning).push({
-                                    verse: v,
-                                    arabicWord: arabicWord,
-                                    meaning: meaning,
-                                    rootIndex: idx
-                                });
-                            }
+                // Extract meanings for this root in this verse
+                const rootsArray = v.roots.split(',').map(r => r.trim());
+                const meaningsArray = v.meanings ? v.meanings.split(',').map(m => m.trim()) : [];
+                const arabicWords = v.arabic ? v.arabic.split(/\s+/) : [];
+                
+                // Find all occurrences of this root and their meanings
+                rootsArray.forEach((r, idx) => {
+                    if (r === root && meaningsArray[idx]) {
+                        const meaning = meaningsArray[idx];
+                        const arabicWord = arabicWords[idx] || '';
+                        
+                        // Group by meaning variation
+                        if (!meaningVariations.has(meaning)) {
+                            meaningVariations.set(meaning, []);
                         }
-                    });
-                    
-                    relatedVerses.push({
-                        ...v,
-                        matchingRoots: [root]
-                    });
-                }
+                        
+                        // Check if this verse is already in this meaning group
+                        const existingVerse = meaningVariations.get(meaning).find(item => item.verse.sura_verse === v.sura_verse);
+                        if (!existingVerse) {
+                            meaningVariations.get(meaning).push({
+                                verse: v,
+                                arabicWord: arabicWord,
+                                meaning: meaning,
+                                rootIndex: idx
+                            });
+                        }
+                    }
+                });
+                
+                // Include ALL verses with this root, including the source verse
+                relatedVerses.push({
+                    ...v,
+                    matchingRoots: [root],
+                    isSourceVerse: v.sura_verse === verse.sura_verse
+                });
             }
         });
         
@@ -1148,7 +1148,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                             <p><strong>Meaning in this verse:</strong> {rootAnalysisData.clickedWordMeaning || 'N/A'}</p>
                             <p><strong>From verse:</strong> [{rootAnalysisData.sourceVerse.sura_verse}]</p>
                             <p><strong>Total occurrences:</strong> {rootAnalysisData.totalCount} verses</p>
-                            <p><strong>Other verses with this root:</strong> {rootAnalysisData.totalRelated}</p>
+                            <p><strong>All verses with this root:</strong> {rootAnalysisData.totalRelated}</p>
                         </div>
                         
                         {/* Compare Actions Section */}
@@ -1186,10 +1186,9 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                                         width: '100%'
                                     }}
                                     onClick={() => {
-                                        const versesToCompare = [
-                                            rootAnalysisData.sourceVerse,
-                                            ...rootAnalysisData.relatedVerses.slice(0, showAllRootVerses ? 10 : 5)
-                                        ];
+                                        // Include all verses (source verse is already in relatedVerses)
+                                        const versesToCompare = rootAnalysisData.relatedVerses
+                                            .slice(0, showAllRootVerses ? 11 : 6);
                                         navigateToCompare(versesToCompare);
                                         setShowRootAnalysis(false);
                                     }}
@@ -1294,16 +1293,17 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                         )}
                         
                         <div className="related-verses-section">
-                            <h4>Related Verses (showing {showAllRootVerses ? rootAnalysisData.relatedVerses.length : Math.min(10, rootAnalysisData.relatedVerses.length)})</h4>
+                            <h4>All Verses with Root "{rootAnalysisData.selectedRoot}" (showing {showAllRootVerses ? rootAnalysisData.relatedVerses.length : Math.min(10, rootAnalysisData.relatedVerses.length)})</h4>
                             
                             <div className="related-verses-list">
                                 {rootAnalysisData.relatedVerses
                                     .slice(0, showAllRootVerses ? undefined : 10)
                                     .map((verse, index) => (
-                                        <div key={verse.sura_verse} className="related-verse-item">
+                                        <div key={verse.sura_verse} className={`related-verse-item ${verse.isSourceVerse ? 'source-verse' : ''}`}>
                                             <div className="related-verse-header">
                                                 <span className="verse-number">{index + 1}.</span>
                                                 <span className="verse-ref-small">[{verse.sura_verse}]</span>
+                                                {verse.isSourceVerse && <span className="source-indicator"> (source)</span>}
                                             </div>
                                             <div className="related-verse-text">
                                                 {verse.english}
