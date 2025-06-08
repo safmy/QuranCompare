@@ -21,6 +21,7 @@ from verses_loader import load_verses_data
 from subtitle_ranges import get_cached_verse_range, get_subtitle_for_range
 from arabic_utils import enhance_arabic_search_query, is_arabic_text, get_phonetic_variations
 from tts_endpoint_fastapi import add_tts_routes
+from payment_endpoints import router as payment_router
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -67,6 +68,9 @@ app.add_middleware(
 
 # Add TTS routes
 add_tts_routes(app)
+
+# Add payment routes
+app.include_router(payment_router)
 
 # Global variables
 VECTOR_COLLECTIONS = {}

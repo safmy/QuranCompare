@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
+
 const SubscriptionModal = ({ user, onClose, onSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -9,17 +11,31 @@ const SubscriptionModal = ({ user, onClose, onSuccess }) => {
       setIsLoading(true);
       setError('');
 
-      // TODO: Implement Stripe checkout
-      // For now, simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Create Stripe checkout session
+      const response = await fetch(`${API_BASE_URL}/api/payment/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+          success_url: `${window.location.origin}/payment/success`,
+          cancel_url: `${window.location.origin}/payment/cancel`
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
+      const data = await response.json();
       
-      // TODO: Update user subscription in Supabase after successful payment
-      alert('Payment processing would happen here. For demo purposes, contact support to activate your subscription.');
+      // Redirect to Stripe checkout
+      window.location.href = data.checkout_url;
       
-      onClose();
     } catch (err) {
       console.error('Payment error:', err);
-      setError('Payment failed. Please try again.');
+      setError('Failed to start payment process. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -119,23 +135,39 @@ Thank you!`
 
         <h4 style={{ marginBottom: '15px', color: '#333' }}>Payment Options:</h4>
 
-        <div style={{
-          backgroundColor: '#fff3e0',
-          borderRadius: '8px',
-          padding: '20px',
-          marginBottom: '20px',
-          fontSize: '14px',
-          lineHeight: '1.6',
-          textAlign: 'center'
-        }}>
-          <strong>⚠️ Payment System Under Development</strong>
-          <p style={{ margin: '10px 0 0 0' }}>
-            Automated payment processing is coming soon. For now, please contact support 
-            to arrange manual payment and activation of your subscription.
-          </p>
-        </div>
-
         <div style={{ marginBottom: '20px' }}>
+          <button
+            onClick={handleStripeCheckout}
+            disabled={isLoading}
+            style={{
+              width: '100%',
+              padding: '15px',
+              marginBottom: '15px',
+              backgroundColor: '#6772e5',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              opacity: isLoading ? 0.7 : 1
+            }}
+          >
+            {isLoading ? 'Creating checkout...' : '💳 Pay with Stripe - £2.99/month'}
+          </button>
+
+          <div style={{
+            textAlign: 'center',
+            margin: '15px 0',
+            color: '#666',
+            fontSize: '12px'
+          }}>
+            OR
+          </div>
 
           <button
             onClick={handleContactSupport}

@@ -7,6 +7,8 @@ import QuranCompare from './components/QuranCompare';
 import QuranManuscriptAnalysis from './components/QuranManuscriptAnalysis';
 import DebaterBot from './components/DebaterBot';
 import AuthCallback from './components/AuthCallback';
+import PaymentSuccess from './components/PaymentSuccess';
+import PaymentCancel from './components/PaymentCancel';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -15,9 +17,15 @@ import { checkPremiumAccess, PREMIUM_FEATURES } from './config/premium';
 function AppContent() {
   const { currentLanguage, changeLanguage } = useLanguage();
   
-  // Check if we're on the auth callback page
+  // Check for special routes
   if (window.location.pathname === '/auth/callback') {
     return <AuthCallback />;
+  }
+  if (window.location.pathname === '/payment/success') {
+    return <PaymentSuccess />;
+  }
+  if (window.location.pathname === '/payment/cancel') {
+    return <PaymentCancel />;
   }
   
   const [activeTab, setActiveTab] = useState(() => {
