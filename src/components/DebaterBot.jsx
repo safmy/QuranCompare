@@ -31,18 +31,30 @@ const DebaterBot = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Check access on component mount
+  // Check access on component mount and when user changes
   useEffect(() => {
-    if (!isAuthenticated) {
-      setShowAuth(true);
-      return;
+    // Don't show modals immediately if auth is still loading
+    if (!isAuthenticated && user === null) {
+      // User might still be loading, wait a bit
+      const timer = setTimeout(() => {
+        if (!isAuthenticated) {
+          setShowAuth(true);
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
     }
     
-    const hasAccess = checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT);
-    if (!hasAccess) {
-      setShowSubscription(true);
+    if (isAuthenticated && user) {
+      const hasAccess = checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT);
+      if (!hasAccess) {
+        setShowSubscription(true);
+      } else {
+        // User has access, close any open modals
+        setShowAuth(false);
+        setShowSubscription(false);
+      }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
 
   const startDebate = async (topic) => {
     if (!isAuthenticated) {
@@ -561,6 +573,34 @@ const DebaterBot = () => {
           100% { transform: rotate(360deg); }
         }
       `}</style>
+
+      {/* Auth Modal */}
+      {showAuth && (
+        <AuthModal 
+          onClose={() => setShowAuth(false)}
+          onSuccess={() => {
+            setShowAuth(false);
+            // Check if user now has subscription
+            const hasAccess = checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT);
+            if (!hasAccess) {
+              setShowSubscription(true);
+            }
+          }}
+        />
+      )}
+
+      {/* Subscription Modal */}
+      {showSubscription && user && (
+        <SubscriptionModal
+          user={user}
+          onClose={() => setShowSubscription(false)}
+          onSuccess={() => {
+            setShowSubscription(false);
+            // Refresh auth context to get updated subscription status
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
   );
 };

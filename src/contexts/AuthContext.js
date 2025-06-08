@@ -31,6 +31,17 @@ export const AuthProvider = ({ children }) => {
           if (savedUser) {
             try {
               const userData = JSON.parse(savedUser);
+              // Verify the user still has active subscription
+              const subResult = await checkUserSubscription(userData.email);
+              if (subResult.hasSubscription) {
+                userData.subscriptionStatus = 'active';
+                userData.subscriptionTier = 'premium';
+                userData.subscriptionExpiry = subResult.user?.expires_at || null;
+              } else {
+                userData.subscriptionStatus = 'inactive';
+                userData.subscriptionTier = 'free';
+                userData.subscriptionExpiry = null;
+              }
               setUser(userData);
             } catch (error) {
               console.error('Error parsing saved user data:', error);
@@ -70,15 +81,31 @@ export const AuthProvider = ({ children }) => {
     });
 
     initializeAuth();
+    
+    // Listen for custom auth success events
+    const handleAuthSuccess = async (event) => {
+      if (event.detail?.user) {
+        await handleSupabaseUser(event.detail.user);
+      }
+    };
+    
+    window.addEventListener('supabase-auth-success', handleAuthSuccess);
 
     return () => {
       subscription?.unsubscribe();
+      window.removeEventListener('supabase-auth-success', handleAuthSuccess);
     };
   }, []);
 
   const handleSupabaseUser = async (supabaseUser) => {
     try {
-      const email = supabaseUser.email;
+      // Normalize email to lowercase
+      const email = supabaseUser.email?.toLowerCase().trim();
+      
+      if (!email) {
+        console.error('No email found in Supabase user');
+        return;
+      }
       
       // Create/update user in database
       const createResult = await createOrUpdateUser(email);
@@ -132,6 +159,13 @@ export const AuthProvider = ({ children }) => {
   const login = async (email) => {
     try {
       setLoading(true);
+      
+      // Normalize email to lowercase
+      email = email?.toLowerCase().trim();
+      
+      if (!email) {
+        return { success: false, error: 'Invalid email' };
+      }
       
       // Use Supabase if configured, otherwise fallback to localStorage
       if (isSupabaseConfigured()) {

@@ -42,6 +42,11 @@ const AuthCallback = () => {
             console.log('Session found:', data.session.user?.email);
             setStatus('success');
             
+            // Trigger auth state update event for immediate sync
+            window.dispatchEvent(new CustomEvent('supabase-auth-success', {
+              detail: { user: data.session.user }
+            }));
+            
             // Redirect to the main app after a short delay
             setTimeout(() => {
               window.location.href = '/';

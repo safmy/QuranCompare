@@ -10,6 +10,7 @@ import AuthCallback from './components/AuthCallback';
 import PaymentSuccess from './components/PaymentSuccess';
 import PaymentCancel from './components/PaymentCancel';
 import LanguageSwitcher from './components/LanguageSwitcher';
+import UserProfile from './components/UserProfile';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { checkPremiumAccess, PREMIUM_FEATURES } from './config/premium';
@@ -167,11 +168,18 @@ function AppContent() {
           gap: "15px"
         }}>
           <h1 style={{fontSize: "24px", fontWeight: "bold", margin: 0}}>Quran Analysis & Comparison Tool</h1>
-          <LanguageSwitcher 
-            currentLanguage={currentLanguage}
-            onLanguageChange={changeLanguage}
-            compact={true}
-          />
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "15px"
+          }}>
+            <LanguageSwitcher 
+              currentLanguage={currentLanguage}
+              onLanguageChange={changeLanguage}
+              compact={true}
+            />
+            <UserProfile />
+          </div>
         </div>
         <nav style={{
           display: "flex",

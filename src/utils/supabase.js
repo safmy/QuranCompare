@@ -26,7 +26,9 @@ supabase.auth.onAuthStateChange((event, session) => {
 // User and subscription management via API
 export const checkUserSubscription = async (email) => {
   try {
-    const response = await fetch(`https://qurancompare.onrender.com/api/payment/user/subscription/${encodeURIComponent(email)}`);
+    // Normalize email to lowercase
+    const normalizedEmail = email.toLowerCase().trim();
+    const response = await fetch(`https://qurancompare.onrender.com/api/payment/user/subscription/${encodeURIComponent(normalizedEmail)}`);
     
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status}`);
@@ -65,12 +67,14 @@ export const checkUserSubscription = async (email) => {
 
 export const createOrUpdateUser = async (email) => {
   try {
+    // Normalize email to lowercase
+    const normalizedEmail = email.toLowerCase().trim();
     const response = await fetch('https://qurancompare.onrender.com/api/payment/user/subscription', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email: normalizedEmail })
     });
 
     if (!response.ok) {

@@ -10,7 +10,7 @@ from stripe_config import (
 )
 from supabase import create_client, Client
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -167,6 +167,9 @@ async def get_user_subscription(email: str):
         raise HTTPException(status_code=500, detail="Database not configured")
     
     try:
+        # Normalize email to lowercase
+        email = email.lower().strip()
+        
         # Check if user exists and has active subscription
         response = supabase.table('user_subscriptions').select('*').eq('email', email).execute()
         
@@ -188,11 +191,29 @@ async def get_user_subscription(email: str):
         else:
             user = response.data[0]
             
-        has_subscription = (
-            user.get('status') == 'active' and 
-            user.get('expires_at') and 
-            datetime.fromisoformat(user['expires_at'].replace('Z', '+00:00')) > datetime.now()
-        )
+        # Parse expires_at date properly
+        expires_at_str = user.get('expires_at')
+        has_subscription = False
+        
+        if user.get('status') == 'active' and expires_at_str:
+            try:
+                # Handle different date formats
+                if expires_at_str.endswith('Z'):
+                    expires_at = datetime.fromisoformat(expires_at_str.replace('Z', '+00:00'))
+                elif '+' in expires_at_str or expires_at_str.endswith('+00:00'):
+                    expires_at = datetime.fromisoformat(expires_at_str)
+                else:
+                    # Assume it's a naive datetime, treat as UTC
+                    expires_at = datetime.fromisoformat(expires_at_str).replace(tzinfo=timezone.utc)
+                
+                # Compare with timezone-aware current time in UTC
+                current_time = datetime.now(timezone.utc)
+                has_subscription = expires_at > current_time
+                
+                logger.info(f"Subscription check for {email}: expires_at={expires_at_str}, current_time={current_time}, has_subscription={has_subscription}")
+            except Exception as date_error:
+                logger.error(f"Error parsing date for {email}: {date_error}")
+                has_subscription = False
         
         return {
             "hasSubscription": has_subscription,
@@ -223,6 +244,9 @@ async def create_or_update_user(request: dict):
             logger.error("No email provided in request")
             raise HTTPException(status_code=400, detail="Email is required")
         
+        # Normalize email to lowercase
+        email = email.lower().strip()
+        
         logger.info(f"Processing subscription request for email: {email}")
         
         # Check if user exists
@@ -239,11 +263,11 @@ async def create_or_update_user(request: dict):
         # Create new user with free tier (unless special case)
         user_data = {
             'email': email,
-            'status': 'active' if email == 'syedahmadfahmybinsyedsalim@gmail.com' else 'inactive',
-            'tier': 'premium' if email == 'syedahmadfahmybinsyedsalim@gmail.com' else 'free',
-            'expires_at': (datetime.now() + timedelta(days=365)).isoformat() if email == 'syedahmadfahmybinsyedsalim@gmail.com' else None,
-            'created_at': datetime.now().isoformat(),
-            'updated_at': datetime.now().isoformat()
+            'status': 'active' if email in ['syedahmadfahmybinsyedsalim@gmail.com', 'safmy@example.com', 'zipkaa@gmail.com'] else 'inactive',
+            'tier': 'premium' if email in ['syedahmadfahmybinsyedsalim@gmail.com', 'safmy@example.com', 'zipkaa@gmail.com'] else 'free',
+            'expires_at': (datetime.now(timezone.utc) + timedelta(days=365)).isoformat() if email in ['syedahmadfahmybinsyedsalim@gmail.com', 'safmy@example.com', 'zipkaa@gmail.com'] else None,
+            'created_at': datetime.now(timezone.utc).isoformat(),
+            'updated_at': datetime.now(timezone.utc).isoformat()
         }
         
         response = supabase.table('user_subscriptions').insert(user_data).execute()
