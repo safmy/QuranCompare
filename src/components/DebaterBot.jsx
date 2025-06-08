@@ -291,8 +291,7 @@ const DebaterBot = () => {
             
             <button
               onClick={() => {
-                // TODO: Implement actual subscription flow
-                alert('Subscription flow coming soon! Contact support for early access.');
+                window.open('mailto:support@qurancompare.com?subject=Premium Subscription Request&body=I would like to subscribe to the AI Debater Bot premium feature for £2.99/month. Please contact me to set up my subscription.', '_blank');
                 setShowSubscriptionPrompt(false);
               }}
               style={{

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { checkUserSubscription, createOrUpdateUser, isSupabaseConfigured } from '../utils/supabase';
 
 const AuthContext = createContext();
 
@@ -42,29 +43,66 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      // For now, simulate a simple login process
-      // In production, this would verify the email with your backend
-      const userData = {
-        email: email,
-        id: Date.now().toString(),
-        loginTime: new Date().toISOString(),
-        subscriptionStatus: email === 'safmy@example.com' ? 'active' : 'inactive', // Demo: make your email premium
-        subscriptionTier: email === 'safmy@example.com' ? 'premium' : 'free',
-        subscriptionExpiry: email === 'safmy@example.com' ? 
-          new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : // 30 days from now
-          null
-      };
+      // Use Supabase if configured, otherwise fallback to localStorage
+      if (isSupabaseConfigured()) {
+        // Check/create user in Supabase
+        const createResult = await createOrUpdateUser(email);
+        if (!createResult.success) {
+          return { success: false, error: createResult.error };
+        }
+        
+        // Check subscription status
+        const subResult = await checkUserSubscription(email);
+        if (subResult.error) {
+          return { success: false, error: subResult.error };
+        }
+        
+        const userData = {
+          email: email,
+          id: createResult.user.id || Date.now().toString(),
+          loginTime: new Date().toISOString(),
+          subscriptionStatus: subResult.hasSubscription ? 'active' : 'inactive',
+          subscriptionTier: subResult.hasSubscription ? 'premium' : 'free',
+          subscriptionExpiry: subResult.user?.expires_at || null
+        };
+        
+        setUser(userData);
+        
+        // Sync with localStorage for premium system compatibility
+        if (userData.subscriptionStatus === 'active') {
+          localStorage.setItem('subscriptionStatus', 'active');
+          localStorage.setItem('subscriptionTier', userData.subscriptionTier);
+          localStorage.setItem('subscriptionExpiry', userData.subscriptionExpiry);
+        } else {
+          localStorage.removeItem('subscriptionStatus');
+          localStorage.removeItem('subscriptionTier');
+          localStorage.removeItem('subscriptionExpiry');
+        }
+        
+        return { success: true };
+      } else {
+        // Fallback: Deny all users except safmy@example.com when Supabase not configured
+        if (email !== 'safmy@example.com') {
+          return { success: false, error: 'Premium subscription required. Please contact support.' };
+        }
+        
+        const userData = {
+          email: email,
+          id: Date.now().toString(),
+          loginTime: new Date().toISOString(),
+          subscriptionStatus: 'active',
+          subscriptionTier: 'premium',
+          subscriptionExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+        };
 
-      setUser(userData);
-      
-      // Update subscription status in premium system
-      if (userData.subscriptionStatus === 'active') {
+        setUser(userData);
+        
         localStorage.setItem('subscriptionStatus', 'active');
         localStorage.setItem('subscriptionTier', userData.subscriptionTier);
         localStorage.setItem('subscriptionExpiry', userData.subscriptionExpiry);
-      }
 
-      return { success: true };
+        return { success: true };
+      }
     } catch (error) {
       console.error('Login error:', error);
       return { success: false, error: error.message };
@@ -86,21 +124,8 @@ export const AuthProvider = ({ children }) => {
 
     try {
       // In production, this would process payment through Stripe
-      const updatedUser = {
-        ...user,
-        subscriptionStatus: 'active',
-        subscriptionTier: 'premium',
-        subscriptionExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-      };
-
-      setUser(updatedUser);
-      
-      // Update subscription status
-      localStorage.setItem('subscriptionStatus', 'active');
-      localStorage.setItem('subscriptionTier', 'premium');
-      localStorage.setItem('subscriptionExpiry', updatedUser.subscriptionExpiry);
-
-      return { success: true };
+      // For now, redirect to payment flow
+      return { success: false, error: 'Please use the subscription link to upgrade' };
     } catch (error) {
       console.error('Subscription upgrade error:', error);
       return { success: false, error: error.message };
