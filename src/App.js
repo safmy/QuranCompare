@@ -5,8 +5,10 @@ import QuranVectorSearch from './components/QuranVectorSearch';
 import QuranVerseLookup from './components/QuranVerseLookup';
 import QuranCompare from './components/QuranCompare';
 import QuranManuscriptAnalysis from './components/QuranManuscriptAnalysis';
+import DebaterBot from './components/DebaterBot';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
+import { checkPremiumAccess, PREMIUM_FEATURES } from './config/premium';
 
 function AppContent() {
   const { currentLanguage, changeLanguage } = useLanguage();
@@ -114,7 +116,21 @@ function AppContent() {
       /> 
     },
     { id: 'compare', label: 'Compare', component: <QuranCompare key={compareVerses.join(',')} initialVerses={compareVerses} /> },
-    { id: 'manuscript', label: 'Manuscript Analysis', component: <QuranManuscriptAnalysis /> }
+    { id: 'manuscript', label: 'Manuscript Analysis', component: <QuranManuscriptAnalysis /> },
+    { 
+      id: 'debater', 
+      label: (
+        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          AI Debater
+          {checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT) ? (
+            <span style={{ fontSize: '10px', backgroundColor: 'rgba(76, 175, 80, 0.8)', padding: '2px 6px', borderRadius: '10px' }}>PRO</span>
+          ) : (
+            <span style={{ fontSize: '10px', backgroundColor: 'rgba(255, 152, 0, 0.8)', padding: '2px 6px', borderRadius: '10px' }}>SUB</span>
+          )}
+        </span>
+      ), 
+      component: <DebaterBot />
+    }
   ];
 
   return (

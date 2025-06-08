@@ -859,6 +859,99 @@ async def transcribe_audio(audio: UploadFile = File(...), language: Optional[str
         logger.error(f"Error transcribing audio: {type(e).__name__}: {e}")
         raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
 
+# Debater Bot Endpoint
+class DebateRequest(BaseModel):
+    topic: Optional[str] = None
+    message: Optional[str] = None
+    isNewTopic: bool = False
+    conversationHistory: List[Dict[str, str]] = []
+
+class DebateResponse(BaseModel):
+    response: str
+
+# In-memory conversation storage (in production, use Redis or database)
+conversation_memory = {}
+
+@app.options("/debate")
+async def debate_options():
+    """Handle preflight requests for /debate endpoint"""
+    return {"message": "OK"}
+
+@app.post("/debate", response_model=DebateResponse)
+async def debate_endpoint(request: DebateRequest):
+    """Handle debate conversations with AI"""
+    try:
+        if not client:
+            raise HTTPException(status_code=500, detail="OpenAI client not configured")
+        
+        logger.info(f"Debate request: topic={request.topic}, message={request.message}, isNewTopic={request.isNewTopic}")
+        
+        # Build conversation messages
+        messages = [
+            {
+                "role": "system",
+                "content": """You are an intelligent debate partner designed to engage in thoughtful, respectful philosophical and theological discussions. Your role is to:
+
+DEBATE RULES:
+1. Be respectful but intellectually challenging
+2. Present well-reasoned counterarguments
+3. Ask probing questions to deepen the discussion
+4. Draw from various philosophical and religious traditions
+5. Acknowledge good points made by the human
+6. Stay focused on the topic at hand
+7. Be concise but substantive in your responses
+8. Encourage critical thinking
+9. If discussing religious topics, remain respectful of all traditions
+10. Aim to help the human explore different perspectives
+
+PERSONALITY:
+- Intellectually curious and engaging
+- Respectful but not passive
+- Willing to challenge ideas constructively
+- Knowledgeable about philosophy, theology, and ethics
+- Focused on understanding rather than winning
+
+Remember: The goal is productive discourse that helps both parties think more deeply about important questions."""
+            }
+        ]
+        
+        # Add conversation history
+        for msg in request.conversationHistory:
+            messages.append({
+                "role": msg.get("role", "user"),
+                "content": msg.get("content", "")
+            })
+        
+        # Add current message
+        if request.isNewTopic and request.topic:
+            messages.append({
+                "role": "user",
+                "content": f"Let's debate about: {request.topic}"
+            })
+        elif request.message:
+            messages.append({
+                "role": "user", 
+                "content": request.message
+            })
+        
+        # Generate AI response
+        response = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            max_tokens=1000,
+            temperature=0.7,
+            presence_penalty=0.6,
+            frequency_penalty=0.3
+        )
+        
+        ai_response = response.choices[0].message.content
+        
+        return DebateResponse(response=ai_response)
+        
+    except Exception as e:
+        logger.error(f"Error in debate endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Catch-all OPTIONS handler for any endpoint
 @app.options("/{path:path}")
 async def catch_all_options(path: str):
