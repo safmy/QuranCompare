@@ -6,6 +6,7 @@ import QuranVerseLookup from './components/QuranVerseLookup';
 import QuranCompare from './components/QuranCompare';
 import QuranManuscriptAnalysis from './components/QuranManuscriptAnalysis';
 import DebaterBot from './components/DebaterBot';
+import AuthCallback from './components/AuthCallback';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -13,6 +14,12 @@ import { checkPremiumAccess, PREMIUM_FEATURES } from './config/premium';
 
 function AppContent() {
   const { currentLanguage, changeLanguage } = useLanguage();
+  
+  // Check if we're on the auth callback page
+  if (window.location.pathname === '/auth/callback') {
+    return <AuthCallback />;
+  }
+  
   const [activeTab, setActiveTab] = useState(() => {
     return sessionStorage.getItem('activeTab') || 'lookup';
   });

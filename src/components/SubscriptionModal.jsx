@@ -117,63 +117,25 @@ Thank you!`
           </ul>
         </div>
 
-        <h4 style={{ marginBottom: '15px', color: '#333' }}>Choose Payment Method:</h4>
+        <h4 style={{ marginBottom: '15px', color: '#333' }}>Payment Options:</h4>
+
+        <div style={{
+          backgroundColor: '#fff3e0',
+          borderRadius: '8px',
+          padding: '20px',
+          marginBottom: '20px',
+          fontSize: '14px',
+          lineHeight: '1.6',
+          textAlign: 'center'
+        }}>
+          <strong>⚠️ Payment System Under Development</strong>
+          <p style={{ margin: '10px 0 0 0' }}>
+            Automated payment processing is coming soon. For now, please contact support 
+            to arrange manual payment and activation of your subscription.
+          </p>
+        </div>
 
         <div style={{ marginBottom: '20px' }}>
-          <button
-            onClick={handleStripeCheckout}
-            disabled={isLoading}
-            style={{
-              width: '100%',
-              padding: '15px',
-              marginBottom: '10px',
-              backgroundColor: '#6772e5',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px'
-            }}
-          >
-            💳 Pay with Card (Stripe) - £2.99/month
-          </button>
-
-          <button
-            onClick={handlePayPalCheckout}
-            disabled={isLoading}
-            style={{
-              width: '100%',
-              padding: '15px',
-              marginBottom: '10px',
-              backgroundColor: '#0070ba',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px'
-            }}
-          >
-            💰 Pay with PayPal - £2.99/month
-          </button>
-
-          <div style={{
-            textAlign: 'center',
-            margin: '15px 0',
-            color: '#666',
-            fontSize: '12px'
-          }}>
-            OR
-          </div>
 
           <button
             onClick={handleContactSupport}
