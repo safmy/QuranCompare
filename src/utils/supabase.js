@@ -6,6 +6,23 @@ const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'your-anon-ke
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Auth event listener
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('Auth event:', event, session?.user?.email);
+  
+  if (event === 'SIGNED_IN' && session?.user) {
+    // User signed in successfully
+    window.dispatchEvent(new CustomEvent('supabase-auth-success', {
+      detail: { user: session.user }
+    }));
+  }
+  
+  if (event === 'SIGNED_OUT') {
+    // User signed out
+    window.dispatchEvent(new CustomEvent('supabase-auth-signout'));
+  }
+});
+
 // User and subscription management
 export const checkUserSubscription = async (email) => {
   try {
@@ -73,6 +90,30 @@ export const createOrUpdateUser = async (email) => {
   } catch (err) {
     console.error('Error in createOrUpdateUser:', err);
     return { success: false, error: err.message };
+  }
+};
+
+// Get current user from Supabase
+export const getCurrentUser = async () => {
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    return user;
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return null;
+  }
+};
+
+// Sign out user
+export const signOut = async () => {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Error signing out:', error);
+    return { success: false, error: error.message };
   }
 };
 

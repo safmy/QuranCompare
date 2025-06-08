@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { checkPremiumAccess, PREMIUM_FEATURES, hasActiveSubscription, getSubscriptionInfo } from '../config/premium';
-import LoginForm from './LoginForm';
+import AuthModal from './AuthModal';
+import SubscriptionModal from './SubscriptionModal';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
 
@@ -14,6 +15,8 @@ const DebaterBot = () => {
   const [currentTopic, setCurrentTopic] = useState('');
   const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
+  const [showSubscription, setShowSubscription] = useState(false);
   const { user, isAuthenticated, hasActiveSubscription: authHasSubscription } = useAuth();
   const messagesEndRef = useRef(null);
 
@@ -31,24 +34,24 @@ const DebaterBot = () => {
   // Check access on component mount
   useEffect(() => {
     if (!isAuthenticated) {
-      setShowLogin(true);
+      setShowAuth(true);
       return;
     }
     
     const hasAccess = checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT);
     if (!hasAccess) {
-      setShowSubscriptionPrompt(true);
+      setShowSubscription(true);
     }
   }, [isAuthenticated]);
 
   const startDebate = async (topic) => {
     if (!isAuthenticated) {
-      setShowLogin(true);
+      setShowAuth(true);
       return;
     }
     
     if (!checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT)) {
-      setShowSubscriptionPrompt(true);
+      setShowSubscription(true);
       return;
     }
 
@@ -105,12 +108,12 @@ const DebaterBot = () => {
     if (!inputText.trim() || isLoading) return;
     
     if (!isAuthenticated) {
-      setShowLogin(true);
+      setShowAuth(true);
       return;
     }
     
     if (!checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT)) {
-      setShowSubscriptionPrompt(true);
+      setShowSubscription(true);
       return;
     }
 
@@ -194,11 +197,19 @@ const DebaterBot = () => {
     "The problem of evil"
   ];
 
-  // Show login form if not authenticated
-  if (showLogin && !isAuthenticated) {
+  // Show auth modal if not authenticated
+  if (!isAuthenticated) {
     return (
       <>
-        <LoginForm onClose={() => setShowLogin(false)} />
+        {showAuth && (
+          <AuthModal 
+            onClose={() => setShowAuth(false)}
+            onSuccess={() => {
+              setShowAuth(false);
+              // User will be redirected after OAuth or receive email link
+            }}
+          />
+        )}
         <div style={{
           height: '100vh',
           display: 'flex',
@@ -207,110 +218,55 @@ const DebaterBot = () => {
           backgroundColor: '#f5f5f5'
         }}>
           <div style={{ textAlign: 'center', color: '#666' }}>
-            <h2>Please log in to access the AI Debater Bot</h2>
+            <h2>Please sign in to access the AI Debater Bot</h2>
             <p>Premium subscription required for unlimited debates.</p>
+            <button
+              onClick={() => setShowAuth(true)}
+              style={{
+                marginTop: '20px',
+                padding: '12px 24px',
+                backgroundColor: '#2196F3',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 'bold'
+              }}
+            >
+              Sign In / Sign Up
+            </button>
           </div>
         </div>
       </>
     );
   }
 
-  if (showSubscriptionPrompt && !checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT)) {
+  // Show subscription modal if authenticated but no premium access
+  if (showSubscription && !checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT)) {
     return (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999
-      }}>
+      <>
+        <SubscriptionModal
+          user={user}
+          onClose={() => setShowSubscription(false)}
+          onSuccess={() => {
+            setShowSubscription(false);
+            // Refresh the page or update state after successful subscription
+          }}
+        />
         <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '40px',
-          maxWidth: '500px',
-          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
-          textAlign: 'center'
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f5f5f5'
         }}>
-          <h2 style={{ marginTop: 0, color: '#1976d2' }}>
-            🤖 AI Debater Bot
-          </h2>
-          <p style={{ marginBottom: '20px', color: '#666', lineHeight: '1.6' }}>
-            The AI Debater Bot is a premium subscription feature that provides specialized theological debates 
-            based on Rashad Khalifa's teachings and the Final Testament - something you won't find anywhere else.
-          </p>
-          <div style={{
-            backgroundColor: '#f5f5f5',
-            borderRadius: '8px',
-            padding: '20px',
-            marginBottom: '30px'
-          }}>
-            <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>
-              Unique Value - Why Not Just Use ChatGPT?
-            </h3>
-            <ul style={{ textAlign: 'left', margin: 0, paddingLeft: '20px' }}>
-              <li><strong>Specialized Knowledge:</strong> Trained on Rashad Khalifa's complete teachings</li>
-              <li><strong>Authentic Perspective:</strong> Responds as a true submitter, not neutral AI</li>
-              <li><strong>Integrated Research:</strong> Instant access to 60+ debate rules and audio references</li>
-              <li><strong>Final Testament Focus:</strong> All responses backed by Quranic verses</li>
-              <li><strong>Community Wisdom:</strong> Incorporates years of submission community discussions</li>
-            </ul>
-          </div>
-          
-          <div style={{
-            backgroundColor: '#e3f2fd',
-            borderRadius: '8px',
-            padding: '15px',
-            marginBottom: '20px'
-          }}>
-            <strong>Subscription Status:</strong> {subscriptionInfo.isActive ? 'Active' : 'Inactive'}
-            {subscriptionInfo.expiry && (
-              <div>Expires: {new Date(subscriptionInfo.expiry).toLocaleDateString()}</div>
-            )}
-          </div>
-          
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => setShowSubscriptionPrompt(false)}
-              style={{
-                padding: '12px 20px',
-                backgroundColor: '#f5f5f5',
-                border: '1px solid #ddd',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              Maybe Later
-            </button>
-            
-            <button
-              onClick={() => {
-                window.open('mailto:support@qurancompare.com?subject=Premium Subscription Request&body=I would like to subscribe to the AI Debater Bot premium feature for £2.99/month. Please contact me to set up my subscription.', '_blank');
-                setShowSubscriptionPrompt(false);
-              }}
-              style={{
-                padding: '12px 20px',
-                backgroundColor: '#2196F3',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 'bold'
-              }}
-            >
-              Subscribe Now (£2.99/month)
-            </button>
-            
+          <div style={{ textAlign: 'center', color: '#666' }}>
+            <h2>Premium Subscription Required</h2>
+            <p>The AI Debater Bot requires a premium subscription.</p>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
