@@ -34,11 +34,33 @@ const UserProfile = () => {
         }
       } catch (error) {
         console.error('Error creating portal session:', error);
+        // If Stripe portal fails, show contact info
+        alert('To manage your subscription, please contact support@qurancompare.com');
       }
     } else {
       // Show subscription modal for new subscriptions
       setShowSubscriptionModal(true);
     }
+    setShowDropdown(false);
+  };
+  
+  const handleCancelSubscription = () => {
+    const subject = encodeURIComponent('Subscription Cancellation Request');
+    const body = encodeURIComponent(
+      `Hi,
+
+I would like to cancel my AI Debater Bot subscription.
+
+Account details:
+- Email: ${user?.email}
+- User ID: ${user?.id}
+
+Please cancel my subscription and confirm when complete.
+
+Thank you!`
+    );
+    
+    window.open(`mailto:support@qurancompare.com?subject=${subject}&body=${body}`, '_blank');
     setShowDropdown(false);
   };
   
@@ -163,30 +185,84 @@ const UserProfile = () => {
               
               {/* Actions */}
               <div style={{ padding: '12px' }}>
-                <button
-                  onClick={handleManageSubscription}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    backgroundColor: '#2196F3',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    marginBottom: '8px',
-                    transition: 'background-color 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#1976d2';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = '#2196F3';
-                  }}
-                >
-                  {hasActiveSubscription() ? '⚙️ Manage Subscription' : '⭐ Upgrade to Premium'}
-                </button>
+                {hasActiveSubscription() ? (
+                  <>
+                    <button
+                      onClick={handleManageSubscription}
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        backgroundColor: '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        marginBottom: '8px',
+                        transition: 'background-color 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.backgroundColor = '#45a049';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = '#4CAF50';
+                      }}
+                    >
+                      🔄 Renew Subscription
+                    </button>
+                    
+                    <button
+                      onClick={handleCancelSubscription}
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        backgroundColor: '#ff6b6b',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        marginBottom: '8px',
+                        transition: 'background-color 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.backgroundColor = '#ff5252';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = '#ff6b6b';
+                      }}
+                    >
+                      ❌ Cancel Subscription
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={handleManageSubscription}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      backgroundColor: '#2196F3',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      marginBottom: '8px',
+                      transition: 'background-color 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = '#1976d2';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = '#2196F3';
+                    }}
+                  >
+                    ⭐ Upgrade to Premium
+                  </button>
+                )}
                 
                 <button
                   onClick={() => {

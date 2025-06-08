@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { checkPremiumAccess, PREMIUM_FEATURES, hasActiveSubscription, getSubscriptionInfo } from '../config/premium';
+import { supabase } from '../utils/supabase';
 import AuthModal from './AuthModal';
 import SubscriptionModal from './SubscriptionModal';
 
@@ -17,6 +18,9 @@ const DebaterBot = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
+  const [chatHistoryId, setChatHistoryId] = useState(null);
+  const [previousChats, setPreviousChats] = useState([]);
+  const [showChatHistory, setShowChatHistory] = useState(false);
   const { user, isAuthenticated, hasActiveSubscription: authHasSubscription } = useAuth();
   const messagesEndRef = useRef(null);
 
@@ -52,9 +56,88 @@ const DebaterBot = () => {
         // User has access, close any open modals
         setShowAuth(false);
         setShowSubscription(false);
+        // Load previous chats
+        loadChatHistory();
       }
     }
   }, [isAuthenticated, user]);
+  
+  // Load previous chat history
+  const loadChatHistory = async () => {
+    if (!user?.email) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('chat_history')
+        .select('*')
+        .eq('user_email', user.email)
+        .order('created_at', { ascending: false })
+        .limit(10);
+        
+      if (!error && data) {
+        setPreviousChats(data);
+      }
+    } catch (err) {
+      console.error('Error loading chat history:', err);
+    }
+  };
+  
+  // Save chat to history
+  const saveChatHistory = async () => {
+    if (!user?.email || messages.length === 0) return;
+    
+    try {
+      const chatData = {
+        user_email: user.email,
+        topic: currentTopic,
+        messages: messages,
+        is_active: true
+      };
+      
+      if (chatHistoryId) {
+        // Update existing chat
+        await supabase
+          .from('chat_history')
+          .update({
+            messages: messages,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', chatHistoryId);
+      } else {
+        // Create new chat
+        const { data, error } = await supabase
+          .from('chat_history')
+          .insert(chatData)
+          .select();
+          
+        if (!error && data && data[0]) {
+          setChatHistoryId(data[0].id);
+        }
+      }
+    } catch (err) {
+      console.error('Error saving chat history:', err);
+    }
+  };
+  
+  // Save chat history when messages change
+  useEffect(() => {
+    if (messages.length > 0 && user?.email) {
+      const saveTimer = setTimeout(() => {
+        saveChatHistory();
+      }, 2000); // Save after 2 seconds of no changes
+      
+      return () => clearTimeout(saveTimer);
+    }
+  }, [messages]);
+  
+  // Load a previous chat
+  const loadPreviousChat = (chat) => {
+    setMessages(chat.messages || []);
+    setCurrentTopic(chat.topic);
+    setChatHistoryId(chat.id);
+    setDebateMode(true);
+    setShowChatHistory(false);
+  };
 
   const startDebate = async (topic) => {
     if (!isAuthenticated) {
@@ -184,6 +267,7 @@ const DebaterBot = () => {
     setCurrentTopic('');
     setDebateMode(false);
     setError(null);
+    setChatHistoryId(null); // Reset chat history ID for new chat
   };
 
   const handleKeyPress = (e) => {
@@ -195,6 +279,56 @@ const DebaterBot = () => {
 
   const formatTimestamp = (date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+  
+  // Parse message content and make verse references clickable
+  const parseMessageContent = (content) => {
+    // Regex to match verse references like "2:255" or "[2:255]"
+    const verseRegex = /\[?(\d{1,3}):(\d{1,3})\]?/g;
+    
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    
+    while ((match = verseRegex.exec(content)) !== null) {
+      // Add text before the match
+      if (match.index > lastIndex) {
+        parts.push({
+          type: 'text',
+          content: content.slice(lastIndex, match.index)
+        });
+      }
+      
+      // Add the verse reference as a link
+      parts.push({
+        type: 'verse',
+        content: match[0],
+        chapter: parseInt(match[1]),
+        verse: parseInt(match[2])
+      });
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining text
+    if (lastIndex < content.length) {
+      parts.push({
+        type: 'text',
+        content: content.slice(lastIndex)
+      });
+    }
+    
+    return parts.length > 0 ? parts : [{ type: 'text', content }];
+  };
+  
+  const handleVerseClick = (chapter, verse) => {
+    // Navigate to verse lookup tab with the selected verse
+    const verseRange = `${chapter}:${verse}`;
+    
+    // Dispatch event for the main app to handle
+    window.dispatchEvent(new CustomEvent('openVerseRange', {
+      detail: { range: verseRange }
+    }));
   };
 
   // Quick topic suggestions
@@ -452,7 +586,26 @@ const DebaterBot = () => {
                     color: message.role === 'user' ? 'white' : '#333'
                   }}>
                     <div style={{ fontSize: '14px', lineHeight: '1.4' }}>
-                      {message.content}
+                      {parseMessageContent(message.content).map((part, index) => {
+                        if (part.type === 'verse') {
+                          return (
+                            <span
+                              key={index}
+                              style={{
+                                color: message.role === 'user' ? '#bbdefb' : '#1976d2',
+                                textDecoration: 'underline',
+                                cursor: 'pointer',
+                                fontWeight: 'bold'
+                              }}
+                              onClick={() => handleVerseClick(part.chapter, part.verse)}
+                              title={`Click to view verse ${part.chapter}:${part.verse}`}
+                            >
+                              {part.content}
+                            </span>
+                          );
+                        }
+                        return <span key={index}>{part.content}</span>;
+                      })}
                     </div>
                     <div style={{
                       fontSize: '11px',
