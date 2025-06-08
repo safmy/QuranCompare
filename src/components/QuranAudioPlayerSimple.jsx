@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { getAbsoluteVerseNumber, getVerseAudioUrl } from '../utils/verseMapping';
 import ChunkAudioPlayerBackend from './ChunkAudioPlayerBackend';
 import InteractiveChunkEditor from './InteractiveChunkEditor';
-import { setDeveloperAccess } from '../config/premium';
 
 const QuranAudioPlayerSimple = ({ 
   verseReference, 
@@ -28,10 +27,6 @@ const QuranAudioPlayerSimple = ({
   const loopCountRef = useRef(0);
   const isLoopingRef = useRef(false);
   
-  // Enable developer access for testing (remove in production)
-  useEffect(() => {
-    setDeveloperAccess(true);
-  }, []);
 
   // Initialize audio on component mount
   useEffect(() => {
