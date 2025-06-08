@@ -23,73 +23,102 @@ supabase.auth.onAuthStateChange((event, session) => {
   }
 });
 
-// User and subscription management
+// User and subscription management via API
 export const checkUserSubscription = async (email) => {
   try {
-    // Check if user exists and has active subscription
-    const { data, error } = await supabase
-      .from('user_subscriptions')
-      .select('*')
-      .eq('email', email)
-      .eq('status', 'active')
-      .gt('expires_at', new Date().toISOString())
-      .single();
-
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
-      console.error('Supabase error:', error);
-      return { hasSubscription: false, error: error.message };
+    const response = await fetch(`https://qurancompare.onrender.com/api/payment/user/subscription/${encodeURIComponent(email)}`);
+    
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
     }
-
-    return {
-      hasSubscription: !!data,
-      user: data,
-      error: null
-    };
+    
+    const data = await response.json();
+    return data;
   } catch (err) {
-    console.error('Error checking subscription:', err);
-    return { hasSubscription: false, error: err.message };
+    console.error('Error checking subscription via API:', err);
+    // Fallback to direct Supabase if API fails
+    try {
+      const { data, error } = await supabase
+        .from('user_subscriptions')
+        .select('*')
+        .eq('email', email)
+        .eq('status', 'active')
+        .gt('expires_at', new Date().toISOString())
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Supabase fallback error:', error);
+        return { hasSubscription: false, error: error.message };
+      }
+
+      return {
+        hasSubscription: !!data,
+        user: data,
+        error: null
+      };
+    } catch (fallbackErr) {
+      console.error('Fallback error:', fallbackErr);
+      return { hasSubscription: false, error: fallbackErr.message };
+    }
   }
 };
 
 export const createOrUpdateUser = async (email) => {
   try {
-    // First check if user exists
-    const { data: existingUser } = await supabase
-      .from('user_subscriptions')
-      .select('*')
-      .eq('email', email)
-      .single();
+    const response = await fetch('https://qurancompare.onrender.com/api/payment/user/subscription', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email })
+    });
 
-    if (existingUser) {
-      return { success: true, user: existingUser };
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
     }
 
-    // Create new user with free tier
-    const { data, error } = await supabase
-      .from('user_subscriptions')
-      .insert([
-        {
-          email: email,
-          status: email === 'safmy@example.com' ? 'active' : 'inactive',
-          tier: email === 'safmy@example.com' ? 'premium' : 'free',
-          expires_at: email === 'safmy@example.com' 
-            ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 1 year from now
-            : null,
-          created_at: new Date().toISOString()
-        }
-      ])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating user:', error);
-      return { success: false, error: error.message };
-    }
-
-    return { success: true, user: data };
+    const data = await response.json();
+    return data;
   } catch (err) {
-    console.error('Error in createOrUpdateUser:', err);
-    return { success: false, error: err.message };
+    console.error('Error creating user via API:', err);
+    // Fallback to direct Supabase if API fails
+    try {
+      const { data: existingUser } = await supabase
+        .from('user_subscriptions')
+        .select('*')
+        .eq('email', email)
+        .single();
+
+      if (existingUser) {
+        return { success: true, user: existingUser };
+      }
+
+      const { data, error } = await supabase
+        .from('user_subscriptions')
+        .insert([
+          {
+            email: email,
+            status: email === 'safmy@example.com' ? 'active' : 'inactive',
+            tier: email === 'safmy@example.com' ? 'premium' : 'free',
+            expires_at: email === 'safmy@example.com' 
+              ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+              : null,
+            created_at: new Date().toISOString()
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Supabase fallback error:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, user: data };
+    } catch (fallbackErr) {
+      console.error('Fallback error:', fallbackErr);
+      return { success: false, error: fallbackErr.message };
+    }
   }
 };
 
