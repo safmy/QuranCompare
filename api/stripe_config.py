@@ -12,13 +12,20 @@ STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')  # Will need to set this after creating webhook
 
 # Initialize Stripe
-stripe.api_key = STRIPE_SECRET_KEY
+if STRIPE_SECRET_KEY:
+    stripe.api_key = STRIPE_SECRET_KEY
+    logger.info("Stripe API initialized successfully")
+else:
+    logger.warning("STRIPE_SECRET_KEY not provided - payment processing will be disabled")
 
 # Product/Price IDs - Create these in Stripe Dashboard or via API
 DEBATER_BOT_PRICE_ID = os.getenv('STRIPE_DEBATER_PRICE_ID', 'price_1RXeD5ImvcH9DSE1KcvO2Iy9')
 
 def create_checkout_session(user_email: str, success_url: str, cancel_url: str):
     """Create a Stripe checkout session for subscription"""
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Stripe not configured - missing secret key")
+    
     try:
         # Create or retrieve customer
         customers = stripe.Customer.list(email=user_email, limit=1)

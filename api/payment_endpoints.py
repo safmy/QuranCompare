@@ -20,7 +20,18 @@ router = APIRouter(prefix="/api/payment", tags=["payment"])
 # Supabase client
 supabase_url = os.getenv('SUPABASE_URL', 'https://fsubmqjevlfpcirgsbhi.supabase.co')
 supabase_key = os.getenv('SUPABASE_SERVICE_KEY', '')  # Need service key for server-side ops
-supabase: Client = create_client(supabase_url, supabase_key) if supabase_key else None
+
+# Initialize Supabase client only if service key is provided
+supabase = None
+if supabase_key and supabase_key.strip():
+    try:
+        supabase = create_client(supabase_url, supabase_key)
+        logger.info("Supabase client initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize Supabase client: {e}")
+        supabase = None
+else:
+    logger.warning("SUPABASE_SERVICE_KEY not provided - webhook database updates will be disabled")
 
 # Request models
 class CreateCheckoutRequest(BaseModel):
