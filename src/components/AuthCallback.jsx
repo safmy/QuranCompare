@@ -7,25 +7,89 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Get the session from the URL
-        const { data, error } = await supabase.auth.getSession();
+        console.log('AuthCallback: Starting auth callback process');
+        console.log('Current URL:', window.location.href);
         
-        if (error) {
-          console.error('Auth callback error:', error);
-          setStatus('error');
-          return;
-        }
-
-        if (data.session) {
-          // User successfully authenticated
-          setStatus('success');
+        // Check for auth tokens in URL hash or query params
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const queryParams = new URLSearchParams(window.location.search);
+        
+        console.log('Hash params:', Object.fromEntries(hashParams));
+        console.log('Query params:', Object.fromEntries(queryParams));
+        
+        // Check if we have auth tokens (magic link callback)
+        const hasAuthTokens = hashParams.get('access_token') || 
+                              hashParams.get('refresh_token') || 
+                              queryParams.get('code') ||
+                              hashParams.get('type') === 'magiclink';
+        
+        if (hasAuthTokens) {
+          console.log('Auth tokens found, processing magic link...');
           
-          // Redirect to the main app after a short delay
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 2000);
+          // Wait a moment for Supabase to process the tokens
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Now check for session
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error('Auth callback error:', error);
+            setStatus('error');
+            return;
+          }
+
+          if (data.session) {
+            console.log('Session found:', data.session.user?.email);
+            setStatus('success');
+            
+            // Redirect to the main app after a short delay
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 2000);
+          } else {
+            console.log('No session found, trying to refresh...');
+            // Try refreshing the session
+            const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+            
+            if (refreshError) {
+              console.error('Refresh error:', refreshError);
+              setStatus('error');
+              return;
+            }
+            
+            if (refreshData.session) {
+              console.log('Session refreshed successfully');
+              setStatus('success');
+              setTimeout(() => {
+                window.location.href = '/';
+              }, 2000);
+            } else {
+              console.log('Still no session after refresh');
+              setStatus('error');
+            }
+          }
         } else {
-          setStatus('error');
+          console.log('No auth tokens found in URL');
+          
+          // Check if we already have a session
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error('Session check error:', error);
+            setStatus('error');
+            return;
+          }
+          
+          if (data.session) {
+            console.log('Existing session found');
+            setStatus('success');
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 1000);
+          } else {
+            console.log('No existing session, redirecting to home');
+            setStatus('error');
+          }
         }
       } catch (err) {
         console.error('Auth callback error:', err);

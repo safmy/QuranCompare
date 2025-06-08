@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { checkUserSubscription, createOrUpdateUser, isSupabaseConfigured } from '../utils/supabase';
+import { checkUserSubscription, createOrUpdateUser, isSupabaseConfigured, supabase } from '../utils/supabase';
 
 const AuthContext = createContext();
 
@@ -15,20 +15,110 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage on app start
+  // Load user from localStorage on app start and listen to Supabase auth changes
   useEffect(() => {
-    const savedUser = localStorage.getItem('quranCompareUser');
-    if (savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
-        setUser(userData);
-      } catch (error) {
-        console.error('Error parsing saved user data:', error);
-        localStorage.removeItem('quranCompareUser');
+    const initializeAuth = async () => {
+      if (isSupabaseConfigured()) {
+        // Get initial session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          console.log('Initial Supabase session found:', session.user.email);
+          await handleSupabaseUser(session.user);
+        } else {
+          // Check localStorage fallback
+          const savedUser = localStorage.getItem('quranCompareUser');
+          if (savedUser) {
+            try {
+              const userData = JSON.parse(savedUser);
+              setUser(userData);
+            } catch (error) {
+              console.error('Error parsing saved user data:', error);
+              localStorage.removeItem('quranCompareUser');
+            }
+          }
+        }
+      } else {
+        // Fallback to localStorage
+        const savedUser = localStorage.getItem('quranCompareUser');
+        if (savedUser) {
+          try {
+            const userData = JSON.parse(savedUser);
+            setUser(userData);
+          } catch (error) {
+            console.error('Error parsing saved user data:', error);
+            localStorage.removeItem('quranCompareUser');
+          }
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+
+    // Listen to Supabase auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Supabase auth state change:', event, session?.user?.email);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        await handleSupabaseUser(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        localStorage.removeItem('quranCompareUser');
+        localStorage.removeItem('subscriptionStatus');
+        localStorage.removeItem('subscriptionTier');
+        localStorage.removeItem('subscriptionExpiry');
+      }
+    });
+
+    initializeAuth();
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
+
+  const handleSupabaseUser = async (supabaseUser) => {
+    try {
+      const email = supabaseUser.email;
+      
+      // Create/update user in database
+      const createResult = await createOrUpdateUser(email);
+      if (!createResult.success) {
+        console.error('Failed to create/update user:', createResult.error);
+        return;
+      }
+      
+      // Check subscription status
+      const subResult = await checkUserSubscription(email);
+      if (subResult.error) {
+        console.error('Failed to check subscription:', subResult.error);
+        return;
+      }
+      
+      const userData = {
+        email: email,
+        id: supabaseUser.id,
+        loginTime: new Date().toISOString(),
+        subscriptionStatus: subResult.hasSubscription ? 'active' : 'inactive',
+        subscriptionTier: subResult.hasSubscription ? 'premium' : 'free',
+        subscriptionExpiry: subResult.user?.expires_at || null
+      };
+      
+      setUser(userData);
+      
+      // Sync with localStorage for premium system compatibility
+      if (userData.subscriptionStatus === 'active') {
+        localStorage.setItem('subscriptionStatus', 'active');
+        localStorage.setItem('subscriptionTier', userData.subscriptionTier);
+        localStorage.setItem('subscriptionExpiry', userData.subscriptionExpiry);
+      } else {
+        localStorage.removeItem('subscriptionStatus');
+        localStorage.removeItem('subscriptionTier');
+        localStorage.removeItem('subscriptionExpiry');
+      }
+    } catch (error) {
+      console.error('Error handling Supabase user:', error);
+    }
+  };
 
   // Save user to localStorage when user changes
   useEffect(() => {

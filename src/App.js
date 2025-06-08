@@ -17,17 +17,6 @@ import { checkPremiumAccess, PREMIUM_FEATURES } from './config/premium';
 function AppContent() {
   const { currentLanguage, changeLanguage } = useLanguage();
   
-  // Check for special routes
-  if (window.location.pathname === '/auth/callback') {
-    return <AuthCallback />;
-  }
-  if (window.location.pathname === '/payment/success') {
-    return <PaymentSuccess />;
-  }
-  if (window.location.pathname === '/payment/cancel') {
-    return <PaymentCancel />;
-  }
-  
   const [activeTab, setActiveTab] = useState(() => {
     return sessionStorage.getItem('activeTab') || 'lookup';
   });
@@ -148,6 +137,17 @@ function AppContent() {
       component: <DebaterBot />
     }
   ];
+
+  // Check for special routes after all hooks are declared
+  if (window.location.pathname === '/auth/callback') {
+    return <AuthCallback />;
+  }
+  if (window.location.pathname === '/payment/success') {
+    return <PaymentSuccess />;
+  }
+  if (window.location.pathname === '/payment/cancel') {
+    return <PaymentCancel />;
+  }
 
   return (
     <div className="App">
