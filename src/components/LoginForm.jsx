@@ -105,8 +105,8 @@ const LoginForm = ({ onClose }) => {
             fontSize: '13px',
             lineHeight: '1.4'
           }}>
-            <strong>Demo Access:</strong> Use "safmy@example.com" for premium features, 
-            or any other email for free access.
+            <strong>Access:</strong> Enter your email address to access the platform. 
+            Premium subscription required for AI Debater Bot.
           </div>
 
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>

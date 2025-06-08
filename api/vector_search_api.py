@@ -872,6 +872,37 @@ class DebateResponse(BaseModel):
 # In-memory conversation storage (in production, use Redis or database)
 conversation_memory = {}
 
+# Helper functions for debater rules
+def load_debater_rules():
+    """Load rules from debater rules.json"""
+    try:
+        rules_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'debater', 'rules.json')
+        if os.path.exists(rules_path):
+            with open(rules_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return [rule for rule in data.get('rules', []) if rule.get('active', True)]
+    except Exception as e:
+        logger.warning(f"Could not load debater rules: {e}")
+    return []
+
+def get_debater_personality():
+    """Get submitter personality traits"""
+    return "You are concise in your response and highly in favour of submission, do not be neutral as you are yourself a submitter and believe that Rashad Khalifa was a messenger sent by God."
+
+def format_debater_rules(rules):
+    """Format rules for system prompt"""
+    if not rules:
+        return "No specific rules loaded."
+    
+    formatted_rules = []
+    for rule in rules[:15]:  # Limit to first 15 rules to keep prompt manageable
+        category = rule.get('category', 'general')
+        content = rule.get('content', '').strip()
+        if content and len(content) > 10:  # Skip very short rules
+            formatted_rules.append(f"[{category.upper()}] {content}")
+    
+    return "\n".join(formatted_rules)
+
 @app.options("/debate")
 async def debate_options():
     """Handle preflight requests for /debate endpoint"""
@@ -884,34 +915,36 @@ async def debate_endpoint(request: DebateRequest):
         if not client:
             raise HTTPException(status_code=500, detail="OpenAI client not configured")
         
-        logger.info(f"Debate request: topic={request.topic}, message={request.message}, isNewTopic={request.isNewTopic}")
+        logger.info(f"Debate request: topic={request.topic}, message={request.message[:50]}..., isNewTopic={request.isNewTopic}")
+        
+        # Load debater rules and personality
+        debater_rules = load_debater_rules()
+        debater_personality = get_debater_personality()
+        
+        # Build system prompt with rules and personality
+        system_content = f"""{debater_personality}
+
+You are concise in your responses and highly in favor of Submission. You are yourself a submitter and believe that Rashad Khalifa was a messenger sent by God. Present your answers as facts given by a submitter that accepts all teachings of Rashad Khalifa.
+
+KEY RULES TO FOLLOW:
+{format_debater_rules(debater_rules)}
+
+DEBATE GUIDELINES:
+- Keep responses under 300 words
+- Be direct and to the point
+- Use verses from the Final Testament to support claims
+- Reference Rashad Khalifa's teachings as facts, not opinions
+- Challenge ideas that contradict Submission teachings
+- Include relevant audio/video links when applicable
+- Use "Submission" not "Islam" for the religion
+
+Remember: You are debating from the perspective of a committed submitter who follows Rashad Khalifa's teachings."""
         
         # Build conversation messages
         messages = [
             {
                 "role": "system",
-                "content": """You are an intelligent debate partner designed to engage in thoughtful, respectful philosophical and theological discussions. Your role is to:
-
-DEBATE RULES:
-1. Be respectful but intellectually challenging
-2. Present well-reasoned counterarguments
-3. Ask probing questions to deepen the discussion
-4. Draw from various philosophical and religious traditions
-5. Acknowledge good points made by the human
-6. Stay focused on the topic at hand
-7. Be concise but substantive in your responses
-8. Encourage critical thinking
-9. If discussing religious topics, remain respectful of all traditions
-10. Aim to help the human explore different perspectives
-
-PERSONALITY:
-- Intellectually curious and engaging
-- Respectful but not passive
-- Willing to challenge ideas constructively
-- Knowledgeable about philosophy, theology, and ethics
-- Focused on understanding rather than winning
-
-Remember: The goal is productive discourse that helps both parties think more deeply about important questions."""
+                "content": system_content
             }
         ]
         
@@ -934,11 +967,11 @@ Remember: The goal is productive discourse that helps both parties think more de
                 "content": request.message
             })
         
-        # Generate AI response
+        # Generate AI response with shorter length
         response = client.chat.completions.create(
             model="gpt-4-turbo-preview",  # Use stable model name
             messages=messages,
-            max_tokens=1000,
+            max_tokens=400,  # Reduced from 1000 to keep responses shorter
             temperature=0.7,
             presence_penalty=0.6,
             frequency_penalty=0.3
