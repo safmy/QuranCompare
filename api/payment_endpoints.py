@@ -31,27 +31,20 @@ supabase = None
 supabase_error = None
 if supabase_key and supabase_key.strip():
     try:
-        # Try different initialization approaches
-        try:
-            # Method 1: Standard initialization (no options parameter)
-            supabase = create_client(supabase_url, supabase_key)
-            logger.info("✅ Supabase client initialized successfully (method 1)")
-        except Exception as e1:
-            logger.warning(f"Method 1 failed: {e1}")
-            try:
-                # Method 2: Try with environment variable approach
-                import os
-                os.environ['SUPABASE_URL'] = supabase_url
-                os.environ['SUPABASE_KEY'] = supabase_key
-                from supabase import create_client
-                supabase = create_client(supabase_url, supabase_key)
-                logger.info("✅ Supabase client initialized successfully (method 2)")
-            except Exception as e2:
-                logger.warning(f"Method 2 failed: {e2}")
-                # Try to understand what's happening
-                logger.error(f"create_client function signature: {create_client.__doc__}")
-                logger.error(f"create_client module: {create_client.__module__}")
-                raise e1  # Re-raise the original error
+        # Workaround for proxy parameter issue in supabase 2.3.4
+        # Create ClientOptions manually without proxy
+        from supabase.client import ClientOptions
+        
+        # Create options without any proxy settings
+        options = ClientOptions(
+            headers={},
+            auto_refresh_token=True,
+            persist_session=True
+        )
+        
+        # Initialize Supabase client with explicit options
+        supabase = create_client(supabase_url, supabase_key, options)
+        logger.info("✅ Supabase client initialized successfully")
                 
     except Exception as e:
         logger.error(f"❌ Failed to initialize Supabase client: {e}")
