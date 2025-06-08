@@ -33,31 +33,25 @@ if supabase_key and supabase_key.strip():
     try:
         # Try different initialization approaches
         try:
-            # Method 1: With explicit options to avoid proxy issues
-            supabase = create_client(
-                supabase_url=supabase_url,
-                supabase_key=supabase_key,
-                options={}  # Empty options to avoid any default proxy settings
-            )
+            # Method 1: Standard initialization (no options parameter)
+            supabase = create_client(supabase_url, supabase_key)
             logger.info("✅ Supabase client initialized successfully (method 1)")
         except Exception as e1:
             logger.warning(f"Method 1 failed: {e1}")
             try:
-                # Method 2: Direct Client instantiation
-                from supabase import Client
-                from supabase.client import ClientOptions
-                options = ClientOptions()
-                supabase = Client(supabase_url, supabase_key, options)
+                # Method 2: Try with environment variable approach
+                import os
+                os.environ['SUPABASE_URL'] = supabase_url
+                os.environ['SUPABASE_KEY'] = supabase_key
+                from supabase import create_client
+                supabase = create_client(supabase_url, supabase_key)
                 logger.info("✅ Supabase client initialized successfully (method 2)")
             except Exception as e2:
                 logger.warning(f"Method 2 failed: {e2}")
-                try:
-                    # Method 3: Minimal initialization
-                    supabase = create_client(supabase_url, supabase_key)
-                    logger.info("✅ Supabase client initialized successfully (method 3)")
-                except Exception as e3:
-                    logger.warning(f"Method 3 failed: {e3}")
-                    raise e1  # Re-raise the original error
+                # Try to understand what's happening
+                logger.error(f"create_client function signature: {create_client.__doc__}")
+                logger.error(f"create_client module: {create_client.__module__}")
+                raise e1  # Re-raise the original error
                 
     except Exception as e:
         logger.error(f"❌ Failed to initialize Supabase client: {e}")
@@ -318,13 +312,24 @@ async def test_payment_router():
 async def test_supabase_connection():
     """Test Supabase connection specifically"""
     if not supabase:
+        # Try to get more info about the create_client function
+        import inspect
+        from supabase import create_client
+        
+        create_client_info = {
+            "signature": str(inspect.signature(create_client)) if hasattr(inspect, 'signature') else "N/A",
+            "doc": create_client.__doc__,
+            "module": create_client.__module__
+        }
+        
         return {
             "status": "error",
             "message": "Supabase not initialized",
             "error": supabase_error,
             "supabase_url": os.getenv('SUPABASE_URL'),
             "service_key_present": bool(os.getenv('SUPABASE_SERVICE_KEY')),
-            "service_key_length": len(os.getenv('SUPABASE_SERVICE_KEY', ''))
+            "service_key_length": len(os.getenv('SUPABASE_SERVICE_KEY', '')),
+            "create_client_info": create_client_info
         }
     
     try:
