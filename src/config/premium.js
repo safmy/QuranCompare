@@ -19,10 +19,6 @@ export const SUBSCRIPTION_ONLY_FEATURES = [
 
 // Check if user has access to premium features
 export const checkPremiumAccess = (feature) => {
-  // For development, check if user is developer
-  const isDeveloper = localStorage.getItem('isDeveloper') === 'true';
-  if (isDeveloper) return true;
-  
   // Check if this feature requires active subscription
   if (SUBSCRIPTION_ONLY_FEATURES.includes(feature)) {
     return hasActiveSubscription();
@@ -64,28 +60,12 @@ export const setSubscriptionStatus = (status, tier, expiryDate) => {
   }
 };
 
-// Set developer access (for testing)
-export const setDeveloperAccess = (enabled) => {
-  localStorage.setItem('isDeveloper', enabled ? 'true' : 'false');
-};
-
 // Simulate feature purchase (for testing)
 export const purchaseFeature = (feature) => {
   const purchasedFeatures = JSON.parse(localStorage.getItem('purchasedFeatures') || '[]');
   if (!purchasedFeatures.includes(feature)) {
     purchasedFeatures.push(feature);
     localStorage.setItem('purchasedFeatures', JSON.stringify(purchasedFeatures));
-  }
-};
-
-// Mock subscription for testing
-export const setTestSubscription = (active = true) => {
-  if (active) {
-    const expiry = new Date();
-    expiry.setMonth(expiry.getMonth() + 1); // 1 month from now
-    setSubscriptionStatus('active', SUBSCRIPTION_TIERS.PREMIUM, expiry.toISOString());
-  } else {
-    setSubscriptionStatus('inactive', SUBSCRIPTION_TIERS.FREE, null);
   }
 };
 

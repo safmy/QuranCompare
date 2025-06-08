@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { checkPremiumAccess, PREMIUM_FEATURES, hasActiveSubscription, getSubscriptionInfo, setTestSubscription } from '../config/premium';
+import { checkPremiumAccess, PREMIUM_FEATURES, hasActiveSubscription, getSubscriptionInfo } from '../config/premium';
 import LoginForm from './LoginForm';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
@@ -241,8 +241,8 @@ const DebaterBot = () => {
             🤖 AI Debater Bot
           </h2>
           <p style={{ marginBottom: '20px', color: '#666', lineHeight: '1.6' }}>
-            The AI Debater Bot is a premium subscription feature that allows you to engage in 
-            intelligent debates on philosophical and theological topics using advanced AI.
+            The AI Debater Bot is a premium subscription feature that provides specialized theological debates 
+            based on Rashad Khalifa's teachings and the Final Testament - something you won't find anywhere else.
           </p>
           <div style={{
             backgroundColor: '#f5f5f5',
@@ -251,14 +251,14 @@ const DebaterBot = () => {
             marginBottom: '30px'
           }}>
             <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>
-              Premium Subscription Features:
+              Unique Value - Why Not Just Use ChatGPT?
             </h3>
             <ul style={{ textAlign: 'left', margin: 0, paddingLeft: '20px' }}>
-              <li>Unlimited AI debate conversations</li>
-              <li>Advanced philosophical discussion topics</li>
-              <li>Memory of conversation context</li>
-              <li>Customizable debate rules and styles</li>
-              <li>High-quality GPT-4 responses</li>
+              <li><strong>Specialized Knowledge:</strong> Trained on Rashad Khalifa's complete teachings</li>
+              <li><strong>Authentic Perspective:</strong> Responds as a true submitter, not neutral AI</li>
+              <li><strong>Integrated Research:</strong> Instant access to 60+ debate rules and audio references</li>
+              <li><strong>Final Testament Focus:</strong> All responses backed by Quranic verses</li>
+              <li><strong>Community Wisdom:</strong> Incorporates years of submission community discussions</li>
             </ul>
           </div>
           
@@ -306,28 +306,9 @@ const DebaterBot = () => {
                 fontWeight: 'bold'
               }}
             >
-              Subscribe Now ($9.99/month)
+              Subscribe Now (£2.99/month)
             </button>
             
-            {/* Developer testing button */}
-            <button
-              onClick={() => {
-                setTestSubscription(true);
-                setShowSubscriptionPrompt(false);
-                window.location.reload();
-              }}
-              style={{
-                padding: '12px 20px',
-                backgroundColor: '#ff9800',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '12px'
-              }}
-            >
-              🔧 Test Access (Dev)
-            </button>
           </div>
         </div>
       </div>
