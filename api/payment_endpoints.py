@@ -28,6 +28,7 @@ logger.info(f"SUPABASE_SERVICE_KEY length: {len(supabase_key) if supabase_key el
 
 # Initialize Supabase client only if service key is provided
 supabase = None
+supabase_error = None
 if supabase_key and supabase_key.strip():
     try:
         supabase = create_client(supabase_url, supabase_key)
@@ -35,9 +36,11 @@ if supabase_key and supabase_key.strip():
     except Exception as e:
         logger.error(f"❌ Failed to initialize Supabase client: {e}")
         logger.error(f"Error type: {type(e).__name__}")
+        supabase_error = str(e)
         supabase = None
 else:
     logger.warning("⚠️ SUPABASE_SERVICE_KEY not provided - database operations will fail")
+    supabase_error = "No service key provided"
 
 # Request models
 class CreateCheckoutRequest(BaseModel):
@@ -270,8 +273,11 @@ async def test_payment_router():
         "message": "Payment router is working",
         "supabase_configured": supabase is not None,
         "supabase_status": supabase_status,
+        "supabase_error": supabase_error,
         "stripe_status": stripe_status,
         "environment_variables": env_vars,
+        "supabase_url": os.getenv('SUPABASE_URL'),
+        "service_key_first_10": os.getenv('SUPABASE_SERVICE_KEY', '')[:10] + "..." if os.getenv('SUPABASE_SERVICE_KEY') else None,
         "endpoints": [
             "/api/payment/create-checkout-session",
             "/api/payment/user/subscription/{email}",
@@ -280,3 +286,33 @@ async def test_payment_router():
             "/api/payment/config"
         ]
     }
+
+@router.get("/test-supabase")
+async def test_supabase_connection():
+    """Test Supabase connection specifically"""
+    if not supabase:
+        return {
+            "status": "error",
+            "message": "Supabase not initialized",
+            "error": supabase_error,
+            "supabase_url": os.getenv('SUPABASE_URL'),
+            "service_key_present": bool(os.getenv('SUPABASE_SERVICE_KEY')),
+            "service_key_length": len(os.getenv('SUPABASE_SERVICE_KEY', ''))
+        }
+    
+    try:
+        # Try a simple query to test the connection
+        response = supabase.table('user_subscriptions').select('count').execute()
+        return {
+            "status": "success",
+            "message": "Supabase connection working",
+            "table_accessible": True,
+            "response_data": response.data if hasattr(response, 'data') else str(response)
+        }
+    except Exception as e:
+        return {
+            "status": "error", 
+            "message": "Supabase connection failed",
+            "error": str(e),
+            "error_type": type(e).__name__
+        }
