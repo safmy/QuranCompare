@@ -33,19 +33,31 @@ if supabase_key and supabase_key.strip():
     try:
         # Try different initialization approaches
         try:
-            # Method 1: Basic initialization
-            supabase = create_client(supabase_url, supabase_key)
+            # Method 1: With explicit options to avoid proxy issues
+            supabase = create_client(
+                supabase_url=supabase_url,
+                supabase_key=supabase_key,
+                options={}  # Empty options to avoid any default proxy settings
+            )
             logger.info("✅ Supabase client initialized successfully (method 1)")
         except Exception as e1:
             logger.warning(f"Method 1 failed: {e1}")
             try:
-                # Method 2: With explicit parameters
+                # Method 2: Direct Client instantiation
                 from supabase import Client
-                supabase = Client(supabase_url, supabase_key)
+                from supabase.client import ClientOptions
+                options = ClientOptions()
+                supabase = Client(supabase_url, supabase_key, options)
                 logger.info("✅ Supabase client initialized successfully (method 2)")
             except Exception as e2:
                 logger.warning(f"Method 2 failed: {e2}")
-                raise e1  # Re-raise the original error
+                try:
+                    # Method 3: Minimal initialization
+                    supabase = create_client(supabase_url, supabase_key)
+                    logger.info("✅ Supabase client initialized successfully (method 3)")
+                except Exception as e3:
+                    logger.warning(f"Method 3 failed: {e3}")
+                    raise e1  # Re-raise the original error
                 
     except Exception as e:
         logger.error(f"❌ Failed to initialize Supabase client: {e}")
