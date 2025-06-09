@@ -1,0 +1,198 @@
+{
+  "appendices": [
+    {
+      "number": 1,
+      "title": "One of the Great Miracles",
+      "filename": "appendix_01.pdf"
+    },
+    {
+      "number": 2,
+      "title": "God's Messenger of the Covenant",
+      "filename": "appendix_02.pdf"
+    },
+    {
+      "number": 3,
+      "title": "We Made the Quran Easy",
+      "filename": "appendix_03.pdf"
+    },
+    {
+      "number": 4,
+      "title": "Why Was the Quran Revealed in Arabic?",
+      "filename": "appendix_04.pdf"
+    },
+    {
+      "number": 5,
+      "title": "The Quran's Common Denominator",
+      "filename": "appendix_05.pdf"
+    },
+    {
+      "number": 6,
+      "title": "Greatest Criterion",
+      "filename": "appendix_06.pdf"
+    },
+    {
+      "number": 7,
+      "title": "The Miracle of the Quran",
+      "filename": "appendix_07.pdf"
+    },
+    {
+      "number": 8,
+      "title": "The Myth of Intercession",
+      "filename": "appendix_08.pdf"
+    },
+    {
+      "number": 9,
+      "title": "Abraham: Founder of Islam",
+      "filename": "appendix_09.pdf"
+    },
+    {
+      "number": 10,
+      "title": "The Day of Resurrection",
+      "filename": "appendix_10.pdf"
+    },
+    {
+      "number": 11,
+      "title": "God's Usage of the Plural",
+      "filename": "appendix_11.pdf"
+    },
+    {
+      "number": 12,
+      "title": "Role of the Prophet Muhammad",
+      "filename": "appendix_12.pdf"
+    },
+    {
+      "number": 13,
+      "title": "The First Pillar of Islam",
+      "filename": "appendix_13.pdf"
+    },
+    {
+      "number": 14,
+      "title": "The Contact Prayers (Salat)",
+      "filename": "appendix_14.pdf"
+    },
+    {
+      "number": 15,
+      "title": "The Obligatory Charity (Zakat)",
+      "filename": "appendix_15.pdf"
+    },
+    {
+      "number": 16,
+      "title": "Dietary Prohibitions",
+      "filename": "appendix_16.pdf"
+    },
+    {
+      "number": 17,
+      "title": "Death",
+      "filename": "appendix_17.pdf"
+    },
+    {
+      "number": 18,
+      "title": "Quran: The Ultimate Reference",
+      "filename": "appendix_18.pdf"
+    },
+    {
+      "number": 19,
+      "title": "Hadith & Sunna: Satan's Hypocritical Inventions",
+      "filename": "appendix_19.pdf"
+    },
+    {
+      "number": 20,
+      "title": "Quran: Unlike Any Other Book",
+      "filename": "appendix_20.pdf"
+    },
+    {
+      "number": 21,
+      "title": "Satan's Clever Trick",
+      "filename": "appendix_21.pdf"
+    },
+    {
+      "number": 22,
+      "title": "Jesus",
+      "filename": "appendix_22.pdf"
+    },
+    {
+      "number": 23,
+      "title": "Mathematical Coding of the Quran",
+      "filename": "appendix_23.pdf"
+    },
+    {
+      "number": 24,
+      "title": "Tampering With the Word of God",
+      "filename": "appendix_24.pdf"
+    },
+    {
+      "number": 25,
+      "title": "The End of the World",
+      "filename": "appendix_25.pdf"
+    },
+    {
+      "number": 26,
+      "title": "The Three Messengers of Islam",
+      "filename": "appendix_26.pdf"
+    },
+    {
+      "number": 27,
+      "title": "Muhammad's Household",
+      "filename": "appendix_27.pdf"
+    },
+    {
+      "number": 28,
+      "title": "The Age of 40",
+      "filename": "appendix_28.pdf"
+    },
+    {
+      "number": 29,
+      "title": "The Missing Basmalah",
+      "filename": "appendix_29.pdf"
+    },
+    {
+      "number": 30,
+      "title": "Messengers vs. Prophets",
+      "filename": "appendix_30.pdf"
+    },
+    {
+      "number": 31,
+      "title": "Chronological Order of Revelation",
+      "filename": "appendix_31.pdf"
+    },
+    {
+      "number": 32,
+      "title": "God's Usage of the Plural",
+      "filename": "appendix_32.pdf"
+    },
+    {
+      "number": 33,
+      "title": "Why Did God Send a Messenger Now?",
+      "filename": "appendix_33.pdf"
+    },
+    {
+      "number": 34,
+      "title": "Virginity",
+      "filename": "appendix_34.pdf"
+    },
+    {
+      "number": 35,
+      "title": "Drugs & Alcohol",
+      "filename": "appendix_35.pdf"
+    },
+    {
+      "number": 36,
+      "title": "What Price A Great Nation",
+      "filename": "appendix_36.pdf"
+    },
+    {
+      "number": 37,
+      "title": "The Crucial Age of 40",
+      "filename": "appendix_37.pdf"
+    },
+    {
+      "number": 38,
+      "title": "19 - The Creator's Signature",
+      "filename": "appendix_38.pdf"
+    }
+  ],
+  "pdf_base_path": "/appendices/",
+  "complete_pdf": "appendices_complete.pdf",
+  "last_updated": "2025-06-09 11:50:57",
+  "total_count": 38
+}

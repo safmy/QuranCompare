@@ -114,6 +114,73 @@
   flex-shrink: 0;
 }
 
+/* PDF-specific styling */
+.appendix-item-wrapper {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.appendix-actions {
+  position: absolute;
+  right: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 8px;
+}
+
+.pdf-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  font-size: 16px;
+}
+
+.pdf-button:hover {
+  background: #f0f0f0;
+  transform: scale(1.1);
+}
+
+.view-button {
+  border-color: #2196F3;
+}
+
+.download-button {
+  border-color: #4CAF50;
+}
+
+.complete-pdf-download {
+  margin: 15px 0;
+}
+
+.download-complete-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #4CAF50;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.download-complete-link:hover {
+  background: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
 /* Scrollbar styling */
 .appendices-list::-webkit-scrollbar {
   width: 6px;
@@ -131,6 +198,44 @@
 
 .appendices-list::-webkit-scrollbar-thumb:hover {
   background: #999;
+}
+
+/* PDF Download Section */
+.pdf-download-section {
+  margin: 15px 0;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.download-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: #6b46c1;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.download-all-btn:hover {
+  background-color: #553396;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.3);
+}
+
+.download-all-btn.secondary {
+  background-color: #4a90e2;
+}
+
+.download-all-btn.secondary:hover {
+  background-color: #357abd;
 }
 
 /* Mobile responsive */

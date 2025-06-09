@@ -88,19 +88,26 @@ const PrayerTimes = () => {
     // Asr calculation - exact midpoint between noon and sunset
     const asr = sunset ? noon + (sunset - noon) / 2 : null;
 
-    // Convert to local time
+    // Convert to local time with proper timezone/DST handling
     const convertToLocalTime = (decimalHours) => {
       if (decimalHours === null || isNaN(decimalHours)) return null;
       
       const hours = Math.floor(decimalHours);
       const minutes = Math.round((decimalHours - hours) * 60);
       
-      // Create date object for the selected date
-      const prayerDate = new Date(date);
-      prayerDate.setHours(hours, minutes, 0, 0);
+      // Create a UTC date object for the calculation
+      const utcDate = new Date(Date.UTC(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        hours,
+        minutes,
+        0,
+        0
+      ));
       
-      // Format time in local timezone
-      const timeStr = prayerDate.toLocaleTimeString('en-US', {
+      // Format time in the target timezone
+      const timeStr = utcDate.toLocaleTimeString('en-US', {
         timeZone: timezone,
         hour: '2-digit',
         minute: '2-digit',
@@ -180,15 +187,32 @@ const PrayerTimes = () => {
       
       if (data && data.length > 0) {
         const { lat, lon, display_name } = data[0];
-        setLocation({ lat: parseFloat(lat), lon: parseFloat(lon) });
+        const latitude = parseFloat(lat);
+        const longitude = parseFloat(lon);
+        setLocation({ lat: latitude, lon: longitude });
         setCityName(display_name.split(',')[0]);
         
-        // Use browser timezone as default
-        const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        setTimezone(detectedTimezone);
+        // Try to get timezone for the location
+        let locationTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        try {
+          // Use a free timezone service
+          const tzResponse = await fetch(
+            `https://timeapi.io/api/timezone/coordinate?latitude=${latitude}&longitude=${longitude}`
+          );
+          if (tzResponse.ok) {
+            const tzData = await tzResponse.json();
+            if (tzData.timeZone) {
+              locationTimezone = tzData.timeZone;
+            }
+          }
+        } catch (e) {
+          console.log('Failed to fetch timezone, using browser default');
+        }
+        
+        setTimezone(locationTimezone);
         
         // Calculate prayer times
-        const times = calculateSunTimes(parseFloat(lat), parseFloat(lon), selectedDate, detectedTimezone);
+        const times = calculateSunTimes(latitude, longitude, selectedDate, locationTimezone);
         setPrayerTimes(times);
       } else {
         setError('City not found. Please try another name.');
