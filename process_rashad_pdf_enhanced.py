@@ -158,8 +158,14 @@ def upload_to_supabase(structured_data):
     from supabase import create_client, Client
     
     # Initialize Supabase client
-    SUPABASE_URL = os.getenv('SUPABASE_URL', 'https://gslmvjeozbdhintonqio.supabase.co')
-    SUPABASE_KEY = os.getenv('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzbG12amVvemJkaGludG9ucWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI0NzY5NTUsImV4cCI6MjA1ODA1Mjk1NX0.JgMHpiBEvgdLo2gsixjfgJOy65Vo8T36VHcXdYdOJjY')
+    from dotenv import load_dotenv
+    load_dotenv()
+    
+    SUPABASE_URL = os.getenv('SUPABASE_URL')
+    SUPABASE_KEY = os.getenv('SUPABASE_ANON_KEY')
+    
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        raise ValueError('Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables')
     
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
     
