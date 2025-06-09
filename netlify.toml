@@ -4,8 +4,9 @@
 
 [build.environment]
   CI = "false"
-  # Environment variables should be set in Netlify dashboard
-  # Do not commit sensitive keys here
+  REACT_APP_SUPABASE_URL = "https://fmmeyglbkzhxpqoicmbs.supabase.co"
+  REACT_APP_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWV5Z2xia3poeHBxb2ljbWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyMjI1NjAsImV4cCI6MjA2Mzc5ODU2MH0.oQ1KxdJgMoIFzGnrWjEJz6n6qJ1sksosJ8vkrb6L3XU"
+  REACT_APP_API_URL = "https://qurancompare.onrender.com"
 
 [[redirects]]
   from = "/*"

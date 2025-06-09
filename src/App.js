@@ -4,7 +4,7 @@ import QuranSearch from './components/QuranSearch';
 import QuranVectorSearch from './components/QuranVectorSearch';
 import QuranVerseLookup from './components/QuranVerseLookup';
 import QuranCompare from './components/QuranCompare';
-// import DebaterBot from './components/DebaterBot'; // Removed chatbot
+import DebaterBot from './components/DebaterBot';
 import AuthCallback from './components/AuthCallback';
 import PaymentSuccess from './components/PaymentSuccess';
 import PaymentCancel from './components/PaymentCancel';
@@ -13,7 +13,7 @@ import UserProfile from './components/UserProfile';
 import SidebarMenu from './components/SidebarMenu';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
-// import { checkPremiumAccess, PREMIUM_FEATURES } from './config/premium'; // Not needed without chatbot
+import { checkPremiumAccess, PREMIUM_FEATURES } from './config/premium';
 
 function AppContent() {
   const { currentLanguage, changeLanguage } = useLanguage();
@@ -126,7 +126,7 @@ function AppContent() {
       /> 
     },
     { id: 'compare', label: 'Compare', component: <QuranCompare key={compareVerses.join(',')} initialVerses={compareVerses} /> },
-    // AI Debater removed - subscription feature
+    { id: 'debater', label: '🤖 AI Debater', component: <DebaterBot /> }
     {
       id: 'discord',
       label: (
