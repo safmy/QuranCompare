@@ -1,0 +1,155 @@
+.appendices-container {
+  padding: 10px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.appendices-header {
+  margin-bottom: 20px;
+}
+
+.appendices-header h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.appendices-description {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 15px;
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 5px;
+  border-left: 3px solid #6b46c1;
+}
+
+.discord-invite {
+  margin-bottom: 20px;
+}
+
+.discord-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #5865F2;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.discord-link:hover {
+  background: #4752C4;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(88, 101, 242, 0.3);
+}
+
+.appendices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.appendix-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.appendix-item:hover {
+  background: #e9ecef;
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.appendix-number {
+  width: 32px;
+  height: 32px;
+  background: #6b46c1;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.appendix-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.appendix-title {
+  margin: 0 0 4px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.3;
+}
+
+.appendix-preview {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #666;
+  line-height: 1.3;
+}
+
+.appendix-arrow {
+  color: #999;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+/* Scrollbar styling */
+.appendices-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.appendices-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.appendices-list::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.appendices-list::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Mobile responsive */
+@media (max-width: 400px) {
+  .appendix-item {
+    padding: 10px;
+  }
+  
+  .appendix-number {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+  
+  .appendix-title {
+    font-size: 0.9rem;
+  }
+  
+  .appendix-preview {
+    display: none;
+  }
+}

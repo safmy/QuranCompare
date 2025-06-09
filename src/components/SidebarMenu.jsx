@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import QiblaDirection from './QiblaDirection';
 import PrayerTimes from './PrayerTimes';
+import Appendices from './Appendices';
 import './SidebarMenu.css';
 
 const SidebarMenu = () => {
@@ -34,11 +35,13 @@ const SidebarMenu = () => {
   return (
     <>
       {/* Hamburger Menu Button */}
-      <div className="sidebar-menu-button" onClick={toggleMenu}>
-        <div className="hamburger-line"></div>
-        <div className="hamburger-line"></div>
-        <div className="hamburger-line"></div>
-      </div>
+      {!isOpen && (
+        <div className="sidebar-menu-button" onClick={toggleMenu}>
+          <div className="hamburger-line"></div>
+          <div className="hamburger-line"></div>
+          <div className="hamburger-line"></div>
+        </div>
+      )}
 
       {/* Sidebar Menu */}
       <div className={`sidebar-menu ${isOpen ? 'open' : ''}`}>
@@ -78,6 +81,23 @@ const SidebarMenu = () => {
             {activeSection === 'prayer' && (
               <div className="sidebar-section-content">
                 <PrayerTimes />
+              </div>
+            )}
+          </div>
+
+          {/* Appendices Section */}
+          <div className="sidebar-section">
+            <div 
+              className="sidebar-section-header"
+              onClick={() => toggleSection('appendices')}
+            >
+              <span className="section-icon">📚</span>
+              <span className="section-title">Appendices</span>
+              <span className={`toggle-icon ${activeSection === 'appendices' ? 'open' : ''}`}>▶</span>
+            </div>
+            {activeSection === 'appendices' && (
+              <div className="sidebar-section-content">
+                <Appendices />
               </div>
             )}
           </div>
