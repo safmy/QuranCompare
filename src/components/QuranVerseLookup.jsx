@@ -1435,7 +1435,8 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                         </div>
                     </div>
                 </div>
-            )} */}
+            */}
+        </div>
     );
 };
 
