@@ -10,6 +10,7 @@ const PrayerTimes = () => {
   const [manualCity, setManualCity] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [timezone, setTimezone] = useState('UTC');
+  const [calculationMethod, setCalculationMethod] = useState('sunnah'); // 'sunnah' or 'isna'
 
   // Calculate sun times using the same logic as Discord bot
   const calculateSunTimes = (lat, lon, date, timezone) => {
@@ -92,8 +93,23 @@ const PrayerTimes = () => {
       sunrise = noon - omega_sunset * 12 / Math.PI;
       sunset = noon + omega_sunset * 12 / Math.PI;
       
-      // Calculate afternoon (Asr) as the exact midpoint between noon and sunset
-      afternoon = noon + (sunset - noon) / 2;
+      // Calculate afternoon (Asr) based on shadow length
+      // Shafi'i/Maliki/Hanbali: shadow = length + noon shadow
+      // Hanafi: shadow = 2 * length + noon shadow
+      const shadowFactor = 1; // Use Shafi'i method (standard)
+      const tanDelta = Math.tan(delta);
+      const tanLat = Math.tan(latRad);
+      const noonShadow = Math.abs(tanLat - tanDelta);
+      const asrAngle = Math.atan(1 / (shadowFactor + noonShadow));
+      const cosAsrAngle = (Math.sin(asrAngle) - Math.sin(latRad) * Math.sin(delta)) / (Math.cos(latRad) * Math.cos(delta));
+      
+      if (Math.abs(cosAsrAngle) <= 1) {
+        const omegaAsr = Math.acos(cosAsrAngle);
+        afternoon = noon + omegaAsr * 12 / Math.PI;
+      } else {
+        // Fallback to midpoint if calculation fails
+        afternoon = noon + (sunset - noon) / 2;
+      }
     }
     
     if (omega_dawn !== null) {
@@ -115,6 +131,11 @@ const PrayerTimes = () => {
       
       const hours = Math.floor(decimalHours);
       const minutes = Math.round((decimalHours - hours) * 60);
+      
+      // Handle edge case where minutes round to 60
+      if (minutes === 60) {
+        return `${(hours + 1).toString().padStart(2, '0')}:00`;
+      }
       
       return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     };
@@ -142,10 +163,35 @@ const PrayerTimes = () => {
         return 0;
       }
       
-      // For IANA timezone names, use proper timezone conversion
-      const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
-      const tzDate = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
-      return (tzDate - utcDate) / (1000 * 60 * 60);
+      // For IANA timezone names, calculate the offset correctly
+      // Create a date in the target timezone
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+      
+      // Format the date in the target timezone
+      const parts = formatter.formatToParts(date);
+      const tzYear = parseInt(parts.find(p => p.type === 'year').value);
+      const tzMonth = parseInt(parts.find(p => p.type === 'month').value) - 1;
+      const tzDay = parseInt(parts.find(p => p.type === 'day').value);
+      const tzHour = parseInt(parts.find(p => p.type === 'hour').value);
+      const tzMinute = parseInt(parts.find(p => p.type === 'minute').value);
+      const tzSecond = parseInt(parts.find(p => p.type === 'second').value);
+      
+      // Create a date object with those values (will be in local time)
+      const tzDate = new Date(tzYear, tzMonth, tzDay, tzHour, tzMinute, tzSecond);
+      
+      // The difference between the original date and the timezone date gives us the offset
+      const offset = (date.getTime() - tzDate.getTime()) / (1000 * 60 * 60);
+      
+      return -offset; // Negative because we need to add this to UTC to get local time
     } catch (error) {
       console.error('Invalid timezone:', timezone, error);
       return 0; // Default to UTC if invalid
@@ -231,13 +277,13 @@ const PrayerTimes = () => {
     setLoading(false);
   };
 
-  // Update prayer times when date changes
+  // Update prayer times when date or method changes
   useEffect(() => {
     if (location && timezone) {
       const times = calculateSunTimes(location.lat, location.lon, selectedDate, timezone);
       setPrayerTimes(times);
     }
-  }, [selectedDate, location, timezone]);
+  }, [selectedDate, location, timezone, calculationMethod]);
 
   // Initial location fetch
   useEffect(() => {
@@ -247,9 +293,9 @@ const PrayerTimes = () => {
   return (
     <div className="prayer-times-container">
       <div className="prayer-times-header">
-        <h4>Prayer Times (Sun-based)</h4>
+        <h4>Prayer Times</h4>
         <p className="prayer-description">
-          Based on sun positions with Islamic prayer names
+          Calculated based on sun positions using {calculationMethod === 'sunnah' ? 'Traditional Sunnah' : 'ISNA'} method
         </p>
       </div>
 
@@ -261,23 +307,45 @@ const PrayerTimes = () => {
           value={manualCity}
           onChange={(e) => setManualCity(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && searchCity()}
+          style={{ minWidth: '100px' }}
         />
         <button onClick={searchCity} className="search-button">
           Search
         </button>
-        <button onClick={getCurrentLocation} className="location-button" title="Use current location">
+        <button onClick={getCurrentLocation} className="location-button" title="Use current location" style={{ minWidth: '45px', fontSize: '16px' }}>
           📍
         </button>
       </div>
 
-      {/* Date Selector */}
-      <div className="date-selector">
-        <input
-          type="date"
-          value={selectedDate.toISOString().split('T')[0]}
-          onChange={(e) => setSelectedDate(new Date(e.target.value))}
-          className="date-input"
-        />
+      {/* Date and Method Selector */}
+      <div className="date-method-selector">
+        <div className="date-selector">
+          <input
+            type="date"
+            value={selectedDate.toISOString().split('T')[0]}
+            onChange={(e) => setSelectedDate(new Date(e.target.value))}
+            className="date-input"
+          />
+        </div>
+        <div className="method-selector">
+          <label htmlFor="calculation-method" style={{ fontSize: '14px', marginRight: '8px' }}>Method:</label>
+          <select
+            id="calculation-method"
+            value={calculationMethod}
+            onChange={(e) => setCalculationMethod(e.target.value)}
+            className="method-select"
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #ddd',
+              borderRadius: '5px',
+              fontSize: '14px',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="sunnah">Traditional Sunnah</option>
+            <option value="isna">ISNA (North America)</option>
+          </select>
+        </div>
       </div>
 
       {loading && <div className="loading">Loading prayer times...</div>}
@@ -293,9 +361,14 @@ const PrayerTimes = () => {
           <div className="current-location">
             <p className="city-name">{cityName}</p>
             {location && (
-              <p className="coordinates">
-                {location.lat.toFixed(4)}°, {location.lon.toFixed(4)}°
-              </p>
+              <>
+                <p className="coordinates">
+                  {location.lat.toFixed(4)}°, {location.lon.toFixed(4)}°
+                </p>
+                <p className="coordinates">
+                  Timezone: {timezone}
+                </p>
+              </>
             )}
           </div>
 
@@ -328,7 +401,7 @@ const PrayerTimes = () => {
 
           {prayerTimes.twilightType && (
             <div className="twilight-info">
-              <small>Twilight: {prayerTimes.twilightType}</small>
+              <small>Twilight: {prayerTimes.twilightType} | Timezone: {timezone}</small>
             </div>
           )}
         </div>

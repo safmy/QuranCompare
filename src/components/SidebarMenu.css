@@ -34,8 +34,8 @@
 .sidebar-menu {
   position: fixed;
   top: 0;
-  left: -350px;
-  width: 350px;
+  left: -300px;
+  width: 300px;
   height: 100vh;
   background: white;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
@@ -170,8 +170,8 @@
 /* Mobile Responsive */
 @media (max-width: 600px) {
   .sidebar-menu {
-    width: 280px;
-    left: -280px;
+    width: 250px;
+    left: -250px;
   }
   
   .sidebar-menu-button {
