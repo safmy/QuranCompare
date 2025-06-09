@@ -79,15 +79,15 @@ export const AVAILABLE_LANGUAGES = {
   },
   bengali: {
     name: 'বাংলা',
-    field: 'bgquran',
-    footnoteField: 'bgquran_footnote',
+    field: 'bengali',
+    footnoteField: 'bengali_footnote',
     flag: '🇧🇩',
     direction: 'ltr'
   },
   lithuanian: {
     name: 'Lietuvių',
-    field: 'ltquran',
-    footnoteField: 'ltquran_footnote',
+    field: 'lithuanian',
+    footnoteField: 'lithuanian_footnote',
     flag: '🇱🇹',
     direction: 'ltr'
   }
