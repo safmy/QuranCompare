@@ -165,7 +165,7 @@ function AppContent() {
             Connect with other users, ask questions, share insights, and discuss the Quran with our community.
           </p>
           <a 
-            href="https://discord.gg/wikisubmission" 
+            href="https://discord.gg/submission" 
             target="_blank" 
             rel="noopener noreferrer"
             style={{
