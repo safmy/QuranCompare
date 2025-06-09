@@ -72,6 +72,9 @@ const QuranVectorSearch = ({ savedState = {} }) => {
         } else {
           verseText = `[${verseRef}] ${result.content}`;
         }
+      } else if (result.collection === 'RashadAllMedia' && result.youtube_link) {
+        // For Rashad Media, include the YouTube link with timestamp
+        verseText = `${result.content}\n\nWatch on YouTube: ${result.youtube_link}`;
       } else {
         // For other collections (articles, newsletters, etc.), just copy the content
         verseText = result.content;

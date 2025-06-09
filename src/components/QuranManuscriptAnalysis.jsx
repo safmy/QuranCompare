@@ -5,7 +5,7 @@ import _ from 'lodash';
 
 const QuranManuscriptAnalysis = () => {
   const [data, setData] = useState({
-    suraStats: [],
+    chapterStats: [],
     verseStats: [],
     manuscriptStats: [],
     letterStats: [],
@@ -14,7 +14,7 @@ const QuranManuscriptAnalysis = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [activeTab, setActiveTab] = useState('summary');
-  const [selectedSura, setSelectedSura] = useState(1);
+  const [selectedChapter, setSelectedChapter] = useState(1);
   const [selectedManuscript, setSelectedManuscript] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [referenceTexts, setReferenceTexts] = useState({});
@@ -32,8 +32,8 @@ const QuranManuscriptAnalysis = () => {
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
   
-  // Define the disjointed letters (Muqatta'at) by Sura
-  const disjointedLettersBySura = {
+  // Define the disjointed letters (Muqatta'at) by Chapter
+  const disjointedLettersByChapter = {
     2: "الم", // Alif Lam Meem
     3: "الم",
     7: "المص", // Alif Lam Meem Saad
@@ -97,24 +97,24 @@ const QuranManuscriptAnalysis = () => {
   }, [comparatorSource]);
 
   useEffect(() => {
-    // When selectedSura changes, update the selected disjointed letters
-    if (disjointedLettersBySura[selectedSura]) {
-      setSelectedDisjointedLetters(disjointedLettersBySura[selectedSura]);
+    // When selectedChapter changes, update the selected disjointed letters
+    if (disjointedLettersByChapter[selectedChapter]) {
+      setSelectedDisjointedLetters(disjointedLettersByChapter[selectedChapter]);
       // Reset highlighted letter index
       setHighlightedLetterIndex(-1);
-      // Count the occurrences of each disjointed letter in the selected sura
-      countDisjointedLetters(selectedSura);
+      // Count the occurrences of each disjointed letter in the selected chapter
+      countDisjointedLetters(selectedChapter);
     } else {
       setSelectedDisjointedLetters('');
       setDisjointedLetterCounts({});
     }
-  }, [selectedSura, data.letterStats, referenceTexts]);
+  }, [selectedChapter, data.letterStats, referenceTexts]);
 
-  // Function to count occurrences of disjointed letters in a sura
-  const countDisjointedLetters = (sura) => {
-    if (!disjointedLettersBySura[sura]) return;
+  // Function to count occurrences of disjointed letters in a chapter
+  const countDisjointedLetters = (chapter) => {
+    if (!disjointedLettersByChapter[chapter]) return;
     
-    const letters = disjointedLettersBySura[sura].split('');
+    const letters = disjointedLettersByChapter[chapter].split('');
     const letterCounts = {};
     
     // Initialize the count for each letter
@@ -122,13 +122,13 @@ const QuranManuscriptAnalysis = () => {
       letterCounts[letter] = 0;
     });
     
-    // Get all verses for this sura
-    const suraVerses = Object.keys(referenceTexts)
-      .filter(key => key.startsWith(`${sura}:`))
+    // Get all verses for this chapter
+    const chapterVerses = Object.keys(referenceTexts)
+      .filter(key => key.startsWith(`${chapter}:`))
       .map(key => referenceTexts[key]);
     
-    // Count each letter in all verses of the sura
-    suraVerses.forEach(verse => {
+    // Count each letter in all verses of the chapter
+    chapterVerses.forEach(verse => {
       if (!verse) return;
       
       letters.forEach(letter => {
@@ -148,18 +148,18 @@ const QuranManuscriptAnalysis = () => {
   };
 
   // Function to count disjointed letters across all manuscripts
-  const countDisjointedLettersAcrossManuscripts = (sura) => {
-    if (!disjointedLettersBySura[sura]) return { chartData: [], manuscripts: [] };
+  const countDisjointedLettersAcrossManuscripts = (chapter) => {
+    if (!disjointedLettersByChapter[chapter]) return { chartData: [], manuscripts: [] };
     
-    const letters = disjointedLettersBySura[sura].split('');
+    const letters = disjointedLettersByChapter[chapter].split('');
     const manuscriptLetterCounts = {};
     
-    // Get all manuscripts that have verses from this sura
-    const manuscriptsWithSura = data.letterStats
-      .filter(entry => entry.Sura === sura)
+    // Get all manuscripts that have verses from this chapter
+    const manuscriptsWithChapter = data.letterStats
+      .filter(entry => entry.Chapter === chapter)
       .map(entry => entry.Manuscript);
     
-    const uniqueManuscripts = [...new Set(manuscriptsWithSura)];
+    const uniqueManuscripts = [...new Set(manuscriptsWithChapter)];
     
     // Initialize counts for each manuscript
     uniqueManuscripts.forEach(manuscript => {
@@ -169,9 +169,9 @@ const QuranManuscriptAnalysis = () => {
       });
     });
     
-    // Count each letter in each manuscript's verses for this sura
+    // Count each letter in each manuscript's verses for this chapter
     data.letterStats
-      .filter(entry => entry.Sura === sura)
+      .filter(entry => entry.Chapter === chapter)
       .forEach(entry => {
         if (!entry.Text) return;
         
@@ -331,10 +331,10 @@ const QuranManuscriptAnalysis = () => {
   const parseUthmaniText = (text) => {
     try {
       // Simple parser for the Uthmani text format
-      // This assumes each line is a verse, and we need to track sura/verse numbers
+      // This assumes each line is a verse, and we need to track chapter/verse numbers
       const verses = {};
-      let currentSura = 1;
-      let verseInSura = 1;
+      let currentChapter = 1;
+      let verseInChapter = 1;
       
       // Split by lines
       const lines = text.split('\n').filter(line => line.trim().length > 0);
@@ -345,19 +345,19 @@ const QuranManuscriptAnalysis = () => {
       }
       
       for (let i = 0; i < lines.length; i++) {
-        // Handle bismillah markers for new suras
+        // Handle bismillah markers for new chapters
         if (i > 0 && lines[i].includes('بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ') && lines[i].length < 50) {
-          currentSura++;
-          verseInSura = 1;
-          // Skip bismillah line in counting except for Sura 1 (Al-Fatiha) and Sura 9 (At-Tawba)
-          if (currentSura !== 1 && currentSura !== 9) {
+          currentChapter++;
+          verseInChapter = 1;
+          // Skip bismillah line in counting except for Chapter 1 (Al-Fatiha) and Chapter 9 (At-Tawba)
+          if (currentChapter !== 1 && currentChapter !== 9) {
             continue;
           }
         }
         
-        const key = `${currentSura}:${verseInSura}`;
+        const key = `${currentChapter}:${verseInChapter}`;
         verses[key] = lines[i];
-        verseInSura++;
+        verseInChapter++;
       }
       
       console.log(`Successfully parsed Uthmani text with ${Object.keys(verses).length} verses`);
@@ -378,10 +378,10 @@ const QuranManuscriptAnalysis = () => {
   };
 
   const processQuranData = (rawData) => {
-    // 1. Group by Sura and Verse to create reference texts
-    const groupedBySuraVerse = _.groupBy(rawData, row => `${row.Sura}:${row.Verse}`);
+    // 1. Group by Chapter and Verse to create reference texts
+    const groupedByChapterVerse = _.groupBy(rawData, row => `${row.Chapter}:${row.Verse}`);
     
-    // 2. For each Sura:Verse, determine the reference text based on selected comparator
+    // 2. For each Chapter:Verse, determine the reference text based on selected comparator
     const refTexts = {};
     
     if (comparatorSource === 'uthmani' && Object.keys(uthmaniText).length > 0) {
@@ -408,14 +408,14 @@ const QuranManuscriptAnalysis = () => {
       
       for (const row of rawData) {
         if (row.Manuscript === effectiveComparator) {
-          const key = `${row.Sura}:${row.Verse}`;
+          const key = `${row.Chapter}:${row.Verse}`;
           refTexts[key] = row.Text || '';
         }
       }
       
       // If using a manuscript as comparator, but some verses are missing, 
       // fill in gaps with most common text from other manuscripts
-      for (const [key, group] of Object.entries(groupedBySuraVerse)) {
+      for (const [key, group] of Object.entries(groupedByChapterVerse)) {
         if (!refTexts[key]) {
           // Filter out texts with too many asterisks (incomplete texts)
           const validTexts = group
@@ -445,7 +445,7 @@ const QuranManuscriptAnalysis = () => {
     const letterStats = [];
     
     for (const row of rawData) {
-      const key = `${row.Sura}:${row.Verse}`;
+      const key = `${row.Chapter}:${row.Verse}`;
       const manuscriptText = row.Text || '';
       const referenceVerseText = refTexts[key] || '';
       
@@ -462,7 +462,7 @@ const QuranManuscriptAnalysis = () => {
       }
       
       letterStats.push({
-        Sura: row.Sura,
+        Chapter: row.Chapter,
         Verse: row.Verse,
         Manuscript: row.Manuscript,
         Text: manuscriptText,
@@ -476,14 +476,14 @@ const QuranManuscriptAnalysis = () => {
       });
     }
     
-    // 4. Calculate sura-level statistics
-    const uniqueSuras = new Set(rawData.map(row => row.Sura));
-    const suraList = Array.from(uniqueSuras).sort((a, b) => a - b);
-    const suraStats = [];
+    // 4. Calculate chapter-level statistics
+    const uniqueChapters = new Set(rawData.map(row => row.Chapter));
+    const chapterList = Array.from(uniqueChapters).sort((a, b) => a - b);
+    const chapterStats = [];
     
-    for (const sura of suraList) {
-      const suraEntries = letterStats.filter(entry => entry.Sura === sura);
-      const completeSuraEntries = suraEntries.filter(entry => entry.IsComplete);
+    for (const chapter of chapterList) {
+      const chapterEntries = letterStats.filter(entry => entry.Chapter === chapter);
+      const completeChapterEntries = chapterEntries.filter(entry => entry.IsComplete);
       
       // Calculate average letter counts and deviations
       let avgManuscriptLetters = 0;
@@ -491,7 +491,7 @@ const QuranManuscriptAnalysis = () => {
       let totalDeviations = 0;
       let countWithBothTexts = 0;
       
-      for (const entry of suraEntries) {
+      for (const entry of chapterEntries) {
         if (entry.ManuscriptLetterCount > 0) {
           avgManuscriptLetters += entry.ManuscriptLetterCount;
         }
@@ -506,7 +506,7 @@ const QuranManuscriptAnalysis = () => {
         }
       }
       
-      const entryCount = suraEntries.length;
+      const entryCount = chapterEntries.length;
       
       if (entryCount > 0) {
         avgManuscriptLetters /= entryCount;
@@ -520,7 +520,7 @@ const QuranManuscriptAnalysis = () => {
         avgAbsDeviation = totalDeviations / countWithBothTexts;
         
         // Calculate standard deviation
-        const deviations = suraEntries
+        const deviations = chapterEntries
           .filter(entry => entry.Deviation !== null)
           .map(entry => entry.Deviation);
         
@@ -530,10 +530,10 @@ const QuranManuscriptAnalysis = () => {
         stdDeviation = Math.sqrt(variance);
       }
       
-      suraStats.push({
-        Sura: sura,
+      chapterStats.push({
+        Chapter: chapter,
         TotalEntries: entryCount,
-        CompleteEntries: completeSuraEntries.length,
+        CompleteEntries: completeChapterEntries.length,
         AvgManuscriptLetters: parseFloat(avgManuscriptLetters.toFixed(2)),
         AvgReferenceLetters: parseFloat(avgReferenceLetters.toFixed(2)),
         AvgAbsDeviation: parseFloat(avgAbsDeviation.toFixed(2)),
@@ -544,10 +544,10 @@ const QuranManuscriptAnalysis = () => {
     // 5. Calculate verse-specific statistics
     const verseStats = [];
     
-    const uniqueVerseKeys = Object.keys(groupedBySuraVerse);
+    const uniqueVerseKeys = Object.keys(groupedByChapterVerse);
     for (const key of uniqueVerseKeys) {
-      const [sura, verse] = key.split(':').map(Number);
-      const verseEntries = letterStats.filter(entry => entry.Sura === sura && entry.Verse === verse);
+      const [chapter, verse] = key.split(':').map(Number);
+      const verseEntries = letterStats.filter(entry => entry.Chapter === chapter && entry.Verse === verse);
       
       // Calculate statistics for this verse
       const letterCounts = verseEntries.map(entry => entry.ManuscriptLetterCount).filter(count => count > 0);
@@ -571,7 +571,7 @@ const QuranManuscriptAnalysis = () => {
           : 0;
         
         verseStats.push({
-          Sura: sura,
+          Chapter: chapter,
           Verse: verse,
           AvgLetterCount: parseFloat(avgLetterCount.toFixed(2)),
           ReferenceLetterCount: referenceLetterCount,
@@ -642,7 +642,7 @@ const QuranManuscriptAnalysis = () => {
     manuscriptStats.sort((a, b) => b.TotalEntries - a.TotalEntries);
     
     return {
-      suraStats,
+      chapterStats,
       verseStats,
       manuscriptStats,
       letterStats,
@@ -651,20 +651,20 @@ const QuranManuscriptAnalysis = () => {
   };
 
   // Filtering functions
-  const filteredSuraStats = data.suraStats.filter(sura => 
-    sura.Sura.toString().includes(searchQuery)
+  const filteredChapterStats = data.chapterStats.filter(chapter => 
+    chapter.Chapter.toString().includes(searchQuery)
   );
 
   const filteredVerseStats = data.verseStats.filter(verse => 
-    verse.Sura === selectedSura
+    verse.Chapter === selectedChapter
   ).sort((a, b) => a.Verse - b.Verse);
 
   const filteredManuscriptVerses = data.letterStats.filter(item => 
-    item.Manuscript === selectedManuscript && item.Sura === selectedSura
+    item.Manuscript === selectedManuscript && item.Chapter === selectedChapter
   ).sort((a, b) => a.Verse - b.Verse);
 
   // Prepare data for specific visualizations
-  const selectedSuraData = data.suraStats.find(s => s.Sura === selectedSura);
+  const selectedChapterData = data.chapterStats.find(s => s.Chapter === selectedChapter);
   
   const manuscriptLetterDeviation = data.manuscriptStats.map(ms => ({
     name: ms.Manuscript.length > 20 ? ms.Manuscript.substring(0, 20) + '...' : ms.Manuscript,
@@ -672,10 +672,10 @@ const QuranManuscriptAnalysis = () => {
     stdDev: ms.StdDeviation
   })).sort((a, b) => b.deviation - a.deviation);
 
-  const suraStandardDeviations = data.suraStats.map(sura => ({
-    Sura: sura.Sura,
-    StdDeviation: sura.StdDeviation,
-    AvgDeviation: sura.AvgAbsDeviation
+  const chapterStandardDeviations = data.chapterStats.map(chapter => ({
+    Chapter: chapter.Chapter,
+    StdDeviation: chapter.StdDeviation,
+    AvgDeviation: chapter.AvgAbsDeviation
   }));
 
   // Distribution of deviations
@@ -741,10 +741,10 @@ const QuranManuscriptAnalysis = () => {
   };
 
   // Function to calculate statistical measures for letter distributions
-  const calculateLetterStats = (sura) => {
-    if (!disjointedLettersBySura[sura]) return {};
+  const calculateLetterStats = (chapter) => {
+    if (!disjointedLettersByChapter[chapter]) return {};
     
-    const letters = disjointedLettersBySura[sura].split('');
+    const letters = disjointedLettersByChapter[chapter].split('');
     const stats = {};
     
     // Initialize stats object for each letter
@@ -760,16 +760,16 @@ const QuranManuscriptAnalysis = () => {
     });
     
     // Collect counts for each manuscript
-    const manuscriptsWithSura = data.letterStats
-      .filter(entry => entry.Sura === sura)
+    const manuscriptsWithChapter = data.letterStats
+      .filter(entry => entry.Chapter === chapter)
       .map(entry => entry.Manuscript);
     
-    const uniqueManuscripts = [...new Set(manuscriptsWithSura)];
+    const uniqueManuscripts = [...new Set(manuscriptsWithChapter)];
     
     // For each manuscript, calculate the total count of each letter
     uniqueManuscripts.forEach(manuscript => {
       const manuscriptVerses = data.letterStats
-        .filter(entry => entry.Sura === sura && entry.Manuscript === manuscript);
+        .filter(entry => entry.Chapter === chapter && entry.Manuscript === manuscript);
       
       letters.forEach(letter => {
         let totalCount = 0;
@@ -840,7 +840,7 @@ const QuranManuscriptAnalysis = () => {
             <ul className="list-disc pl-6">
               <li>File should be named <code className="bg-gray-100 px-1 rounded">quran_manuscript.xlsx</code></li>
               <li>Must contain a worksheet named <code className="bg-gray-100 px-1 rounded">manuscript_data</code></li>
-              <li>Worksheet should have columns: Sura, Verse, Manuscript, Text</li>
+              <li>Worksheet should have columns: Chapter, Verse, Manuscript, Text</li>
               <li>The <code className="bg-gray-100 px-1 rounded">quran-uthmani.txt</code> file should be in the public directory</li>
             </ul>
             <p className="mt-4">
@@ -908,10 +908,10 @@ const QuranManuscriptAnalysis = () => {
           Statistical Summary
         </button>
         <button 
-          className={`px-4 py-2 mr-2 ${activeTab === 'suras' ? 'bg-blue-500 text-white' : 'bg-gray-200'} rounded-t`}
-          onClick={() => setActiveTab('suras')}
+          className={`px-4 py-2 mr-2 ${activeTab === 'chapters' ? 'bg-blue-500 text-white' : 'bg-gray-200'} rounded-t`}
+          onClick={() => setActiveTab('chapters')}
         >
-          Sura Analysis
+          Chapter Analysis
         </button>
         <button 
           className={`px-4 py-2 mr-2 ${activeTab === 'manuscripts' ? 'bg-blue-500 text-white' : 'bg-gray-200'} rounded-t`}
@@ -941,7 +941,7 @@ const QuranManuscriptAnalysis = () => {
               <h2 className="text-lg font-semibold mb-2">Overall Statistics</h2>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <p><span className="font-medium">Total Suras:</span> {data.suraStats.length}</p>
+                  <p><span className="font-medium">Total Chapters:</span> {data.chapterStats.length}</p>
                   <p><span className="font-medium">Total Verses:</span> {data.verseStats.length}</p>
                   <p><span className="font-medium">Total Manuscripts:</span> {data.manuscriptStats.length}</p>
                   <p><span className="font-medium">Total Entries:</span> {data.letterStats.length}</p>
@@ -985,11 +985,11 @@ const QuranManuscriptAnalysis = () => {
           </div>
           
           <div className="bg-white p-4 rounded shadow">
-            <h2 className="text-lg font-semibold mb-2">Standard Deviation by Sura</h2>
+            <h2 className="text-lg font-semibold mb-2">Standard Deviation by Chapter</h2>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={suraStandardDeviations}>
+              <LineChart data={chapterStandardDeviations}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Sura" />
+                <XAxis dataKey="Chapter" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
@@ -1006,15 +1006,15 @@ const QuranManuscriptAnalysis = () => {
         <div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block mb-1 font-medium">Select Sura</label>
+              <label className="block mb-1 font-medium">Select Chapter</label>
               <select 
                 className="w-full p-2 border rounded"
-                value={selectedSura}
-                onChange={(e) => setSelectedSura(parseInt(e.target.value))}
+                value={selectedChapter}
+                onChange={(e) => setSelectedChapter(parseInt(e.target.value))}
               >
-                {data.suraStats.map(sura => (
-                  <option key={sura.Sura} value={sura.Sura}>
-                    Sura {sura.Sura}
+                {data.chapterStats.map(chapter => (
+                  <option key={chapter.Chapter} value={chapter.Chapter}>
+                    Chapter {chapter.Chapter}
                   </option>
                 ))}
               </select>
@@ -1036,7 +1036,7 @@ const QuranManuscriptAnalysis = () => {
           </div>
           
           <div className="bg-white p-4 rounded shadow mb-6">
-            <h2 className="text-lg font-semibold mb-2">Verse Comparison in Sura {selectedSura} (compared to {comparatorSource === 'uthmani' ? 'Uthmani Text' : comparatorSource})</h2>
+            <h2 className="text-lg font-semibold mb-2">Verse Comparison in Chapter {selectedChapter} (compared to {comparatorSource === 'uthmani' ? 'Uthmani Text' : comparatorSource})</h2>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={filteredManuscriptVerses}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -1070,11 +1070,11 @@ const QuranManuscriptAnalysis = () => {
                 </thead>
                 <tbody>
                   {filteredManuscriptVerses.map(verse => {
-                    const refKey = `${verse.Sura}:${verse.Verse}`;
+                    const refKey = `${verse.Chapter}:${verse.Verse}`;
                     const refText = referenceTexts[refKey] || '';
                     
                     return (
-                      <tr key={`${verse.Sura}:${verse.Verse}`}>
+                      <tr key={`${verse.Chapter}:${verse.Verse}`}>
                         <td className="px-2 py-1 text-center">{verse.Verse}</td>
                         <td className="px-2 py-1 text-right" style={{ direction: 'rtl' }}>{verse.Text}</td>
                         <td className="px-2 py-1 text-right" style={{ direction: 'rtl' }}>{refText}</td>
@@ -1091,13 +1091,13 @@ const QuranManuscriptAnalysis = () => {
         </div>
       )}
       
-      {/* Sura Analysis Tab */}
-      {activeTab === 'suras' && (
+      {/* Chapter Analysis Tab */}
+      {activeTab === 'chapters' && (
         <div>
           <div className="mb-4">
             <input
               type="text"
-              placeholder="Search suras by number..."
+              placeholder="Search chapters by number..."
               className="w-full p-2 border rounded"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -1106,26 +1106,26 @@ const QuranManuscriptAnalysis = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="col-span-1 bg-white p-4 rounded shadow">
-              <h2 className="text-lg font-semibold mb-2">Sura Selection</h2>
+              <h2 className="text-lg font-semibold mb-2">Chapter Selection</h2>
               <div className="max-h-96 overflow-y-auto">
                 <table className="w-full">
                   <thead>
                     <tr>
-                      <th className="px-2 py-1 border-b">Sura</th>
+                      <th className="px-2 py-1 border-b">Chapter</th>
                       <th className="px-2 py-1 border-b">Letters (Avg)</th>
                       <th className="px-2 py-1 border-b">Std Dev</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSuraStats.map(sura => (
+                    {filteredChapterStats.map(chapter => (
                       <tr 
-                        key={sura.Sura} 
-                        className={`cursor-pointer hover:bg-blue-50 ${selectedSura === sura.Sura ? 'bg-blue-100' : ''}`}
-                        onClick={() => setSelectedSura(sura.Sura)}
+                        key={chapter.Chapter} 
+                        className={`cursor-pointer hover:bg-blue-50 ${selectedChapter === chapter.Chapter ? 'bg-blue-100' : ''}`}
+                        onClick={() => setSelectedChapter(chapter.Chapter)}
                       >
-                        <td className="px-2 py-1 text-center">{sura.Sura}</td>
-                        <td className="px-2 py-1 text-center">{sura.AvgManuscriptLetters}</td>
-                        <td className="px-2 py-1 text-center">{sura.StdDeviation}</td>
+                        <td className="px-2 py-1 text-center">{chapter.Chapter}</td>
+                        <td className="px-2 py-1 text-center">{chapter.AvgManuscriptLetters}</td>
+                        <td className="px-2 py-1 text-center">{chapter.StdDeviation}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1134,25 +1134,25 @@ const QuranManuscriptAnalysis = () => {
             </div>
             
             <div className="col-span-2 bg-white p-4 rounded shadow">
-              <h2 className="text-lg font-semibold mb-2">Sura {selectedSura} Statistics</h2>
-              {selectedSuraData && (
+              <h2 className="text-lg font-semibold mb-2">Chapter {selectedChapter} Statistics</h2>
+              {selectedChapterData && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p><span className="font-medium">Total Entries:</span> {selectedSuraData.TotalEntries}</p>
-                    <p><span className="font-medium">Complete Entries:</span> {selectedSuraData.CompleteEntries}</p>
-                    <p><span className="font-medium">Avg. Manuscript Letters:</span> {selectedSuraData.AvgManuscriptLetters}</p>
-                    <p><span className="font-medium">Avg. Reference Letters:</span> {selectedSuraData.AvgReferenceLetters}</p>
-                    <p><span className="font-medium">Letter Difference:</span> {(selectedSuraData.AvgManuscriptLetters - selectedSuraData.AvgReferenceLetters).toFixed(2)}</p>
-                    <p><span className="font-medium">Avg. Absolute Deviation:</span> {selectedSuraData.AvgAbsDeviation}</p>
-                    <p><span className="font-medium">Standard Deviation:</span> {selectedSuraData.StdDeviation}</p>
+                    <p><span className="font-medium">Total Entries:</span> {selectedChapterData.TotalEntries}</p>
+                    <p><span className="font-medium">Complete Entries:</span> {selectedChapterData.CompleteEntries}</p>
+                    <p><span className="font-medium">Avg. Manuscript Letters:</span> {selectedChapterData.AvgManuscriptLetters}</p>
+                    <p><span className="font-medium">Avg. Reference Letters:</span> {selectedChapterData.AvgReferenceLetters}</p>
+                    <p><span className="font-medium">Letter Difference:</span> {(selectedChapterData.AvgManuscriptLetters - selectedChapterData.AvgReferenceLetters).toFixed(2)}</p>
+                    <p><span className="font-medium">Avg. Absolute Deviation:</span> {selectedChapterData.AvgAbsDeviation}</p>
+                    <p><span className="font-medium">Standard Deviation:</span> {selectedChapterData.StdDeviation}</p>
                   </div>
                   <div>
                     <ResponsiveContainer width="100%" height={200}>
                       <PieChart>
                         <Pie
                           data={[
-                            { name: 'Manuscript', value: selectedSuraData.AvgManuscriptLetters },
-                            { name: 'Reference', value: selectedSuraData.AvgReferenceLetters }
+                            { name: 'Manuscript', value: selectedChapterData.AvgManuscriptLetters },
+                            { name: 'Reference', value: selectedChapterData.AvgReferenceLetters }
                           ]}
                           cx="50%"
                           cy="50%"
@@ -1177,7 +1177,7 @@ const QuranManuscriptAnalysis = () => {
           </div>
           
           <div className="bg-white p-4 rounded shadow mb-6">
-            <h2 className="text-lg font-semibold mb-2">Verse Letter Counts in Sura {selectedSura}</h2>
+            <h2 className="text-lg font-semibold mb-2">Verse Letter Counts in Chapter {selectedChapter}</h2>
             <div className="max-h-96 overflow-y-auto">
               <table className="w-full">
                 <thead>
@@ -1191,7 +1191,7 @@ const QuranManuscriptAnalysis = () => {
                 </thead>
                 <tbody>
                   {filteredVerseStats.map(verse => (
-                    <tr key={`${verse.Sura}:${verse.Verse}`}>
+                    <tr key={`${verse.Chapter}:${verse.Verse}`}>
                       <td className="px-2 py-1 text-center">{verse.Verse}</td>
                       <td className="px-2 py-1 text-center">{verse.AvgLetterCount}</td>
                       <td className="px-2 py-1 text-center">{verse.ReferenceLetterCount}</td>
@@ -1205,7 +1205,7 @@ const QuranManuscriptAnalysis = () => {
           </div>
           
           <div className="bg-white p-4 rounded shadow">
-            <h2 className="text-lg font-semibold mb-2">Verse Deviations in Sura {selectedSura}</h2>
+            <h2 className="text-lg font-semibold mb-2">Verse Deviations in Chapter {selectedChapter}</h2>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={filteredVerseStats}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -1287,7 +1287,7 @@ const QuranManuscriptAnalysis = () => {
                 <table className="w-full">
                   <thead>
                     <tr>
-                      <th className="px-2 py-1 border-b">Sura</th>
+                      <th className="px-2 py-1 border-b">Chapter</th>
                       <th className="px-2 py-1 border-b">Verse</th>
                       <th className="px-2 py-1 border-b">Manuscript</th>
                       <th className="px-2 py-1 border-b">Reference</th>
@@ -1300,8 +1300,8 @@ const QuranManuscriptAnalysis = () => {
                       .sort((a, b) => b.AbsDeviation - a.AbsDeviation)
                       .slice(0, 10)
                       .map(stat => (
-                        <tr key={`${stat.Sura}:${stat.Verse}`}>
-                          <td className="px-2 py-1 text-center">{stat.Sura}</td>
+                        <tr key={`${stat.Chapter}:${stat.Verse}`}>
+                          <td className="px-2 py-1 text-center">{stat.Chapter}</td>
                           <td className="px-2 py-1 text-center">{stat.Verse}</td>
                           <td className="px-2 py-1 text-center">{stat.ManuscriptLetterCount}</td>
                           <td className="px-2 py-1 text-center">{stat.ReferenceLetterCount}</td>
@@ -1315,30 +1315,30 @@ const QuranManuscriptAnalysis = () => {
             </div>
             
             <div className="bg-white p-4 rounded shadow">
-              <h2 className="text-lg font-semibold mb-2">Deviations by Sura</h2>
+              <h2 className="text-lg font-semibold mb-2">Deviations by Chapter</h2>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart 
                   data={_.chain(data.letterStats)
                     .filter(item => item.Manuscript === selectedManuscript)
-                    .groupBy('Sura')
-                    .map((items, sura) => {
+                    .groupBy('Chapter')
+                    .map((items, chapter) => {
                       const deviations = items
                         .filter(i => i.Deviation !== null)
                         .map(i => Math.abs(i.Deviation));
                       
                       return {
-                        Sura: parseInt(sura),
+                        Chapter: parseInt(chapter),
                         AverageDeviation: deviations.length > 0 
                           ? parseFloat((deviations.reduce((sum, d) => sum + d, 0) / deviations.length).toFixed(2))
                           : 0,
                         VerseCount: items.length
                       };
                     })
-                    .sortBy('Sura')
+                    .sortBy('Chapter')
                     .value()}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="Sura" />
+                  <XAxis dataKey="Chapter" />
                   <YAxis />
                   <Tooltip />
                   <Legend />
@@ -1355,15 +1355,15 @@ const QuranManuscriptAnalysis = () => {
         <div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block mb-1 font-medium">Select Sura</label>
+              <label className="block mb-1 font-medium">Select Chapter</label>
               <select 
                 className="w-full p-2 border rounded"
-                value={selectedSura}
-                onChange={(e) => setSelectedSura(parseInt(e.target.value))}
+                value={selectedChapter}
+                onChange={(e) => setSelectedChapter(parseInt(e.target.value))}
               >
-                {Object.keys(disjointedLettersBySura).map(suraNumber => (
-                  <option key={suraNumber} value={suraNumber}>
-                    Sura {suraNumber} - {disjointedLettersBySura[suraNumber]}
+                {Object.keys(disjointedLettersByChapter).map(chapterNumber => (
+                  <option key={chapterNumber} value={chapterNumber}>
+                    Chapter {chapterNumber} - {disjointedLettersByChapter[chapterNumber]}
                   </option>
                 ))}
               </select>
@@ -1386,7 +1386,7 @@ const QuranManuscriptAnalysis = () => {
           
           <div className="bg-white p-4 rounded shadow mb-6">
             <h2 className="text-lg font-semibold mb-2">
-              Disjointed Letters in Sura {selectedSura}: {selectedDisjointedLetters}
+              Disjointed Letters in Chapter {selectedChapter}: {selectedDisjointedLetters}
             </h2>
             
             <div className="flex flex-wrap gap-4 mb-4 justify-center">
@@ -1486,7 +1486,7 @@ const QuranManuscriptAnalysis = () => {
                   </thead>
                   <tbody>
                     {filteredVerseStats.map(verse => {
-                      const refKey = `${verse.Sura}:${verse.Verse}`;
+                      const refKey = `${verse.Chapter}:${verse.Verse}`;
                       const refText = referenceTexts[refKey] || '';
                       
                       // Find the corresponding manuscript verse
@@ -1496,7 +1496,7 @@ const QuranManuscriptAnalysis = () => {
                       const manuscriptText = manuscriptVerse ? manuscriptVerse.Text : '';
                       
                       return (
-                        <tr key={`verse-${verse.Sura}:${verse.Verse}`} className="border-b">
+                        <tr key={`verse-${verse.Chapter}:${verse.Verse}`} className="border-b">
                           <td className="px-2 py-3 text-center align-top border-r">
                             <div className="text-gray-600">{verse.Verse}</div>
                           </td>
@@ -1555,7 +1555,7 @@ const QuranManuscriptAnalysis = () => {
                       {selectedDisjointedLetters.split('').map((letter) => {
                         // Calculate sum of all reference counts for this letter
                         const refSum = filteredVerseStats.reduce((sum, verse) => {
-                          const refKey = `${verse.Sura}:${verse.Verse}`;
+                          const refKey = `${verse.Chapter}:${verse.Verse}`;
                           const refText = referenceTexts[refKey] || '';
                           return sum + countLetterInText(refText, letter);
                         }, 0);
@@ -1626,7 +1626,7 @@ const QuranManuscriptAnalysis = () => {
                       </thead>
                       <tbody>
                         {(() => {
-                          const letterStats = calculateLetterStats(selectedSura);
+                          const letterStats = calculateLetterStats(selectedChapter);
                           return Object.entries(letterStats).map(([letter, stats]) => (
                             <tr key={`letter-stats-${letter}`} className="border-b">
                               <td 
@@ -1658,7 +1658,7 @@ const QuranManuscriptAnalysis = () => {
                   <h4 className="font-medium p-3 bg-gray-100 border-b">Letter Distribution Across Manuscripts</h4>
                   {(() => {
                     // Calculate data only once
-                    const manuscriptData = countDisjointedLettersAcrossManuscripts(selectedSura);
+                    const manuscriptData = countDisjointedLettersAcrossManuscripts(selectedChapter);
                     
                     return (
                       manuscriptData.chartData.length > 0 && manuscriptData.manuscripts.length > 0 ? (
@@ -1687,7 +1687,7 @@ const QuranManuscriptAnalysis = () => {
                           </ResponsiveContainer>
                         </div>
                       ) : (
-                        <p className="p-3">No manuscript data available for this sura.</p>
+                        <p className="p-3">No manuscript data available for this chapter.</p>
                       )
                     );
                   })()}
