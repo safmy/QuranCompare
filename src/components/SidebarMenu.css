@@ -39,13 +39,35 @@
   height: 100vh;
   background: white;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  transition: left 0.3s ease;
+  transition: left 0.3s ease, width 0.3s ease;
   z-index: 1001;
   overflow-y: auto;
 }
 
 .sidebar-menu.open {
   left: 0;
+}
+
+/* Expanded state for appendices */
+.sidebar-menu.expanded {
+  width: 80%;
+  max-width: 1200px;
+}
+
+.sidebar-menu.expanded .sidebar-menu {
+  left: -80%;
+}
+
+@media (min-width: 768px) {
+  .sidebar-menu.expanded {
+    width: 70%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sidebar-menu.expanded {
+    width: 60%;
+  }
 }
 
 .sidebar-header {
@@ -172,6 +194,10 @@
   .sidebar-menu {
     width: 250px;
     left: -250px;
+  }
+  
+  .sidebar-menu.expanded {
+    width: 90%;
   }
   
   .sidebar-menu-button {

@@ -10,6 +10,7 @@ const PrayerTimes = () => {
   const [manualCity, setManualCity] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [timezone, setTimezone] = useState('UTC');
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   // Calculate sun times matching Discord bot's astral library logic
   const calculateSunTimes = (lat, lon, date, timezone) => {
@@ -237,6 +238,34 @@ const PrayerTimes = () => {
     getCurrentLocation();
   }, []);
 
+  // Update current time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Format current time for the selected timezone
+  const formatLocalTime = () => {
+    if (!timezone || timezone === 'UTC') {
+      return currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    }
+    
+    try {
+      return currentTime.toLocaleTimeString('en-US', {
+        timeZone: timezone,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+    } catch (e) {
+      return currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    }
+  };
+
   return (
     <div className="prayer-times-container">
       <div className="prayer-times-header">
@@ -293,6 +322,9 @@ const PrayerTimes = () => {
                 </p>
                 <p className="coordinates">
                   Timezone: {timezone}
+                </p>
+                <p className="local-time">
+                  Local Time: <strong>{formatLocalTime()}</strong>
                 </p>
               </>
             )}

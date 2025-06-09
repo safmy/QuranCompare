@@ -44,7 +44,7 @@ const SidebarMenu = () => {
       )}
 
       {/* Sidebar Menu */}
-      <div className={`sidebar-menu ${isOpen ? 'open' : ''}`}>
+      <div className={`sidebar-menu ${isOpen ? 'open' : ''} ${activeSection === 'appendices' ? 'expanded' : ''}`}>
         <div className="sidebar-header">
           <h3>Tools</h3>
           <button className="close-button" onClick={() => setIsOpen(false)}>×</button>

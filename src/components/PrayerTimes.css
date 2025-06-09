@@ -158,6 +158,22 @@
   margin: 5px 0 0 0;
 }
 
+.local-time {
+  font-size: 1rem;
+  color: #333;
+  margin: 8px 0 0 0;
+  padding: 8px;
+  background: #fff;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.local-time strong {
+  color: #17a2b8;
+  font-family: monospace;
+  font-size: 1.1rem;
+}
+
 /* Times Grid */
 .times-grid {
   display: grid;
