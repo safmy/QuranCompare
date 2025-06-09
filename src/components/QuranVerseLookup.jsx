@@ -599,16 +599,14 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                             meaningVariations.set(meaning, []);
                         }
                         
-                        // Check if this verse is already in this meaning group
-                        const existingVerse = meaningVariations.get(meaning).find(item => item.verse.sura_verse === v.sura_verse);
-                        if (!existingVerse) {
-                            meaningVariations.get(meaning).push({
-                                verse: v,
-                                arabicWord: arabicWord,
-                                meaning: meaning,
-                                rootIndex: idx
-                            });
-                        }
+                        // Add ALL verses with this meaning (not just one per verse)
+                        meaningVariations.get(meaning).push({
+                            verse: v,
+                            arabicWord: arabicWord,
+                            meaning: meaning,
+                            rootIndex: idx,
+                            verseRef: v.sura_verse
+                        });
                     }
                 });
                 
@@ -623,8 +621,8 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
         
         // Sort meaning variations by frequency (most common first)
         const sortedVariations = Array.from(meaningVariations.entries())
-            .sort((a, b) => b[1].length - a[1].length)
-            .slice(0, 10); // Limit to top 10 variations
+            .sort((a, b) => b[1].length - a[1].length);
+            // Removed limit to show all variations
         
         // Sort related verses by verse reference
         relatedVerses.sort((a, b) => a.sura_verse.localeCompare(b.sura_verse));
@@ -1222,25 +1220,36 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                                         width: '100%'
                                     }}
                                     onClick={() => {
-                                        const versesToCompare = [rootAnalysisData.sourceVerse];
+                                        const versesToCompare = [];
                                         const meaningMap = new Map();
+                                        const seenVerses = new Set();
                                         
-                                        rootAnalysisData.meaningVariations.forEach(([meaning, verses]) => {
-                                            if (verses.length > 0) {
-                                                const verse = verses[0].verse;
-                                                versesToCompare.push(verse);
-                                                meaningMap.set(verse.sura_verse, {
-                                                    meaning: meaning,
-                                                    arabicWord: verses[0].arabicWord,
-                                                    occurrences: verses.length
-                                                });
+                                        // Add source verse first
+                                        versesToCompare.push(rootAnalysisData.sourceVerse);
+                                        seenVerses.add(rootAnalysisData.sourceVerse.sura_verse);
+                                        
+                                        // Add one verse from each meaning variation
+                                        rootAnalysisData.meaningVariations.forEach(([meaning, occurrences]) => {
+                                            if (occurrences.length > 0) {
+                                                // Find a verse that hasn't been added yet
+                                                const uniqueVerse = occurrences.find(occ => !seenVerses.has(occ.verseRef));
+                                                if (uniqueVerse) {
+                                                    versesToCompare.push(uniqueVerse.verse);
+                                                    seenVerses.add(uniqueVerse.verseRef);
+                                                    meaningMap.set(uniqueVerse.verseRef, {
+                                                        meaning: meaning,
+                                                        arabicWord: uniqueVerse.arabicWord,
+                                                        occurrences: occurrences.length
+                                                    });
+                                                }
                                             }
                                         });
                                         
                                         const meaningData = {
                                             root: rootAnalysisData.selectedRoot,
                                             sourceVerse: rootAnalysisData.sourceVerse.sura_verse,
-                                            variations: Object.fromEntries(meaningMap)
+                                            variations: Object.fromEntries(meaningMap),
+                                            totalOccurrences: rootAnalysisData.totalCount
                                         };
                                         
                                         navigateToCompare(versesToCompare.slice(0, 11), meaningData);
@@ -1250,6 +1259,56 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                                     Compare One from Each Meaning
                                 </button>
                             </div>
+
+                            {/* Compare by Selected Meaning Category */}
+                            {selectedMeaningCategory && (
+                                <div className="compare-action-card" style={{
+                                    padding: '15px',
+                                    background: 'white',
+                                    borderRadius: '8px',
+                                    border: '1px solid #ddd'
+                                }}>
+                                    <h4 style={{ margin: '0 0 10px 0', color: '#ff9800' }}>
+                                        🔍 Compare Similar Meanings
+                                    </h4>
+                                    <p style={{ fontSize: '14px', color: '#666', margin: '0 0 10px 0' }}>
+                                        Compare verses where "{rootAnalysisData.selectedRoot}" means "{selectedMeaningCategory}"
+                                    </p>
+                                    <button
+                                        style={{
+                                            padding: '10px 20px',
+                                            background: '#ff9800',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            fontSize: '14px',
+                                            cursor: 'pointer',
+                                            width: '100%'
+                                        }}
+                                        onClick={() => {
+                                            const selectedMeaningVerses = rootAnalysisData.meaningVariations
+                                                .find(([meaning]) => meaning === selectedMeaningCategory)?.[1] || [];
+                                            
+                                            const versesToCompare = selectedMeaningVerses
+                                                .map(item => item.verse)
+                                                .filter((v, i, arr) => arr.findIndex(verse => verse.sura_verse === v.sura_verse) === i)
+                                                .slice(0, 11);
+                                            
+                                            const meaningData = {
+                                                root: rootAnalysisData.selectedRoot,
+                                                sourceVerse: rootAnalysisData.sourceVerse.sura_verse,
+                                                selectedMeaning: selectedMeaningCategory,
+                                                totalWithThisMeaning: selectedMeaningVerses.length
+                                            };
+                                            
+                                            navigateToCompare(versesToCompare, meaningData);
+                                            setShowRootAnalysis(false);
+                                        }}
+                                    >
+                                        Compare Verses with "{selectedMeaningCategory}" Meaning
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Meaning variations section */}
@@ -1262,8 +1321,11 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                                 overflowY: isMobile ? 'auto' : 'visible'
                             }}>
                                 <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#333' }}>
-                                    Meaning Variations of "{rootAnalysisData.selectedRoot}"
+                                    All Meaning Variations of "{rootAnalysisData.selectedRoot}" ({rootAnalysisData.meaningVariations.length} meanings)
                                 </h4>
+                                <p style={{ fontSize: '14px', color: '#666', marginTop: '-10px', marginBottom: '15px' }}>
+                                    💡 Click any meaning to compare verses with that same meaning
+                                </p>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                     {rootAnalysisData.meaningVariations.map(([meaning, verses], idx) => (
                                         <div key={idx} style={{
@@ -1283,7 +1345,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                                             </span>
                                             {selectedMeaningCategory === meaning && (
                                                 <span style={{ marginLeft: '10px', fontSize: '12px' }}>
-                                                    ✓ Selected
+                                                    ✓ Selected - See "Compare Similar Meanings" below
                                                 </span>
                                             )}
                                         </div>

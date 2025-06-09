@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Root Analysis Test - Verse 33:56</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; background: #f5f5f5; border-radius: 8px; }
+        h2 { color: #2196f3; }
+        .success { color: green; }
+        .fail { color: red; }
+        .info { background: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Root Analysis Test for Verse 33:56</h1>
+    
+    <div class="test-section">
+        <h2>Test Summary</h2>
+        <div class="info">
+            <p><strong>Verse 33:56:</strong> Contains root "و ص ل" with meaning "[they] send blessings / help and support"</p>
+            <p><strong>Issue:</strong> This verse wasn't showing in the root analysis summary when selecting "Compare One from Each Meaning"</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Changes Made:</h2>
+        <ol>
+            <li class="success">✓ Removed the 10-variation limit in root analysis (line 625)</li>
+            <li class="success">✓ Now showing ALL meaning variations, not just top 10</li>
+            <li class="success">✓ Added clearer UI instructions for finding similar meanings</li>
+            <li class="success">✓ Enhanced the meaning selection interface with better visual feedback</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Expected Results:</h2>
+        <ol>
+            <li>When analyzing root "و ص ل" from any verse, ALL meanings should appear including "[they] send blessings / help and support"</li>
+            <li>Verse 33:56 should be included when clicking "Compare One from Each Meaning"</li>
+            <li>Users can click on any meaning to select it and then use "Compare Similar Meanings" button</li>
+            <li>The UI clearly shows how to find verses with similar meanings</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>How to Test:</h2>
+        <ol>
+            <li>Go to verse 33:56</li>
+            <li>Click on the Arabic word with root "و ص ل"</li>
+            <li>In the root analysis modal, verify that "[they] send blessings / help and support" appears in the list</li>
+            <li>Click "Compare One from Each Meaning" - verse 33:56 should be included</li>
+            <li>Click on any meaning to select it, then use "Compare Similar Meanings" to see all verses with that meaning</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>New Features:</h2>
+        <ul>
+            <li><strong>Find Similar Meanings:</strong> Click any meaning in the list to select it, then click "Compare Similar Meanings"</li>
+            <li><strong>All Meanings Shown:</strong> No longer limited to top 10 - rare meanings like the one in 33:56 will always appear</li>
+            <li><strong>Better UI:</strong> Clear instructions and visual feedback for selecting meanings</li>
+        </ul>
+    </div>
+</body>
+</html>

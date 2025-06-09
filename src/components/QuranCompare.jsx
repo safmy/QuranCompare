@@ -393,36 +393,53 @@ const QuranCompare = ({ initialVerses = [] }) => {
                 📚 Root Analysis Summary: "{meaningData.root}"
               </h4>
               <p style={{ marginBottom: '15px', color: '#666' }}>
-                The following verses demonstrate different meanings of the root "{meaningData.root}" in the Quran:
+                {meaningData.selectedMeaning ? 
+                  `Showing verses where the root "${meaningData.root}" means "${meaningData.selectedMeaning}" (${meaningData.totalWithThisMeaning} occurrences):` :
+                  `The following verses demonstrate different meanings of the root "${meaningData.root}" in the Quran:`
+                }
               </p>
-              <div style={{ display: 'grid', gap: '10px' }}>
-                {Object.entries(meaningData.variations).map(([verseRef, data]) => (
-                  <div key={verseRef} style={{
-                    padding: '10px',
-                    backgroundColor: verseRef === meaningData.sourceVerse ? '#e3f2fd' : 'white',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px'
-                  }}>
-                    <strong>[{verseRef}]</strong>
-                    {verseRef === meaningData.sourceVerse && (
-                      <span style={{ 
-                        marginLeft: '10px', 
-                        fontSize: '0.8em', 
-                        color: '#1976d2',
-                        fontWeight: 'normal'
-                      }}>
-                        (Source verse)
-                      </span>
-                    )}
-                    <br />
-                    <span style={{ color: '#2e7d32' }}>"{data.arabicWord}"</span> → 
-                    <strong style={{ marginLeft: '5px' }}>{data.meaning}</strong>
-                    <br />
-                    <small style={{ color: '#666' }}>
-                      This meaning appears in {data.occurrences} verse{data.occurrences !== 1 ? 's' : ''} total
-                    </small>
-                  </div>
-                ))}
+              {meaningData.selectedMeaning ? (
+                // Similar meaning comparison view
+                <div style={{ padding: '10px', backgroundColor: '#fff3cd', borderRadius: '4px' }}>
+                  <p style={{ margin: 0, fontSize: '0.9em' }}>
+                    All verses below contain the root "{meaningData.root}" with the meaning: <strong>"{meaningData.selectedMeaning}"</strong>
+                  </p>
+                  <p style={{ margin: '5px 0 0 0', fontSize: '0.85em', color: '#666' }}>
+                    Total verses with this meaning: {meaningData.totalWithThisMeaning || verses.length}
+                  </p>
+                </div>
+              ) : (
+                // Different meanings comparison view
+                <div style={{ display: 'grid', gap: '10px' }}>
+                  {meaningData.variations && Object.entries(meaningData.variations).map(([verseRef, data]) => (
+                    <div key={verseRef} style={{
+                      padding: '10px',
+                      backgroundColor: verseRef === meaningData.sourceVerse ? '#e3f2fd' : 'white',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px'
+                    }}>
+                      <strong>[{verseRef}]</strong>
+                      {verseRef === meaningData.sourceVerse && (
+                        <span style={{ 
+                          marginLeft: '10px', 
+                          fontSize: '0.8em', 
+                          color: '#1976d2',
+                          fontWeight: 'normal'
+                        }}>
+                          (Source verse)
+                        </span>
+                      )}
+                      <br />
+                      <span style={{ color: '#2e7d32' }}>"{data.arabicWord}"</span> → 
+                      <strong style={{ marginLeft: '5px' }}>{data.meaning}</strong>
+                      <br />
+                      <small style={{ color: '#666' }}>
+                        This meaning appears in {data.occurrences} verse{data.occurrences !== 1 ? 's' : ''} total
+                      </small>
+                    </div>
+                  ))}
+                </div>
+              )}
               </div>
               <div style={{ 
                 marginTop: '15px', 
@@ -431,9 +448,16 @@ const QuranCompare = ({ initialVerses = [] }) => {
                 borderRadius: '4px',
                 fontSize: '0.9em'
               }}>
-                💡 <strong>Tip:</strong> Each verse below shows one example of how the root "{meaningData.root}" 
-                is used with different meanings. This helps understand the semantic range and contextual 
-                flexibility of Arabic roots in the Quran.
+                💡 <strong>Tip:</strong> {meaningData.selectedMeaning ? 
+                  `These verses all share the same meaning for the root "${meaningData.root}". To see different meanings, go back and select "Compare One from Each Meaning".` :
+                  `Each verse below shows one example of how the root "${meaningData.root}" is used with different meanings. This helps understand the semantic range and contextual flexibility of Arabic roots in the Quran.`
+                }
+                {meaningData.totalOccurrences && !meaningData.selectedMeaning && (
+                  <span style={{ display: 'block', marginTop: '5px', fontSize: '0.85em', color: '#666' }}>
+                    Note: The root "{meaningData.root}" appears in {meaningData.totalOccurrences} verses total. 
+                    Only representative examples are shown above.
+                  </span>
+                )}
               </div>
             </div>
           )}
