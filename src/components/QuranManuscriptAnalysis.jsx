@@ -652,19 +652,19 @@ const QuranManuscriptAnalysis = () => {
 
   // Filtering functions
   const filteredChapterStats = data.chapterStats.filter(chapter => 
-    chapter.Chapter.toString().includes(searchQuery)
+    chapter.Sura && chapter.Sura.toString().includes(searchQuery)
   );
 
   const filteredVerseStats = data.verseStats.filter(verse => 
-    verse.Chapter === selectedChapter
+    verse.Sura === selectedChapter
   ).sort((a, b) => a.Verse - b.Verse);
 
   const filteredManuscriptVerses = data.letterStats.filter(item => 
-    item.Manuscript === selectedManuscript && item.Chapter === selectedChapter
+    item.Manuscript === selectedManuscript && item.Sura === selectedChapter
   ).sort((a, b) => a.Verse - b.Verse);
 
   // Prepare data for specific visualizations
-  const selectedChapterData = data.chapterStats.find(s => s.Chapter === selectedChapter);
+  const selectedChapterData = data.chapterStats.find(s => s.Sura === selectedChapter);
   
   const manuscriptLetterDeviation = data.manuscriptStats.map(ms => ({
     name: ms.Manuscript.length > 20 ? ms.Manuscript.substring(0, 20) + '...' : ms.Manuscript,

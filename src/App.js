@@ -256,6 +256,15 @@ function AppContent() {
             }}>
               Quran Analysis & Comparison Tool
             </h1>
+            <span style={{
+              fontSize: "10px",
+              color: "rgba(255,255,255,0.7)",
+              position: "absolute",
+              top: "-8px",
+              right: "0"
+            }}>
+              v1.0.2
+            </span>
           </div>
           <div style={{
             display: "flex",

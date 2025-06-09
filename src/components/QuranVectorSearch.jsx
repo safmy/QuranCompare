@@ -506,6 +506,24 @@ const QuranVectorSearch = ({ savedState = {} }) => {
   }, [searchResults, searchTerm, numResults, includeRashadMedia, includeFinalTestament, includeNewsletters, includeArabicVerses, useRegex, regexResults]);
 
   return (
+    <>
+      <style>{`
+        /* Custom scrollbar for Rashad Media content */
+        .rashad-media-content::-webkit-scrollbar {
+          width: 12px;
+        }
+        .rashad-media-content::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 6px;
+        }
+        .rashad-media-content::-webkit-scrollbar-thumb {
+          background: #888;
+          border-radius: 6px;
+        }
+        .rashad-media-content::-webkit-scrollbar-thumb:hover {
+          background: #555;
+        }
+      `}</style>
     <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px' }}>
       <h2 style={{ color: '#333', marginBottom: '20px' }}>Semantic Search</h2>
       <p style={{ color: '#666', marginBottom: '20px' }}>
@@ -1018,21 +1036,66 @@ const QuranVectorSearch = ({ savedState = {} }) => {
                   })()}
                 </div>
               ) : (
-                <div style={{
+                <div className={result.collection === 'RashadAllMedia' ? 'rashad-media-content' : ''} style={{
                   fontSize: '15px',
                   lineHeight: '1.6',
                   color: '#555',
                   marginBottom: '10px',
                   ...(result.collection === 'RashadAllMedia' ? {
-                    maxHeight: '300px',
-                    overflowY: 'auto',
-                    padding: '10px',
+                    maxHeight: '400px',
+                    overflowY: 'scroll',
+                    padding: '15px',
                     backgroundColor: '#f9f9f9',
                     borderRadius: '6px',
-                    border: '1px solid #e0e0e0'
+                    border: '1px solid #e0e0e0',
+                    position: 'relative',
+                    // Force scrollbar visibility
+                    WebkitOverflowScrolling: 'touch',
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: '#888 #f0f0f0'
                   } : {})
                 }}>
+                  {result.collection === 'RashadAllMedia' && (
+                    <div style={{
+                      position: 'sticky',
+                      top: 0,
+                      right: 0,
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      padding: '2px 8px',
+                      fontSize: '12px',
+                      color: '#666',
+                      borderRadius: '4px',
+                      marginBottom: '10px',
+                      textAlign: 'right'
+                    }}>
+                      📜 Scroll for full transcript
+                    </div>
+                  )}
                   {highlightSearchTerms(result.content, searchTerm)}
+                  {result.collection === 'RashadAllMedia' && result.content.length > 500 && (
+                    <div style={{
+                      marginTop: '20px',
+                      padding: '10px',
+                      backgroundColor: '#e3f2fd',
+                      borderRadius: '4px',
+                      fontSize: '13px',
+                      textAlign: 'center'
+                    }}>
+                      <strong>Note:</strong> This is a portion of the transcript. The search matched this section.
+                      {result.youtube_link && (
+                        <>
+                          {' '}For the full content, <a 
+                            href={result.youtube_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: '#1976d2', textDecoration: 'underline' }}
+                          >
+                            watch the video
+                          </a>.
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
               
@@ -1118,6 +1181,7 @@ const QuranVectorSearch = ({ savedState = {} }) => {
         </div>
       )}
     </div>
+    </>
   );
 };
 
