@@ -1072,30 +1072,6 @@ const QuranVectorSearch = ({ savedState = {} }) => {
                     </div>
                   )}
                   {highlightSearchTerms(result.content, searchTerm)}
-                  {result.collection === 'RashadAllMedia' && result.content.length > 500 && (
-                    <div style={{
-                      marginTop: '20px',
-                      padding: '10px',
-                      backgroundColor: '#e3f2fd',
-                      borderRadius: '4px',
-                      fontSize: '13px',
-                      textAlign: 'center'
-                    }}>
-                      <strong>Note:</strong> This is a portion of the transcript. The search matched this section.
-                      {result.youtube_link && (
-                        <>
-                          {' '}For the full content, <a 
-                            href={result.youtube_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ color: '#1976d2', textDecoration: 'underline' }}
-                          >
-                            watch the video
-                          </a>.
-                        </>
-                      )}
-                    </div>
-                  )}
                 </div>
               )}
               

@@ -4,7 +4,6 @@ import QuranSearch from './components/QuranSearch';
 import QuranVectorSearch from './components/QuranVectorSearch';
 import QuranVerseLookup from './components/QuranVerseLookup';
 import QuranCompare from './components/QuranCompare';
-import QuranManuscriptAnalysis from './components/QuranManuscriptAnalysis';
 import DebaterBot from './components/DebaterBot';
 import AuthCallback from './components/AuthCallback';
 import PaymentSuccess from './components/PaymentSuccess';
@@ -127,7 +126,6 @@ function AppContent() {
       /> 
     },
     { id: 'compare', label: 'Compare', component: <QuranCompare key={compareVerses.join(',')} initialVerses={compareVerses} /> },
-    { id: 'manuscript', label: 'Manuscript Analysis', component: <QuranManuscriptAnalysis /> },
     { 
       id: 'debater', 
       label: (
@@ -263,7 +261,7 @@ function AppContent() {
               top: "-8px",
               right: "0"
             }}>
-              v1.0.2
+              v1.0.3
             </span>
           </div>
           <div style={{
