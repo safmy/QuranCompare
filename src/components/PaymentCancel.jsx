@@ -1,4 +1,5 @@
 import React from 'react';
+import { appConfig } from '../config/app';
 
 const PaymentCancel = () => {
   return (
@@ -54,7 +55,7 @@ const PaymentCancel = () => {
             onClick={() => {
               const subject = encodeURIComponent('Need Help with Subscription');
               const body = encodeURIComponent('I had trouble with the payment process and would like assistance subscribing to the AI Debater Bot.');
-              window.open(`mailto:support@qurancompare.com?subject=${subject}&body=${body}`, '_blank');
+              window.open(`mailto:${appConfig.supportEmail}?subject=${subject}&body=${body}`, '_blank');
             }}
             style={{
               padding: '12px 24px',

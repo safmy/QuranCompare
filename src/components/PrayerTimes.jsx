@@ -102,9 +102,24 @@ const PrayerTimes = () => {
 
   // Get timezone offset in hours
   const getTimezoneOffset = (timezone, date) => {
-    const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
-    const tzDate = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
-    return (tzDate - utcDate) / (1000 * 60 * 60);
+    try {
+      // Handle UTC+X format
+      if (timezone.startsWith('UTC')) {
+        const match = timezone.match(/UTC([+-]?\d+)/);
+        if (match) {
+          return parseInt(match[1], 10);
+        }
+        return 0;
+      }
+      
+      // For IANA timezone names, use proper timezone conversion
+      const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
+      const tzDate = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
+      return (tzDate - utcDate) / (1000 * 60 * 60);
+    } catch (error) {
+      console.error('Invalid timezone:', timezone, error);
+      return 0; // Default to UTC if invalid
+    }
   };
 
   // Get user's current location
@@ -169,13 +184,29 @@ const PrayerTimes = () => {
         setLocation({ lat: parseFloat(lat), lon: parseFloat(lon) });
         setCityName(display_name.split(',')[0]);
         
-        // Estimate timezone based on longitude
-        const estimatedOffset = Math.round(lon / 15);
-        const tz = `UTC${estimatedOffset >= 0 ? '+' : ''}${estimatedOffset}`;
-        setTimezone(tz);
+        // Try to get timezone from the location
+        let detectedTimezone;
+        try {
+          // Use timezone lookup service
+          const tzResponse = await fetch(
+            `https://worldtimeapi.org/api/timezone/Etc/GMT${Math.round(-lon / 15)}`
+          );
+          if (tzResponse.ok) {
+            const tzData = await tzResponse.json();
+            detectedTimezone = tzData.timezone;
+          } else {
+            // Fallback to browser timezone
+            detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          }
+        } catch (e) {
+          // Use browser timezone as fallback
+          detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        }
+        
+        setTimezone(detectedTimezone);
         
         // Calculate prayer times
-        const times = calculateSunTimes(parseFloat(lat), parseFloat(lon), selectedDate, tz);
+        const times = calculateSunTimes(parseFloat(lat), parseFloat(lon), selectedDate, detectedTimezone);
         setPrayerTimes(times);
       } else {
         setError('City not found. Please try another name.');
@@ -205,7 +236,7 @@ const PrayerTimes = () => {
       <div className="prayer-times-header">
         <h4>Prayer Times (Sun-based)</h4>
         <p className="prayer-description">
-          Based on sun positions: Dawn, Sunrise, Noon, Afternoon, Sunset, and Dusk (Night)
+          Based on sun positions: Dawn (Fajr), Sunrise, Noon (Dhuhr), Afternoon (Asr), Sunset (Maghrib), and Night (Isha/Dusk)
         </p>
       </div>
 
@@ -257,7 +288,7 @@ const PrayerTimes = () => {
 
           <div className="times-grid">
             <div className="time-item">
-              <span className="time-label">Dawn</span>
+              <span className="time-label">Dawn (Fajr)</span>
               <span className="time-value">{prayerTimes.dawn || '--:--'}</span>
             </div>
             <div className="time-item">
@@ -265,19 +296,19 @@ const PrayerTimes = () => {
               <span className="time-value">{prayerTimes.sunrise || '--:--'}</span>
             </div>
             <div className="time-item">
-              <span className="time-label">Noon</span>
+              <span className="time-label">Noon (Dhuhr)</span>
               <span className="time-value">{prayerTimes.noon || '--:--'}</span>
             </div>
             <div className="time-item">
-              <span className="time-label">Afternoon</span>
+              <span className="time-label">Afternoon (Asr)</span>
               <span className="time-value">{prayerTimes.afternoon || '--:--'}</span>
             </div>
             <div className="time-item">
-              <span className="time-label">Sunset</span>
+              <span className="time-label">Sunset (Maghrib)</span>
               <span className="time-value">{prayerTimes.sunset || '--:--'}</span>
             </div>
             <div className="time-item">
-              <span className="time-label">Dusk (Night)</span>
+              <span className="time-label">Night (Isha)</span>
               <span className="time-value">{prayerTimes.dusk || '--:--'}</span>
             </div>
           </div>

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { hasActiveSubscription, getSubscriptionInfo } from '../config/premium';
+import { appConfig } from '../config/app';
 import SubscriptionModal from './SubscriptionModal';
+import { cancelSubscription } from '../utils/subscriptionManager';
 
 const UserProfile = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -35,7 +37,7 @@ const UserProfile = () => {
       } catch (error) {
         console.error('Error creating portal session:', error);
         // If Stripe portal fails, show contact info
-        alert('To manage your subscription, please contact support@qurancompare.com');
+        alert(`To manage your subscription, please contact ${appConfig.supportEmail}`);
       }
     } else {
       // Show subscription modal for new subscriptions
@@ -44,10 +46,24 @@ const UserProfile = () => {
     setShowDropdown(false);
   };
   
-  const handleCancelSubscription = () => {
-    const subject = encodeURIComponent('Subscription Cancellation Request');
-    const body = encodeURIComponent(
-      `Hi,
+  const handleCancelSubscription = async () => {
+    if (window.confirm('Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your current billing period.')) {
+      try {
+        const result = await cancelSubscription(user.id);
+        
+        if (result.success) {
+          alert('Your subscription has been cancelled successfully. You will continue to have access until the end of your current billing period.');
+          // Refresh the page to update subscription status
+          window.location.reload();
+        } else {
+          throw new Error(result.error || 'Failed to cancel subscription');
+        }
+      } catch (error) {
+        console.error('Error cancelling subscription:', error);
+        // Fallback to email if automatic cancellation fails
+        const subject = encodeURIComponent('Subscription Cancellation Request');
+        const body = encodeURIComponent(
+          `Hi,
 
 I would like to cancel my AI Debater Bot subscription.
 
@@ -57,10 +73,15 @@ Account details:
 
 Please cancel my subscription and confirm when complete.
 
+Error details: ${error.message}
+
 Thank you!`
-    );
-    
-    window.open(`mailto:support@qurancompare.com?subject=${subject}&body=${body}`, '_blank');
+        );
+        
+        window.open(`mailto:${appConfig.supportEmail}?subject=${subject}&body=${body}`, '_blank');
+        alert('We encountered an issue cancelling your subscription automatically. An email has been prepared for you to send to our support team.');
+      }
+    }
     setShowDropdown(false);
   };
   
@@ -263,6 +284,56 @@ Thank you!`
                     ⭐ Upgrade to Premium
                   </button>
                 )}
+                
+                {/* Contact Support Button */}
+                <button
+                  onClick={() => {
+                    const subject = encodeURIComponent('Support Request - QuranCompare');
+                    const body = encodeURIComponent(
+                      `Hi,
+
+I need help with QuranCompare.
+
+Account details:
+- Email: ${user?.email}
+- User ID: ${user?.id}
+- Subscription Status: ${hasActiveSubscription() ? 'Premium' : 'Free'}
+
+Please describe your issue here:
+[Your message]
+
+Thank you!`
+                    );
+                    
+                    window.open(`mailto:${appConfig.supportEmail}?subject=${subject}&body=${body}`, '_blank');
+                    setShowDropdown(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    backgroundColor: '#f5f5f5',
+                    color: '#333',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    marginBottom: '8px',
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = '#e0e0e0';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = '#f5f5f5';
+                  }}
+                >
+                  💬 Contact Support
+                </button>
                 
                 <button
                   onClick={() => {

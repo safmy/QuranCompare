@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { appConfig } from '../config/app';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
 
@@ -76,7 +77,7 @@ Please contact me to set up my subscription and provide payment instructions.
 Thank you!`
     );
     
-    window.open(`mailto:support@qurancompare.com?subject=${subject}&body=${body}`, '_blank');
+    window.open(`mailto:${appConfig.supportEmail}?subject=${subject}&body=${body}`, '_blank');
     onClose();
   };
 
@@ -185,10 +186,22 @@ Thank you!`
               borderRadius: '6px',
               cursor: 'pointer',
               fontSize: '16px',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              transition: 'background-color 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#1976d2';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#2196F3';
             }}
           >
-            📧 Contact Support for Manual Setup
+            <span>📧</span>
+            <span>Contact Support</span>
           </button>
         </div>
 
@@ -228,7 +241,7 @@ Thank you!`
           For immediate access, please contact support who will manually activate your subscription.
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
           <button
             type="button"
             onClick={onClose}
@@ -243,6 +256,62 @@ Thank you!`
             }}
           >
             Maybe Later
+          </button>
+        </div>
+
+        {/* Technical Support Section */}
+        <div style={{
+          borderTop: '1px solid #e0e0e0',
+          paddingTop: '15px',
+          textAlign: 'center'
+        }}>
+          <p style={{ fontSize: '12px', color: '#666', margin: '0 0 10px 0' }}>
+            Having technical issues?
+          </p>
+          <button
+            onClick={() => {
+              const subject = encodeURIComponent('Technical Support Request');
+              const body = encodeURIComponent(
+                `Hi,
+
+I'm experiencing technical issues with the QuranCompare app.
+
+Issue description:
+[Please describe your technical issue here]
+
+Account details:
+- Email: ${user?.email}
+- User ID: ${user?.id}
+
+Browser/Device info:
+- User Agent: ${navigator.userAgent}
+
+Thank you!`
+              );
+              
+              window.open(`mailto:${appConfig.supportEmail}?subject=${subject}&body=${body}`, '_blank');
+            }}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: 'transparent',
+              color: '#1976d2',
+              border: '1px solid #1976d2',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '500',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#1976d2';
+              e.target.style.color = 'white';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'transparent';
+              e.target.style.color = '#1976d2';
+            }}
+          >
+            🔧 Get Technical Support
           </button>
         </div>
       </div>
