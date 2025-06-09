@@ -1,0 +1,218 @@
+.prayer-times-container {
+  padding: 10px;
+}
+
+.prayer-times-header h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.prayer-description {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 20px;
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 5px;
+  border-left: 3px solid #17a2b8;
+}
+
+/* Location Input */
+.location-input {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.location-input input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 0.9rem;
+}
+
+.location-input input:focus {
+  outline: none;
+  border-color: #17a2b8;
+}
+
+.search-button {
+  background: #17a2b8;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.search-button:hover {
+  background: #138496;
+}
+
+.location-button {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: background 0.2s;
+}
+
+.location-button:hover {
+  background: #5a6268;
+}
+
+/* Date Selector */
+.date-selector {
+  margin-bottom: 20px;
+}
+
+.date-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 0.9rem;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #17a2b8;
+}
+
+/* Loading and Error */
+.loading {
+  text-align: center;
+  color: #666;
+  padding: 20px;
+}
+
+.error {
+  background: #fee;
+  border: 1px solid #fcc;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.error p {
+  margin: 0;
+  color: #c00;
+  font-size: 0.9rem;
+}
+
+/* Prayer Times Display */
+.prayer-times-display {
+  animation: fadeIn 0.5s ease;
+}
+
+.current-location {
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 5px;
+}
+
+.city-name {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+}
+
+.coordinates {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 5px 0 0 0;
+}
+
+/* Times Grid */
+.times-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.time-item {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s;
+}
+
+.time-item:hover {
+  background: #e9ecef;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.time-label {
+  display: block;
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.time-value {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Special styling for Dawn and Dusk */
+.time-item:first-child .time-value,
+.time-item:last-child .time-value {
+  color: #17a2b8;
+}
+
+/* Twilight Info */
+.twilight-info {
+  text-align: center;
+  padding: 8px;
+  background: #e3f2fd;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+.twilight-info small {
+  color: #1976d2;
+  font-size: 0.85rem;
+}
+
+/* Responsive */
+@media (max-width: 400px) {
+  .times-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .location-input {
+    flex-wrap: wrap;
+  }
+  
+  .location-input input {
+    flex: 100%;
+    margin-bottom: 8px;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

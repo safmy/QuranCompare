@@ -440,7 +440,6 @@ const QuranCompare = ({ initialVerses = [] }) => {
                   ))}
                 </div>
               )}
-              </div>
               <div style={{ 
                 marginTop: '15px', 
                 padding: '10px',

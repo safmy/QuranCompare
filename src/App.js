@@ -11,6 +11,7 @@ import PaymentSuccess from './components/PaymentSuccess';
 import PaymentCancel from './components/PaymentCancel';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import UserProfile from './components/UserProfile';
+import SidebarMenu from './components/SidebarMenu';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { checkPremiumAccess, PREMIUM_FEATURES } from './config/premium';
@@ -152,6 +153,7 @@ function AppContent() {
 
   return (
     <div className="App">
+      <SidebarMenu />
       <header style={{
         backgroundColor: "#6b46c1",
         padding: "20px",
