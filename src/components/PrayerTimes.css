@@ -14,8 +14,8 @@
   margin-bottom: 20px;
   background: #f8f9fa;
   padding: 10px;
-  border-radius: 5px;
-  border-left: 3px solid #17a2b8;
+  border-radius: 8px;
+  border-left: 3px solid #6b46c1;
 }
 
 /* Location Input */
@@ -36,37 +36,44 @@
 
 .location-input input:focus {
   outline: none;
-  border-color: #17a2b8;
+  border-color: #6b46c1;
 }
 
 .search-button {
-  background: #17a2b8;
+  background: linear-gradient(135deg, #6b46c1 0%, #8b5cf6 100%);
   color: white;
   border: none;
   padding: 8px 16px;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: background 0.2s;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(107, 70, 193, 0.2);
 }
 
 .search-button:hover {
-  background: #138496;
+  background: linear-gradient(135deg, #5a39a8 0%, #7c4edf 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.3);
 }
 
 .location-button {
-  background: #6c757d;
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
   color: white;
   border: none;
   padding: 8px 12px;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 1.2rem;
-  transition: background 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
 }
 
 .location-button:hover {
-  background: #5a6268;
+  background: linear-gradient(135deg, #7c4edf 0%, #9f7aea 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
 /* Date and Method Selector */
@@ -99,7 +106,7 @@
 
 .date-input:focus {
   outline: none;
-  border-color: #17a2b8;
+  border-color: #6b46c1;
 }
 
 .method-select {
@@ -108,7 +115,7 @@
 
 .method-select:focus {
   outline: none;
-  border-color: #17a2b8;
+  border-color: #6b46c1;
 }
 
 /* Loading and Error */
@@ -169,7 +176,7 @@
 }
 
 .local-time strong {
-  color: #17a2b8;
+  color: #6b46c1;
   font-family: monospace;
   font-size: 1.1rem;
 }
@@ -214,20 +221,20 @@
 /* Special styling for Dawn and Dusk */
 .time-item:first-child .time-value,
 .time-item:last-child .time-value {
-  color: #17a2b8;
+  color: #6b46c1;
 }
 
 /* Twilight Info */
 .twilight-info {
   text-align: center;
   padding: 8px;
-  background: #e3f2fd;
-  border-radius: 5px;
+  background: #f3e8ff;
+  border-radius: 8px;
   margin-top: 10px;
 }
 
 .twilight-info small {
-  color: #1976d2;
+  color: #6b46c1;
   font-size: 0.85rem;
 }
 

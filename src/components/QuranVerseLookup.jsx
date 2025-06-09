@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './QuranVerseLookup.css';
 import VoiceSearchButton from './VoiceSearchButton';
+import RootAnalysisModal from './RootAnalysisModal';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getLanguageConfig, getTranslationText, getFootnoteText } from '../config/languages';
 import { getVerseAudioUrl, getAllVerseAudioUrls } from '../utils/verseMapping';
@@ -1134,6 +1135,16 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
             
             {/* Root Analysis Modal */}
             {showRootAnalysis && rootAnalysisData && (
+                <RootAnalysisModal
+                    rootAnalysisData={rootAnalysisData}
+                    onClose={() => setShowRootAnalysis(false)}
+                    onCompare={navigateToCompare}
+                    currentLanguage={currentLanguage}
+                    getTranslationText={getTranslationText}
+                />
+            )}
+            
+            {/* OLD ROOT ANALYSIS MODAL - TO BE REMOVED
                 <div className="root-analysis-modal">
                     <div className="root-analysis-content">
                         <div className="root-analysis-header">
@@ -1424,8 +1435,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                         </div>
                     </div>
                 </div>
-            )}
-        </div>
+            )} */}
     );
 };
 

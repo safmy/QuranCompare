@@ -259,7 +259,8 @@ const InteractiveChunkEditor = ({ arabicText, repeatCount = 3, pauseBetweenRepea
               }}>
                 <strong style={{ 
                   fontSize: '14px', 
-                  color: '#666',
+                  color: '#333',
+                  fontWeight: '600',
                   position: 'absolute',
                   left: '8px',
                   top: '6px'

@@ -137,7 +137,8 @@ const ChunkAudioPlayer = ({ arabicText, chunkIndex, onUnauthorized }) => {
       }}>
         <strong style={{ 
           fontSize: '14px', 
-          color: '#666',
+          color: '#333',
+          fontWeight: '600',
           position: 'absolute',
           left: '8px',
           top: '6px'

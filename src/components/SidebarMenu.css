@@ -87,77 +87,101 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 24px 20px;
+  background: linear-gradient(135deg, #6b46c1 0%, #8b5cf6 100%);
+  border-bottom: none;
+  box-shadow: 0 2px 12px rgba(107, 70, 193, 0.15);
 }
 
 .sidebar-header h3 {
   margin: 0;
-  color: #333;
+  color: white;
   font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .close-button {
-  background: none;
+  background: rgba(255, 255, 255, 0.2);
   border: none;
-  font-size: 28px;
+  font-size: 24px;
   cursor: pointer;
-  color: #666;
+  color: white;
   padding: 0;
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.2s;
+  transition: all 0.2s;
+  border-radius: 8px;
 }
 
 .close-button:hover {
-  color: #333;
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
 }
 
 /* Sidebar Content */
 .sidebar-content {
-  padding: 10px;
+  padding: 15px;
 }
 
 .sidebar-section {
-  margin-bottom: 10px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  margin-bottom: 12px;
+  border: none;
+  border-radius: 12px;
   overflow: hidden;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.sidebar-section:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
 .sidebar-section-header {
   display: flex;
   align-items: center;
-  padding: 15px;
-  background: #f8f9fa;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid transparent;
 }
 
 .sidebar-section-header:hover {
-  background: #e9ecef;
+  background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
 }
 
 .section-icon {
   font-size: 1.5rem;
-  margin-right: 10px;
+  margin-right: 12px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6b46c1 0%, #8b5cf6 100%);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(107, 70, 193, 0.2);
 }
 
 .section-title {
   flex: 1;
   font-size: 1.1rem;
-  font-weight: 500;
+  font-weight: 600;
   color: #333;
+  letter-spacing: -0.02em;
 }
 
 .toggle-icon {
   font-size: 0.8rem;
-  color: #666;
+  color: #6b46c1;
   transition: transform 0.3s ease;
+  font-weight: bold;
 }
 
 .toggle-icon.open {

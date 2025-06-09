@@ -76,6 +76,20 @@ export const AVAILABLE_LANGUAGES = {
     footnoteField: 'footnote', // Arabic uses English footnotes
     flag: '🇸🇦',
     direction: 'rtl'
+  },
+  bengali: {
+    name: 'বাংলা',
+    field: 'bgquran',
+    footnoteField: 'bgquran_footnote',
+    flag: '🇧🇩',
+    direction: 'ltr'
+  },
+  lithuanian: {
+    name: 'Lietuvių',
+    field: 'ltquran',
+    footnoteField: 'ltquran_footnote',
+    flag: '🇱🇹',
+    direction: 'ltr'
   }
 };
 
@@ -84,9 +98,9 @@ export const DEFAULT_LANGUAGE = 'english';
 // Language groups for organized display
 export const LANGUAGE_GROUPS = {
   'Primary': ['english', 'arabic'],
-  'European': ['german', 'french', 'swedish', 'russian'],
+  'European': ['german', 'french', 'swedish', 'russian', 'lithuanian'],
   'Middle Eastern': ['turkish', 'persian'],
-  'South Asian': ['tamil'],
+  'South Asian': ['tamil', 'bengali'],
   'Southeast Asian': ['bahasa', 'malay']
 };
 

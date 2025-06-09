@@ -61,7 +61,7 @@ const SidebarMenu = () => {
             >
               <span className="section-icon">🧭</span>
               <span className="section-title">Qibla Direction</span>
-              <span className={`toggle-icon ${activeSection === 'qibla' ? 'open' : ''}`}>▶</span>
+              <span className={`toggle-icon ${activeSection === 'qibla' ? 'open' : ''}`}>▼</span>
             </div>
             {activeSection === 'qibla' && (
               <div className="sidebar-section-content">
@@ -78,7 +78,7 @@ const SidebarMenu = () => {
             >
               <span className="section-icon">🕌</span>
               <span className="section-title">Prayer Times</span>
-              <span className={`toggle-icon ${activeSection === 'prayer' ? 'open' : ''}`}>▶</span>
+              <span className={`toggle-icon ${activeSection === 'prayer' ? 'open' : ''}`}>▼</span>
             </div>
             {activeSection === 'prayer' && (
               <div className="sidebar-section-content">
@@ -95,7 +95,7 @@ const SidebarMenu = () => {
             >
               <span className="section-icon">📚</span>
               <span className="section-title">Appendices</span>
-              <span className={`toggle-icon ${activeSection === 'appendices' ? 'open' : ''}`}>▶</span>
+              <span className={`toggle-icon ${activeSection === 'appendices' ? 'open' : ''}`}>▼</span>
             </div>
             {activeSection === 'appendices' && (
               <div className="sidebar-section-content">
