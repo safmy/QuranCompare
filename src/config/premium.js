@@ -18,21 +18,32 @@ export const SUBSCRIPTION_ONLY_FEATURES = [
 ];
 
 // Check if user has access to premium features
-export const checkPremiumAccess = (feature) => {
+export const checkPremiumAccess = async (feature) => {
   // Check if this feature requires active subscription
   if (SUBSCRIPTION_ONLY_FEATURES.includes(feature)) {
-    return hasActiveSubscription();
+    return await hasActiveSubscription();
   }
   
   // Check if feature is purchased (will implement payment later)
   const purchasedFeatures = JSON.parse(localStorage.getItem('purchasedFeatures') || '[]');
   
   // Check if user has active subscription (covers all features)
-  return purchasedFeatures.includes(feature) || hasActiveSubscription();
+  return purchasedFeatures.includes(feature) || await hasActiveSubscription();
 };
 
 // Check if user has active subscription
-export const hasActiveSubscription = () => {
+export const hasActiveSubscription = async () => {
+  // Import platform payments utils
+  const { PlatformPayments } = await import('../utils/platformPayments');
+  
+  // Check platform-specific subscription status
+  const status = await PlatformPayments.getSubscriptionStatus();
+  
+  if (status.isActive) {
+    return true;
+  }
+  
+  // Fallback to localStorage for web
   const subscriptionExpiry = localStorage.getItem('subscriptionExpiry');
   const subscriptionStatus = localStorage.getItem('subscriptionStatus');
   

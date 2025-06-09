@@ -1,11 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { appConfig } from '../config/app';
+import { PlatformPayments, PRODUCT_IDS } from '../utils/platformPayments';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
 
 const SubscriptionModal = ({ user, onClose, onSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [platform, setPlatform] = useState('web');
+  const [products, setProducts] = useState([]);
+  
+  useEffect(() => {
+    // Initialize platform-specific payments
+    initializePlatformPayments();
+  }, []);
+  
+  const initializePlatformPayments = async () => {
+    const currentPlatform = PlatformPayments.isIOS() ? 'ios' : 
+                           PlatformPayments.isAndroid() ? 'android' : 'web';
+    setPlatform(currentPlatform);
+    
+    if (currentPlatform !== 'web') {
+      try {
+        setIsLoading(true);
+        const result = await PlatformPayments.initializePayments();
+        if (result.ready && result.products) {
+          setProducts(result.products);
+        }
+      } catch (err) {
+        console.error('Failed to initialize IAP:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
 
   const handleStripeCheckout = async () => {
     try {
@@ -41,7 +69,81 @@ const SubscriptionModal = ({ user, onClose, onSuccess }) => {
       setIsLoading(false);
     }
   };
+  
+  const handleMobilePurchase = async (productId) => {
+    try {
+      setIsLoading(true);
+      setError('');
+      
+      const result = await PlatformPayments.purchaseSubscription(productId);
+      
+      if (result.success) {
+        // Update local storage with subscription status
+        localStorage.setItem('subscriptionStatus', 'active');
+        localStorage.setItem('subscriptionPlatform', platform);
+        
+        // Sync with backend (optional - RevenueCat handles this)
+        try {
+          await fetch(`${API_BASE_URL}/api/payment/sync-mobile-subscription`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: user.email,
+              platform,
+              customerInfo: result.customerInfo
+            })
+          });
+        } catch (syncError) {
+          console.error('Sync error:', syncError);
+        }
+        
+        onSuccess();
+      } else if (result.cancelled) {
+        setError('Purchase cancelled');
+      } else {
+        setError('Purchase failed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Purchase error:', err);
+      setError('Failed to complete purchase. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleRestorePurchases = async () => {
+    try {
+      setIsLoading(true);
+      setError('');
+      
+      const result = await PlatformPayments.restorePurchases();
+      
+      if (result.success && result.isPremium) {
+        localStorage.setItem('subscriptionStatus', 'active');
+        localStorage.setItem('subscriptionPlatform', platform);
+        onSuccess();
+      } else {
+        setError('No active subscriptions found');
+      }
+    } catch (err) {
+      console.error('Restore error:', err);
+      setError('Failed to restore purchases');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  const handleSubscribe = async () => {
+    if (platform === 'web') {
+      handleStripeCheckout();
+    } else {
+      // For mobile, use the monthly subscription by default
+      handleMobilePurchase(PRODUCT_IDS.MONTHLY);
+    }
+  };
+  
   const handlePayPalCheckout = async () => {
     try {
       setIsLoading(true);
@@ -139,32 +241,82 @@ Thank you!`
           </ul>
         </div>
 
-        <h4 style={{ marginBottom: '15px', color: '#333' }}>Payment Options:</h4>
+        <h4 style={{ marginBottom: '15px', color: '#333' }}>
+          {platform === 'web' ? 'Payment Options:' : 'Subscribe to Premium:'}
+        </h4>
 
         <div style={{ marginBottom: '20px' }}>
-          <button
-            onClick={handleStripeCheckout}
-            disabled={isLoading}
-            style={{
-              width: '100%',
-              padding: '15px',
-              marginBottom: '15px',
-              backgroundColor: '#6772e5',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              opacity: isLoading ? 0.7 : 1
-            }}
-          >
-            {isLoading ? 'Creating checkout...' : '💳 Pay with Stripe - £2.99/month'}
-          </button>
+          {platform === 'web' ? (
+            <button
+              onClick={handleStripeCheckout}
+              disabled={isLoading}
+              style={{
+                width: '100%',
+                padding: '15px',
+                marginBottom: '15px',
+                backgroundColor: '#6772e5',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                opacity: isLoading ? 0.7 : 1
+              }}
+            >
+              {isLoading ? 'Creating checkout...' : '💳 Pay with Stripe - £2.99/month'}
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={() => handleMobilePurchase(PRODUCT_IDS.MONTHLY)}
+                disabled={isLoading}
+                style={{
+                  width: '100%',
+                  padding: '15px',
+                  marginBottom: '10px',
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  opacity: isLoading ? 0.7 : 1
+                }}
+              >
+                {isLoading ? 'Processing...' : `Subscribe - ${platform === 'ios' ? '$3.99' : '£2.99'}/month`}
+              </button>
+              
+              <button
+                onClick={handleRestorePurchases}
+                disabled={isLoading}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  marginBottom: '10px',
+                  backgroundColor: 'transparent',
+                  color: '#4CAF50',
+                  border: '2px solid #4CAF50',
+                  borderRadius: '6px',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  opacity: isLoading ? 0.7 : 1
+                }}
+              >
+                🔄 Restore Purchases
+              </button>
+            </>
+          )}
 
           <div style={{
             textAlign: 'center',
