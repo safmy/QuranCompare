@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import VoiceSearchButtonEnhanced from './VoiceSearchButtonEnhanced';
 import { Clipboard } from '@capacitor/clipboard';
+
+// Lazy load the Rashad Media Browser
+const RashadMediaBrowser = lazy(() => import('./RashadMediaBrowser'));
 
 // API endpoint - change this to your deployed API URL in production
 const API_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
@@ -18,6 +21,8 @@ const QuranVectorSearch = ({ savedState = {} }) => {
   const [useRegex, setUseRegex] = useState(savedState.useRegex ?? false);
   const [regexResults, setRegexResults] = useState(savedState.regexResults || []);
   const [quranData, setQuranData] = useState(null);
+  const [showRashadBrowser, setShowRashadBrowser] = useState(false);
+  const [rashadBrowserParams, setRashadBrowserParams] = useState({});
   
   // Long press functionality
   const [longPressTimer, setLongPressTimer] = useState(null);
@@ -1036,43 +1041,61 @@ const QuranVectorSearch = ({ savedState = {} }) => {
                   })()}
                 </div>
               ) : (
-                <div className={result.collection === 'RashadAllMedia' ? 'rashad-media-content' : ''} style={{
-                  fontSize: '15px',
-                  lineHeight: '1.6',
-                  color: '#555',
-                  marginBottom: '10px',
-                  ...(result.collection === 'RashadAllMedia' ? {
-                    maxHeight: '400px',
-                    overflowY: 'scroll',
-                    padding: '15px',
-                    backgroundColor: '#f9f9f9',
-                    borderRadius: '6px',
-                    border: '1px solid #e0e0e0',
-                    position: 'relative',
-                    // Force scrollbar visibility
-                    WebkitOverflowScrolling: 'touch',
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: '#888 #f0f0f0'
-                  } : {})
-                }}>
+                <>
+                  <div className={result.collection === 'RashadAllMedia' ? 'rashad-media-content' : ''} style={{
+                    fontSize: '15px',
+                    lineHeight: '1.6',
+                    color: '#555',
+                    marginBottom: '10px',
+                    ...(result.collection === 'RashadAllMedia' ? {
+                      maxHeight: '400px',
+                      overflowY: 'scroll',
+                      padding: '15px',
+                      backgroundColor: '#f9f9f9',
+                      borderRadius: '6px',
+                      border: '1px solid #e0e0e0',
+                      position: 'relative',
+                      // Force scrollbar visibility
+                      WebkitOverflowScrolling: 'touch',
+                      scrollbarWidth: 'thin',
+                      scrollbarColor: '#888 #f0f0f0'
+                    } : {})
+                  }}>
+                    {highlightSearchTerms(result.content, searchTerm)}
+                  </div>
+                  
+                  {/* Add button to view full transcript for Rashad Media */}
                   {result.collection === 'RashadAllMedia' && (
-                    <div style={{
-                      position: 'sticky',
-                      top: 0,
-                      right: 0,
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                      padding: '2px 8px',
-                      fontSize: '12px',
-                      color: '#666',
-                      borderRadius: '4px',
-                      marginBottom: '10px',
-                      textAlign: 'right'
-                    }}>
-                      📜 Scroll for full transcript
-                    </div>
+                    <button
+                      onClick={() => {
+                        // Extract media info from source
+                        const sourceMatch = result.source?.match(/(Audio|Video)\s+(\d+)/);
+                        if (sourceMatch) {
+                          setRashadBrowserParams({
+                            initialSearchTerm: searchTerm,
+                            initialTimestamp: result.source?.match(/minute\s+([\d:]+)/)?.[1] || '0:00'
+                          });
+                          setShowRashadBrowser(true);
+                        }
+                      }}
+                      style={{
+                        marginTop: '10px',
+                        padding: '8px 16px',
+                        backgroundColor: '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        display: 'inline-block'
+                      }}
+                      onMouseOver={(e) => e.target.style.backgroundColor = '#45a049'}
+                      onMouseOut={(e) => e.target.style.backgroundColor = '#4CAF50'}
+                    >
+                      📖 View Full Transcript
+                    </button>
                   )}
-                  {highlightSearchTerms(result.content, searchTerm)}
-                </div>
+                </>
               )}
               
               {result.source && (
@@ -1157,6 +1180,30 @@ const QuranVectorSearch = ({ savedState = {} }) => {
         </div>
       )}
     </div>
+    
+    {/* Rashad Media Browser Modal */}
+    {showRashadBrowser && (
+      <Suspense fallback={
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          backgroundColor: 'white',
+          padding: '20px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          zIndex: 1000
+        }}>
+          Loading Rashad Media Browser...
+        </div>
+      }>
+        <RashadMediaBrowser 
+          {...rashadBrowserParams}
+          onClose={() => setShowRashadBrowser(false)} 
+        />
+      </Suspense>
+    )}
     </>
   );
 };
