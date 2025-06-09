@@ -7,7 +7,6 @@
     "@capacitor/clipboard": "^7.0.1",
     "@capacitor/core": "^7.2.0",
     "@capacitor/ios": "^7.2.0",
-    "@revenuecat/purchases-capacitor": "^10.3.3",
     "@supabase/supabase-js": "^2.50.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
