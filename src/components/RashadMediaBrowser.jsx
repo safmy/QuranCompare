@@ -16,28 +16,34 @@ const RashadMediaBrowser = ({ initialSearchTerm = '', initialTimestamp = '', onC
   const loadTranscripts = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('rashad_media_full')
-        .select('*')
-        .order('media_type', { ascending: true })
-        .order('media_number', { ascending: true });
+      // For now, show a message that the feature is being set up
+      console.log('Rashad Media Browser: Full transcripts are being prepared');
+      setTranscripts([]);
       
-      if (error) throw error;
-      setTranscripts(data || []);
-      
-      // If we have an initial search term, find and select the best match
-      if (initialSearchTerm && data) {
-        const match = data.find(t => 
-          t.content.toLowerCase().includes(initialSearchTerm.toLowerCase())
-        );
-        if (match) {
-          setSelectedTranscript(match);
-          // Scroll to match after component renders
-          setTimeout(() => scrollToSearchTerm(initialSearchTerm), 100);
-        }
-      }
+      // TODO: Uncomment when table is ready
+      // const { data, error } = await supabase
+      //   .from('rashad_media_full')
+      //   .select('*')
+      //   .order('media_type', { ascending: true })
+      //   .order('media_number', { ascending: true });
+      // 
+      // if (error) throw error;
+      // setTranscripts(data || []);
+      // 
+      // // If we have an initial search term, find and select the best match
+      // if (initialSearchTerm && data) {
+      //   const match = data.find(t => 
+      //     t.content.toLowerCase().includes(initialSearchTerm.toLowerCase())
+      //   );
+      //   if (match) {
+      //     setSelectedTranscript(match);
+      //     // Scroll to match after component renders
+      //     setTimeout(() => scrollToSearchTerm(initialSearchTerm), 100);
+      //   }
+      // }
     } catch (error) {
       console.error('Error loading transcripts:', error);
+      setTranscripts([]);
     }
     setLoading(false);
   };
@@ -178,6 +184,12 @@ const RashadMediaBrowser = ({ initialSearchTerm = '', initialTimestamp = '', onC
           <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#333' }}>Available Transcripts</h3>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>Loading...</div>
+          ) : transcripts.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+              <p style={{ fontSize: '16px', marginBottom: '10px' }}>🚧 Coming Soon!</p>
+              <p style={{ fontSize: '14px' }}>Full transcript browsing is being set up.</p>
+              <p style={{ fontSize: '12px', marginTop: '10px' }}>The search results already show relevant excerpts from the transcripts.</p>
+            </div>
           ) : (
             transcripts.map(transcript => (
               <div

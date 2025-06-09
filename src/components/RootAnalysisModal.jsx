@@ -10,8 +10,8 @@ const RootAnalysisModal = ({
 }) => {
     const [expandedSections, setExpandedSections] = useState({
         overview: true,
-        meanings: true,
         compareOptions: true,
+        meanings: true,
         allVerses: false
     });
     
@@ -140,56 +140,7 @@ const RootAnalysisModal = ({
                     )}
                 </div>
                 
-                {/* Meaning Variations Section */}
-                <div className="analysis-section">
-                    <div 
-                        className="section-header"
-                        onClick={() => toggleSection('meanings')}
-                    >
-                        <span className="section-icon">{expandedSections.meanings ? '▼' : '▶'}</span>
-                        <h4>Meaning Variations ({rootAnalysisData.meaningVariations.length})</h4>
-                    </div>
-                    {expandedSections.meanings && (
-                        <div className="section-content">
-                            <div className="meanings-list">
-                                {rootAnalysisData.meaningVariations.map(([meaning, occurrences], idx) => (
-                                    <div key={idx} className="meaning-item">
-                                        <label className="meaning-checkbox">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedMeanings.has(meaning)}
-                                                onChange={() => toggleMeaningSelection(meaning)}
-                                            />
-                                            <div className="meaning-info">
-                                                <span className="meaning-text">{meaning}</span>
-                                                <span className="meaning-count">({occurrences.length} verses)</span>
-                                            </div>
-                                        </label>
-                                        <div className="meaning-examples">
-                                            {occurrences.slice(0, 3).map((occ, i) => (
-                                                <span key={i} className="example-verse">
-                                                    [{occ.verseRef}]
-                                                    {i < Math.min(2, occurrences.length - 1) && ', '}
-                                                </span>
-                                            ))}
-                                            {occurrences.length > 3 && <span className="more-indicator">...</span>}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            {selectedMeanings.size > 0 && (
-                                <button 
-                                    className="compare-btn primary"
-                                    onClick={compareSelectedMeanings}
-                                >
-                                    Compare Selected Meanings ({selectedMeanings.size})
-                                </button>
-                            )}
-                        </div>
-                    )}
-                </div>
-                
-                {/* Compare Options Section */}
+                {/* Quick Compare Options Section - moved to second position */}
                 <div className="analysis-section">
                     <div 
                         className="section-header"
@@ -278,6 +229,82 @@ const RootAnalysisModal = ({
                         </div>
                     )}
                 </div>
+                
+                {/* Meaning Variations Section - moved to third position */}
+                <div className="analysis-section">
+                    <div 
+                        className="section-header"
+                        onClick={() => toggleSection('meanings')}
+                    >
+                        <span className="section-icon">{expandedSections.meanings ? '▼' : '▶'}</span>
+                        <h4>Meaning Variations ({rootAnalysisData.meaningVariations.length})</h4>
+                    </div>
+                    {expandedSections.meanings && (
+                        <div className="section-content">
+                            <div className="meanings-list">
+                                {rootAnalysisData.meaningVariations.map(([meaning, occurrences], idx) => {
+                                    // Get unique Arabic words for this meaning
+                                    const arabicWords = [...new Set(occurrences.map(occ => occ.arabicWord).filter(word => word))];
+                                    
+                                    return (
+                                        <div key={idx} className="meaning-item">
+                                            <label className="meaning-checkbox">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedMeanings.has(meaning)}
+                                                    onChange={() => toggleMeaningSelection(meaning)}
+                                                />
+                                                <div className="meaning-info">
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                        <span className="meaning-text">{meaning}</span>
+                                                        {arabicWords.length > 0 && (
+                                                            <span style={{ 
+                                                                fontSize: '18px', 
+                                                                fontFamily: 'var(--arabic-font-family)',
+                                                                color: '#666',
+                                                                direction: 'rtl'
+                                                            }}>
+                                                                ({arabicWords.slice(0, 3).join(' / ')}{arabicWords.length > 3 ? ' ...' : ''})
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <span className="meaning-count">({occurrences.length} verses)</span>
+                                                </div>
+                                            </label>
+                                            <div className="meaning-examples">
+                                                {occurrences.slice(0, 3).map((occ, i) => (
+                                                    <span 
+                                                        key={i} 
+                                                        className="example-verse"
+                                                        onClick={() => {
+                                                            // Navigate to the verse when clicked
+                                                            onCompare([occ.verseRef]);
+                                                            onClose();
+                                                        }}
+                                                        style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                                                    >
+                                                        [{occ.verseRef}]
+                                                        {i < Math.min(2, occurrences.length - 1) && ', '}
+                                                    </span>
+                                                ))}
+                                                {occurrences.length > 3 && <span className="more-indicator">...</span>}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            {selectedMeanings.size > 0 && (
+                                <button 
+                                    className="compare-btn primary"
+                                    onClick={compareSelectedMeanings}
+                                >
+                                    Compare Selected Meanings ({selectedMeanings.size})
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
+                
                 
                 {/* All Verses Section */}
                 <div className="analysis-section">
