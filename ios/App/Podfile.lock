@@ -4,11 +4,23 @@ PODS:
   - CapacitorClipboard (7.0.1):
     - Capacitor
   - CapacitorCordova (7.2.0)
+  - PurchasesHybridCommon (13.35.0):
+    - RevenueCat (= 5.27.1)
+  - RevenueCat (5.27.1)
+  - RevenuecatPurchasesCapacitor (10.3.3):
+    - Capacitor
+    - PurchasesHybridCommon (= 13.35.0)
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorClipboard (from `../../node_modules/@capacitor/clipboard`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
+  - "RevenuecatPurchasesCapacitor (from `../../node_modules/@revenuecat/purchases-capacitor`)"
+
+SPEC REPOS:
+  trunk:
+    - PurchasesHybridCommon
+    - RevenueCat
 
 EXTERNAL SOURCES:
   Capacitor:
@@ -17,12 +29,17 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/clipboard"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
+  RevenuecatPurchasesCapacitor:
+    :path: "../../node_modules/@revenuecat/purchases-capacitor"
 
 SPEC CHECKSUMS:
   Capacitor: 03bc7cbdde6a629a8b910a9d7d78c3cc7ed09ea7
   CapacitorClipboard: 70bfdb42b877b320a6e511ab94fa7a6a55d57ecb
   CapacitorCordova: 5967b9ba03915ef1d585469d6e31f31dc49be96f
+  PurchasesHybridCommon: 18288b8ad932cfeb5f142f592d5c65e626a35770
+  RevenueCat: 87171c9f2412778354c8523f5625d1fece2560a5
+  RevenuecatPurchasesCapacitor: 33951e2c8dd0bb552e043632d8383b7812ddb324
 
-PODFILE CHECKSUM: 8d16e448d571b48c94baca679948a26433e4d269
+PODFILE CHECKSUM: 2b154d13105d2cf4ec3b7b578f8fe0e26090f0d2
 
 COCOAPODS: 1.16.2

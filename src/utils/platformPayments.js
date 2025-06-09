@@ -1,5 +1,5 @@
 import { Capacitor } from '@capacitor/core';
-import Purchases, { LOG_LEVEL, PurchasesOffering } from '@revenuecat/purchases-capacitor';
+import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
 
 // Platform-specific payment handling
 export const PlatformPayments = {

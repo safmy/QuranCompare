@@ -4,7 +4,7 @@ import QuranSearch from './components/QuranSearch';
 import QuranVectorSearch from './components/QuranVectorSearch';
 import QuranVerseLookup from './components/QuranVerseLookup';
 import QuranCompare from './components/QuranCompare';
-import DebaterBot from './components/DebaterBot';
+// import DebaterBot from './components/DebaterBot'; // Removed chatbot
 import AuthCallback from './components/AuthCallback';
 import PaymentSuccess from './components/PaymentSuccess';
 import PaymentCancel from './components/PaymentCancel';
@@ -13,7 +13,7 @@ import UserProfile from './components/UserProfile';
 import SidebarMenu from './components/SidebarMenu';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
-import { checkPremiumAccess, PREMIUM_FEATURES } from './config/premium';
+// import { checkPremiumAccess, PREMIUM_FEATURES } from './config/premium'; // Not needed without chatbot
 
 function AppContent() {
   const { currentLanguage, changeLanguage } = useLanguage();
@@ -126,20 +126,7 @@ function AppContent() {
       /> 
     },
     { id: 'compare', label: 'Compare', component: <QuranCompare key={compareVerses.join(',')} initialVerses={compareVerses} /> },
-    { 
-      id: 'debater', 
-      label: (
-        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          AI Debater
-          {checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT) ? (
-            <span style={{ fontSize: '10px', backgroundColor: 'rgba(76, 175, 80, 0.8)', padding: '2px 6px', borderRadius: '10px' }}>PRO</span>
-          ) : (
-            <span style={{ fontSize: '10px', backgroundColor: 'rgba(255, 152, 0, 0.8)', padding: '2px 6px', borderRadius: '10px' }}>SUB</span>
-          )}
-        </span>
-      ), 
-      component: <DebaterBot />
-    },
+    // AI Debater removed - subscription feature
     {
       id: 'discord',
       label: (
@@ -261,7 +248,7 @@ function AppContent() {
               top: "-8px",
               right: "0"
             }}>
-              v1.0.7
+              v1.0.8
             </span>
           </div>
           <div style={{
