@@ -167,9 +167,19 @@ function AppContent() {
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
-          gap: "15px"
+          gap: "15px",
+          position: "relative"
         }}>
-          <h1 style={{fontSize: "24px", fontWeight: "bold", margin: 0}}>Quran Analysis & Comparison Tool</h1>
+          <div style={{width: "60px"}}></div> {/* Spacer for hamburger menu */}
+          <h1 style={{
+            fontSize: "24px", 
+            fontWeight: "bold", 
+            margin: 0,
+            flex: 1,
+            textAlign: "center"
+          }}>
+            Quran Analysis & Comparison Tool
+          </h1>
           <div style={{
             display: "flex",
             alignItems: "center",

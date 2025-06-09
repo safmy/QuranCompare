@@ -11,7 +11,7 @@ const PrayerTimes = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [timezone, setTimezone] = useState('UTC');
 
-  // Calculate sun times using astronomical calculations
+  // Calculate sun times using the same logic as Discord bot
   const calculateSunTimes = (lat, lon, date, timezone) => {
     // Convert date to Julian day number
     const a = Math.floor((14 - (date.getMonth() + 1)) / 12);
@@ -36,35 +36,65 @@ const PrayerTimes = () => {
     const latRad = lat * Math.PI / 180;
     
     // Calculate sunrise/sunset hour angle
-    const omega_sunset = Math.acos(-Math.tan(latRad) * Math.tan(delta));
+    const cosOmegaSunset = -Math.tan(latRad) * Math.tan(delta);
+    let omega_sunset = null;
     
-    // Calculate dawn/dusk with astronomical twilight (18 degrees)
-    const twilightAngle = -18 * Math.PI / 180;
-    let omega_dawn;
+    if (Math.abs(cosOmegaSunset) <= 1) {
+      omega_sunset = Math.acos(cosOmegaSunset);
+    }
     
-    try {
-      omega_dawn = Math.acos((Math.sin(twilightAngle) - Math.sin(latRad) * Math.sin(delta)) / 
-                             (Math.cos(latRad) * Math.cos(delta)));
-    } catch (e) {
-      // If calculation fails, use civil twilight (6 degrees)
-      const civilTwilightAngle = -6 * Math.PI / 180;
-      try {
-        omega_dawn = Math.acos((Math.sin(civilTwilightAngle) - Math.sin(latRad) * Math.sin(delta)) / 
-                               (Math.cos(latRad) * Math.cos(delta)));
-      } catch (e2) {
-        // Continuous twilight
-        omega_dawn = null;
+    // Calculate dawn/dusk with astronomical twilight (18 degrees below horizon)
+    const astronomicalAngle = -18 * Math.PI / 180;
+    const nauticalAngle = -12 * Math.PI / 180;
+    const civilAngle = -6 * Math.PI / 180;
+    
+    let omega_dawn = null;
+    let twilightType = 'ASTRONOMICAL';
+    
+    // Try astronomical twilight first (18 degrees)
+    const cosOmegaAstronomical = (Math.sin(astronomicalAngle) - Math.sin(latRad) * Math.sin(delta)) / 
+                                  (Math.cos(latRad) * Math.cos(delta));
+    
+    if (Math.abs(cosOmegaAstronomical) <= 1) {
+      omega_dawn = Math.acos(cosOmegaAstronomical);
+    } else {
+      // Try nautical twilight (12 degrees)
+      const cosOmegaNautical = (Math.sin(nauticalAngle) - Math.sin(latRad) * Math.sin(delta)) / 
+                               (Math.cos(latRad) * Math.cos(delta));
+      
+      if (Math.abs(cosOmegaNautical) <= 1) {
+        omega_dawn = Math.acos(cosOmegaNautical);
+        twilightType = 'NAUTICAL';
+      } else {
+        // Try civil twilight (6 degrees)
+        const cosOmegaCivil = (Math.sin(civilAngle) - Math.sin(latRad) * Math.sin(delta)) / 
+                              (Math.cos(latRad) * Math.cos(delta));
+        
+        if (Math.abs(cosOmegaCivil) <= 1) {
+          omega_dawn = Math.acos(cosOmegaCivil);
+          twilightType = 'CIVIL';
+        } else {
+          twilightType = 'CONTINUOUS_TWILIGHT';
+        }
       }
     }
 
-    // Calculate times
+    // Calculate times in decimal hours
     const noon = 12 - E / 60 - lon / 15;
-    const sunrise = noon - omega_sunset * 12 / Math.PI;
-    const sunset = noon + omega_sunset * 12 / Math.PI;
-    const afternoon = noon + (sunset - noon) / 2;
     
+    let sunrise = null;
+    let sunset = null;
     let dawn = null;
     let dusk = null;
+    let afternoon = null;
+    
+    if (omega_sunset !== null) {
+      sunrise = noon - omega_sunset * 12 / Math.PI;
+      sunset = noon + omega_sunset * 12 / Math.PI;
+      
+      // Calculate afternoon (Asr) as the exact midpoint between noon and sunset
+      afternoon = noon + (sunset - noon) / 2;
+    }
     
     if (omega_dawn !== null) {
       dawn = noon - omega_dawn * 12 / Math.PI;
@@ -96,7 +126,7 @@ const PrayerTimes = () => {
       afternoon: convertToTime(afternoon),
       sunset: convertToTime(sunset),
       dusk: convertToTime(dusk),
-      twilightType: omega_dawn === null ? 'Continuous' : 'Astronomical'
+      twilightType: twilightType
     };
   };
 
@@ -184,25 +214,8 @@ const PrayerTimes = () => {
         setLocation({ lat: parseFloat(lat), lon: parseFloat(lon) });
         setCityName(display_name.split(',')[0]);
         
-        // Try to get timezone from the location
-        let detectedTimezone;
-        try {
-          // Use timezone lookup service
-          const tzResponse = await fetch(
-            `https://worldtimeapi.org/api/timezone/Etc/GMT${Math.round(-lon / 15)}`
-          );
-          if (tzResponse.ok) {
-            const tzData = await tzResponse.json();
-            detectedTimezone = tzData.timezone;
-          } else {
-            // Fallback to browser timezone
-            detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-          }
-        } catch (e) {
-          // Use browser timezone as fallback
-          detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        }
-        
+        // Use browser timezone as it's more reliable than estimating
+        const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         setTimezone(detectedTimezone);
         
         // Calculate prayer times
@@ -236,7 +249,7 @@ const PrayerTimes = () => {
       <div className="prayer-times-header">
         <h4>Prayer Times (Sun-based)</h4>
         <p className="prayer-description">
-          Based on sun positions: Dawn (Fajr), Sunrise, Noon (Dhuhr), Afternoon (Asr), Sunset (Maghrib), and Night (Isha/Dusk)
+          Based on sun positions with Islamic prayer names
         </p>
       </div>
 
@@ -315,7 +328,7 @@ const PrayerTimes = () => {
 
           {prayerTimes.twilightType && (
             <div className="twilight-info">
-              <small>{prayerTimes.twilightType} twilight</small>
+              <small>Twilight: {prayerTimes.twilightType}</small>
             </div>
           )}
         </div>
