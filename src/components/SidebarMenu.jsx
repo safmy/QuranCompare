@@ -34,14 +34,16 @@ const SidebarMenu = () => {
 
   return (
     <>
-      {/* Hamburger Menu Button */}
-      {!isOpen && (
-        <div className="sidebar-menu-button" onClick={toggleMenu}>
-          <div className="hamburger-line"></div>
-          <div className="hamburger-line"></div>
-          <div className="hamburger-line"></div>
-        </div>
-      )}
+      {/* Modern Hamburger Menu Button */}
+      <button 
+        className={`hamburger-button ${isOpen ? 'open' : ''}`} 
+        onClick={toggleMenu}
+        aria-label="Toggle menu"
+      >
+        <span className="hamburger-line"></span>
+        <span className="hamburger-line"></span>
+        <span className="hamburger-line"></span>
+      </button>
 
       {/* Sidebar Menu */}
       <div className={`sidebar-menu ${isOpen ? 'open' : ''} ${activeSection === 'appendices' ? 'expanded' : ''}`}>

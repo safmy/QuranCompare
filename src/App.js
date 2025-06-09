@@ -69,6 +69,10 @@ function AppContent() {
     const handleOpenVerseRange = (event) => {
       setVerseRangeForLookup(event.detail.range);
       setActiveTab('lookup');
+      // Scroll to top when switching to lookup tab
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
     };
     
     // Listen for navigate to compare events
@@ -153,14 +157,16 @@ function AppContent() {
 
   return (
     <div className="App">
-      <SidebarMenu />
       <header style={{
         backgroundColor: "#6b46c1",
         padding: "20px",
         color: "white",
         display: "flex",
         flexDirection: "column",
-        gap: "15px"
+        gap: "15px",
+        position: "sticky",
+        top: 0,
+        zIndex: 999
       }}>
         <div style={{
           display: "flex",
@@ -170,16 +176,23 @@ function AppContent() {
           gap: "15px",
           position: "relative"
         }}>
-          <div style={{width: "60px"}}></div> {/* Spacer for hamburger menu */}
-          <h1 style={{
-            fontSize: "24px", 
-            fontWeight: "bold", 
-            margin: 0,
-            flex: 1,
-            textAlign: "center"
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "15px",
+            flex: 1
           }}>
-            Quran Analysis & Comparison Tool
-          </h1>
+            <SidebarMenu />
+            <h1 style={{
+              fontSize: "24px", 
+              fontWeight: "bold", 
+              margin: 0,
+              flex: 1,
+              textAlign: "center"
+            }}>
+              Quran Analysis & Comparison Tool
+            </h1>
+          </div>
           <div style={{
             display: "flex",
             alignItems: "center",

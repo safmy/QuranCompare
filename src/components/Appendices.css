@@ -25,21 +25,40 @@
 /* Grid Layout */
 .appendices-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
   margin-bottom: 40px;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 1200px) {
+  .appendices-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* When in expanded sidebar view, show more columns */
+.sidebar-menu.expanded .appendices-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (min-width: 1400px) {
+  .sidebar-menu.expanded .appendices-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .appendix-card {
   background: #f8f9fa;
   border: 1px solid #e9ecef;
   border-radius: 8px;
-  padding: 20px;
+  padding: 15px;
   text-decoration: none;
   color: inherit;
   transition: all 0.2s ease;
   cursor: pointer;
   display: block;
+  min-height: 120px;
 }
 
 .appendix-card:hover {
@@ -50,20 +69,20 @@
 }
 
 .appendix-card-title {
-  margin: 0 0 12px 0;
-  font-size: 1.1rem;
+  margin: 0 0 8px 0;
+  font-size: 1rem;
   font-weight: 600;
   color: #333;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 .appendix-card-preview {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #666;
-  line-height: 1.5;
+  line-height: 1.4;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -135,8 +154,8 @@
 /* Mobile responsive */
 @media (max-width: 768px) {
   .appendices-grid {
-    grid-template-columns: 1fr;
-    gap: 15px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
   
   .appendices-footer {
@@ -147,18 +166,23 @@
 
 @media (max-width: 400px) {
   .appendices-container {
-    padding: 15px;
+    padding: 10px;
+  }
+  
+  .appendices-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
   
   .appendix-card {
-    padding: 15px;
+    padding: 12px;
   }
   
   .appendix-card-title {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
   
   .appendix-card-preview {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
 }

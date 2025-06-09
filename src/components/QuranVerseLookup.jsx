@@ -401,6 +401,10 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                 // Trigger a new search with the subtitle range
                 setTimeout(() => {
                     fetchVerses();
+                    // Scroll to top after verses are loaded
+                    setTimeout(() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }, 500);
                 }, 100);
             }
         } catch (err) {
@@ -410,6 +414,10 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
             setSearchMode('range');
             setTimeout(() => {
                 fetchVerses();
+                // Scroll to top after verses are loaded
+                setTimeout(() => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 500);
             }, 100);
         }
     };
@@ -967,20 +975,8 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                         
                         <div 
                             className="verse-card"
-                            onMouseDown={(e) => handleLongPressStart(verse, e)}
-                            onMouseUp={handleLongPressEnd}
-                            onMouseLeave={handleLongPressEnd}
-                            onTouchStart={(e) => handleLongPressStart(verse, e)}
-                            onTouchEnd={handleLongPressEnd}
-                            onTouchCancel={handleLongPressEnd}
-                            onContextMenu={(e) => e.preventDefault()} // Prevent right-click menu on mobile
                             style={{
-                                position: 'relative',
-                                cursor: 'pointer',
-                                userSelect: 'none',
-                                WebkitTouchCallout: 'none', // Disable iOS callout
-                                WebkitUserSelect: 'none',
-                                touchAction: 'manipulation' // Better touch handling
+                                position: 'relative'
                             }}
                         >
                             <div className="verse-header">
@@ -1044,7 +1040,17 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                                 </div>
                             )}
                             
-                            <div className="translation-text" style={{ direction: getLanguageConfig(currentLanguage).direction }}>
+                            <div 
+                                className="translation-text" 
+                                style={{ direction: getLanguageConfig(currentLanguage).direction }}
+                                onMouseDown={(e) => handleLongPressStart(verse, e)}
+                                onMouseUp={handleLongPressEnd}
+                                onMouseLeave={handleLongPressEnd}
+                                onTouchStart={(e) => handleLongPressStart(verse, e)}
+                                onTouchEnd={handleLongPressEnd}
+                                onTouchCancel={handleLongPressEnd}
+                                onContextMenu={(e) => e.preventDefault()}
+                            >
                                 {getTranslationText(verse, currentLanguage)}
                             </div>
                             
