@@ -126,7 +126,7 @@ function AppContent() {
       /> 
     },
     { id: 'compare', label: 'Compare', component: <QuranCompare key={compareVerses.join(',')} initialVerses={compareVerses} /> },
-    { id: 'debater', label: '🤖 AI Debater', component: <DebaterBot /> }
+    { id: 'debater', label: '🤖 AI Debater', component: <DebaterBot /> },
     {
       id: 'discord',
       label: (
