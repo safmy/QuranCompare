@@ -5,44 +5,44 @@ const Appendices = () => {
   const [localPDFs, setLocalPDFs] = useState({});
   
   const appendices = [
-    { number: 1, title: "One of the Great Miracles", url: "https://www.masjidtucson.org/quran/appendices/appendix1.html" },
-    { number: 2, title: "God's Messenger of the Covenant", url: "https://www.masjidtucson.org/quran/appendices/appendix2.html" },
-    { number: 3, title: "We Made the Quran Easy", url: "https://www.masjidtucson.org/quran/appendices/appendix3.html" },
-    { number: 4, title: "Why Was the Quran Revealed in Arabic?", url: "https://www.masjidtucson.org/quran/appendices/appendix4.html" },
-    { number: 5, title: "The Quran's Common Denominator", url: "https://www.masjidtucson.org/quran/appendices/appendix5.html" },
-    { number: 6, title: "Greatest Criterion", url: "https://www.masjidtucson.org/quran/appendices/appendix6.html" },
-    { number: 7, title: "The Miracle of the Quran", url: "https://www.masjidtucson.org/quran/appendices/appendix7.html" },
-    { number: 8, title: "The Myth of Intercession", url: "https://www.masjidtucson.org/quran/appendices/appendix8.html" },
-    { number: 9, title: "Abraham: Founder of Islam", url: "https://www.masjidtucson.org/quran/appendices/appendix9.html" },
-    { number: 10, title: "The Day of Resurrection", url: "https://www.masjidtucson.org/quran/appendices/appendix10.html" },
-    { number: 11, title: "God's Usage of the Plural", url: "https://www.masjidtucson.org/quran/appendices/appendix11.html" },
-    { number: 12, title: "Role of the Prophet Muhammad", url: "https://www.masjidtucson.org/quran/appendices/appendix12.html" },
-    { number: 13, title: "The First Pillar of Islam", url: "https://www.masjidtucson.org/quran/appendices/appendix13.html" },
-    { number: 14, title: "The Contact Prayers (Salat)", url: "https://www.masjidtucson.org/quran/appendices/appendix14.html" },
-    { number: 15, title: "The Obligatory Charity (Zakat)", url: "https://www.masjidtucson.org/quran/appendices/appendix15.html" },
-    { number: 16, title: "Dietary Prohibitions", url: "https://www.masjidtucson.org/quran/appendices/appendix16.html" },
-    { number: 17, title: "Death", url: "https://www.masjidtucson.org/quran/appendices/appendix17.html" },
-    { number: 18, title: "Quran: The Ultimate Reference", url: "https://www.masjidtucson.org/quran/appendices/appendix18.html" },
-    { number: 19, title: "Hadith & Sunna: Satan's Hypocritical Inventions", url: "https://www.masjidtucson.org/quran/appendices/appendix19.html" },
-    { number: 20, title: "Quran: Unlike Any Other Book", url: "https://www.masjidtucson.org/quran/appendices/appendix20.html" },
-    { number: 21, title: "Satan's Clever Trick", url: "https://www.masjidtucson.org/quran/appendices/appendix21.html" },
-    { number: 22, title: "Jesus", url: "https://www.masjidtucson.org/quran/appendices/appendix22.html" },
-    { number: 23, title: "Mathematical Coding of the Quran", url: "https://www.masjidtucson.org/quran/appendices/appendix23.html" },
-    { number: 24, title: "Tampering With the Word of God", url: "https://www.masjidtucson.org/quran/appendices/appendix24.html" },
-    { number: 25, title: "The End of the World", url: "https://www.masjidtucson.org/quran/appendices/appendix25.html" },
-    { number: 26, title: "The Three Messengers of Islam", url: "https://www.masjidtucson.org/quran/appendices/appendix26.html" },
-    { number: 27, title: "Muhammad's Household", url: "https://www.masjidtucson.org/quran/appendices/appendix27.html" },
-    { number: 28, title: "The Age of 40", url: "https://www.masjidtucson.org/quran/appendices/appendix28.html" },
-    { number: 29, title: "The Missing Basmalah", url: "https://www.masjidtucson.org/quran/appendices/appendix29.html" },
-    { number: 30, title: "Messengers vs. Prophets", url: "https://www.masjidtucson.org/quran/appendices/appendix30.html" },
-    { number: 31, title: "Chronological Order of Revelation", url: "https://www.masjidtucson.org/quran/appendices/appendix31.html" },
-    { number: 32, title: "God's Usage of the Plural", url: "https://www.masjidtucson.org/quran/appendices/appendix32.html" },
-    { number: 33, title: "Why Did God Send a Messenger Now?", url: "https://www.masjidtucson.org/quran/appendices/appendix33.html" },
-    { number: 34, title: "Virginity", url: "https://www.masjidtucson.org/quran/appendices/appendix34.html" },
-    { number: 35, title: "Drugs & Alcohol", url: "https://www.masjidtucson.org/quran/appendices/appendix35.html" },
-    { number: 36, title: "What Price A Great Nation", url: "https://www.masjidtucson.org/quran/appendices/appendix36.html" },
-    { number: 37, title: "The Crucial Age of 40", url: "https://www.masjidtucson.org/quran/appendices/appendix37.html" },
-    { number: 38, title: "19 - The Creator's Signature", url: "https://www.masjidtucson.org/quran/appendices/appendix38.html" }
+    { number: 1, title: "One of the Great Miracles", preview: "Mathematical proof of divine authorship of the Quran" },
+    { number: 2, title: "God's Messenger of the Covenant", preview: "The prophesied messenger to come after Muhammad" },
+    { number: 3, title: "We Made the Quran Easy", preview: "God's promise to facilitate understanding of the Quran" },
+    { number: 4, title: "Why Was the Quran Revealed in Arabic?", preview: "The significance of Arabic as the language of revelation" },
+    { number: 5, title: "The Quran's Common Denominator", preview: "The miraculous mathematical code based on number 19" },
+    { number: 6, title: "Greatest Criterion", preview: "The Quran as the ultimate standard for truth" },
+    { number: 7, title: "The Miracle of the Quran", preview: "Physical, mathematical, and literary miracles" },
+    { number: 8, title: "The Myth of Intercession", preview: "Exposing the false doctrine of intercession" },
+    { number: 9, title: "Abraham: Original Messenger of Islam", preview: "One of the prevalent myths is that Muhammad was the founder of Islam..." },
+    { number: 10, title: "God's Usage of the Plural Tense", preview: "Whenever the first person plural form is used by the Almighty, it invariably indicates participation of other entities, such as the angels..." },
+    { number: 11, title: "The Day of Resurrection", preview: "The earth will shine with the light of God (39:69) as He comes to our universe, together with the angels (89:22)..." },
+    { number: 12, title: "Role of the Prophet Muhammad", preview: "The Prophet's sole mission was to deliver Quran, the whole Quran, and nothing but Quran (3:20; 5:48-50, 5:92, 5:99; 6:19; 13:40; 16:35, 16:82; 24:54; 29:18; 42:48; 64:12)..." },
+    { number: 13, title: "The First Pillar of Islam", preview: "Verse 3:18 states the First Pillar of Islam (Submission): 'God bears witness that there is no other god besides Him, and so do the angels and those who possess knowledge.'..." },
+    { number: 14, title: "Predestination", preview: "God fully knows what kind of decision each of us is destined to make; He knows which of us are going to Heaven and which are going to Hell..." },
+    { number: 15, title: "Religious Duties: Gift from God", preview: "When Abraham implored God in 14:40, he did not ask for wealth or health; the gift he implored for was: 'Please God, make me one who observes the contact prayers (Salat).'..." },
+    { number: 16, title: "Dietary Prohibition", preview: "The Quran teaches that God is extremely displeased with those who prohibit anything that was not specifically prohibited in the Quran (16:112-116)..." },
+    { number: 17, title: "Death", preview: "At the moment of death, everyone knows his or her destiny; Heaven or Hell..." },
+    { number: 18, title: "Quran: The Ultimate Reference", preview: "God's final scripture to humanity" },
+    { number: 19, title: "Hadith & Sunna: Satan's Hypocritical Inventions", preview: "Exposing fabricated religious sources" },
+    { number: 20, title: "Quran: Unlike Any Other Book", preview: "The unique characteristics of the divine scripture" },
+    { number: 21, title: "Satan's Clever Trick", preview: "How Satan misleads people away from God's truth" },
+    { number: 22, title: "Jesus", preview: "The truth about Jesus in the Quran" },
+    { number: 23, title: "Mathematical Coding of the Quran", preview: "Detailed analysis of the mathematical miracle" },
+    { number: 24, title: "Tampering With the Word of God", preview: "The two false verses exposed" },
+    { number: 25, title: "The End of the World", preview: "Prophecies and signs of the end times" },
+    { number: 26, title: "The Three Messengers of Islam", preview: "Abraham, Muhammad, and Rashad" },
+    { number: 27, title: "Muhammad's Household", preview: "The true story of the prophet's family" },
+    { number: 28, title: "The Age of 40", preview: "The significance of age 40 in God's system" },
+    { number: 29, title: "The Missing Basmalah", preview: "The mystery of Sura 9's missing opening" },
+    { number: 30, title: "Messengers vs. Prophets", preview: "The distinction between messengers and prophets" },
+    { number: 31, title: "Chronological Order of Revelation", preview: "The order in which the Quran was revealed" },
+    { number: 32, title: "God's Usage of the Plural", preview: "When God uses 'We' in the Quran" },
+    { number: 33, title: "Why Did God Send a Messenger Now?", preview: "The timing of God's final messenger" },
+    { number: 34, title: "Virginity", preview: "Islamic perspective on virginity and marriage" },
+    { number: 35, title: "Drugs & Alcohol", preview: "Intoxicants and their prohibition" },
+    { number: 36, title: "What Price A Great Nation", preview: "Lessons from history about nations' rise and fall" },
+    { number: 37, title: "The Crucial Age of 40", preview: "Why 40 is the age of spiritual maturity" },
+    { number: 38, title: "19 - The Creator's Signature", preview: "The significance of number 19 in the Quran" }
   ];
   
   // Check for local PDFs on component mount
@@ -89,6 +89,7 @@ const Appendices = () => {
     if (localPDFs[appendix.number]) {
       e.preventDefault();
       const paddedNumber = appendix.number.toString().padStart(2, '0');
+      // Open PDF in new tab for reading (not download)
       window.open(`/appendices/appendix_${paddedNumber}.pdf`, '_blank');
     }
     // Otherwise, let the default link behavior happen
@@ -101,77 +102,37 @@ const Appendices = () => {
         <p className="appendices-description">
           Essential references for understanding the Final Testament
         </p>
-        <div className="discord-invite">
+      </div>
+
+      <div className="appendices-grid">
+        {appendices.map((appendix) => (
+          <a
+            key={appendix.number}
+            href={localPDFs[appendix.number] ? `/appendices/appendix_${appendix.number.toString().padStart(2, '0')}.pdf` : `https://www.masjidtucson.org/quran/appendices/appendix${appendix.number}.html`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="appendix-card"
+          >
+            <h3 className="appendix-card-title">
+              {appendix.number}. {appendix.title} →
+            </h3>
+            <p className="appendix-card-preview">
+              {appendix.preview}
+            </p>
+          </a>
+        ))}
+      </div>
+
+      <div className="appendices-footer">
+        <div className="download-section">
+          <h5>Downloads & PDFs</h5>
+          <p>Download appendices for offline reading</p>
+        </div>
+        <div className="discord-section">
           <a href="https://discord.gg/submission" target="_blank" rel="noopener noreferrer" className="discord-link">
             💬 Join our Discord Community
           </a>
         </div>
-        
-        {localPDFs.complete && (
-          <div className="complete-pdf-download">
-            <a 
-              href="/appendices/appendices_complete.pdf" 
-              download="Quran_Appendices_Complete.pdf"
-              className="download-complete-link"
-            >
-              📥 Download All Appendices (PDF)
-            </a>
-          </div>
-        )}
-      </div>
-
-      <div className="appendices-list">
-        {appendices.map((appendix) => (
-          <div key={appendix.number} className="appendix-item-wrapper">
-            <a
-              href={appendix.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="appendix-item"
-              onClick={(e) => handleAppendixClick(e, appendix)}
-            >
-              <div className="appendix-number">
-                {appendix.number}
-              </div>
-              <div className="appendix-content">
-                <h5 className="appendix-title">{appendix.title}</h5>
-                <p className="appendix-preview">
-                  {appendix.number === 1 && "Mathematical proof of divine authorship"}
-                  {appendix.number === 2 && "The prophesied messenger after Muhammad"}
-                  {appendix.number === 5 && "The miraculous mathematical code"}
-                  {appendix.number === 19 && "Exposing fabricated religious sources"}
-                  {appendix.number === 38 && "The significance of number 19"}
-                </p>
-              </div>
-              <div className="appendix-arrow">
-                {localPDFs[appendix.number] ? '📄' : '🔗'}
-              </div>
-            </a>
-            
-            {localPDFs[appendix.number] && (
-              <div className="appendix-actions">
-                <button
-                  className="pdf-button view-button"
-                  onClick={() => {
-                    const paddedNumber = appendix.number.toString().padStart(2, '0');
-                    window.open(`/appendices/appendix_${paddedNumber}.pdf`, '_blank');
-                  }}
-                  title="View PDF"
-                >
-                  👁️
-                </button>
-                <a
-                  href={`/appendices/appendix_${appendix.number.toString().padStart(2, '0')}.pdf`}
-                  download={`Appendix_${appendix.number}_${appendix.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}
-                  className="pdf-button download-button"
-                  title="Download PDF"
-                >
-                  💾
-                </a>
-              </div>
-            )}
-          </div>
-        ))}
       </div>
     </div>
   );
