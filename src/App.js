@@ -141,6 +141,66 @@ function AppContent() {
         </span>
       ), 
       component: <DebaterBot />
+    },
+    {
+      id: 'discord',
+      label: (
+        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          Discord
+          <span style={{ fontSize: '16px' }}>💬</span>
+        </span>
+      ),
+      component: (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          minHeight: '60vh',
+          flexDirection: 'column',
+          gap: '20px',
+          padding: '20px'
+        }}>
+          <h2 style={{ color: '#6b46c1', marginBottom: '10px' }}>Join Our Discord Community</h2>
+          <p style={{ fontSize: '18px', color: '#666', textAlign: 'center', maxWidth: '600px' }}>
+            Connect with other users, ask questions, share insights, and discuss the Quran with our community.
+          </p>
+          <a 
+            href="https://discord.gg/wikisubmission" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '15px 30px',
+              background: '#5865F2',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '8px',
+              fontSize: '18px',
+              fontWeight: '600',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 12px rgba(88, 101, 242, 0.3)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#4752C4';
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 6px 16px rgba(88, 101, 242, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = '#5865F2';
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 12px rgba(88, 101, 242, 0.3)';
+            }}
+          >
+            <span style={{ fontSize: '24px' }}>💬</span>
+            Join Discord Server
+          </a>
+          <p style={{ fontSize: '14px', color: '#999', marginTop: '10px' }}>
+            Free to join • Active community • Daily discussions
+          </p>
+        </div>
+      )
     }
   ];
 

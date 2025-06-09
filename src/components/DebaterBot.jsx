@@ -7,6 +7,63 @@ import SubscriptionModal from './SubscriptionModal';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
 
+// Dearabization function
+const dearabizeText = (text) => {
+  if (!text) return text;
+  
+  // Define replacements
+  const replacements = {
+    // Primary replacements (case-insensitive)
+    'allah': 'God',
+    'muslim': 'Submitter',
+    'muslims': 'Submitters',
+    'islam': 'Submission',
+    'islamic': 'Submission',
+    'sura': 'Chapter',
+    'suras': 'Chapters',
+    'surah': 'Chapter',
+    'surahs': 'Chapters',
+    // Additional related terms
+    'muslim\'s': 'Submitter\'s',
+    'muslims\'': 'Submitters\'',
+    'islamically': 'in Submission',
+    'islamic teachings': 'Submission teachings',
+    'islamic faith': 'faith of Submission',
+    'islamic belief': 'belief in Submission',
+    'islamic practice': 'practice of Submission',
+    'islamic law': 'law of Submission',
+    'islamic tradition': 'tradition of Submission',
+    'islamic scripture': 'scripture of Submission',
+    'islamic religion': 'religion of Submission',
+    'the muslims': 'the Submitters',
+    'a muslim': 'a Submitter',
+    'as muslims': 'as Submitters',
+    'for muslims': 'for Submitters',
+    'true muslims': 'true Submitters',
+    'devout muslim': 'devout Submitter',
+    'devout muslims': 'devout Submitters',
+    'practicing muslim': 'practicing Submitter',
+    'practicing muslims': 'practicing Submitters'
+  };
+  
+  let result = text;
+  
+  // Apply replacements (case-insensitive)
+  Object.entries(replacements).forEach(([from, to]) => {
+    // Create regex for whole word matching
+    const regex = new RegExp(`\\b${from}\\b`, 'gi');
+    result = result.replace(regex, (match) => {
+      // Preserve original case
+      if (match[0] === match[0].toUpperCase()) {
+        return to[0].toUpperCase() + to.slice(1);
+      }
+      return to;
+    });
+  });
+  
+  return result;
+};
+
 const DebaterBot = () => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -274,7 +331,7 @@ const DebaterBot = () => {
       const botMessage = {
         id: Date.now() + 1,
         role: 'assistant',
-        content: data.response,
+        content: dearabizeText(data.response),
         timestamp: new Date()
       };
 
@@ -337,7 +394,7 @@ const DebaterBot = () => {
       const botMessage = {
         id: Date.now() + 1,
         role: 'assistant',
-        content: data.response,
+        content: dearabizeText(data.response),
         timestamp: new Date()
       };
 
@@ -370,29 +427,64 @@ const DebaterBot = () => {
     // Regex to match verse references like "2:255" or "[2:255]"
     const verseRegex = /\[?(\d{1,3}):(\d{1,3})\]?/g;
     
-    const parts = [];
-    let lastIndex = 0;
-    let match;
+    // Regex to match Rashad-related terms
+    const rashadTerms = /\b(Rashad Khalifa|Dr\. Rashad|Dr Rashad|Rashad's|messenger of the covenant|God's messenger|the messenger|final testament|mathematical miracle|code 19|miracle 19)\b/gi;
     
-    while ((match = verseRegex.exec(content)) !== null) {
+    const parts = [];
+    let processedText = content;
+    
+    // First, replace verse references
+    const verseMatches = [];
+    let verseMatch;
+    while ((verseMatch = verseRegex.exec(content)) !== null) {
+      verseMatches.push({
+        start: verseMatch.index,
+        end: verseMatch.index + verseMatch[0].length,
+        type: 'verse',
+        content: verseMatch[0],
+        chapter: parseInt(verseMatch[1]),
+        verse: parseInt(verseMatch[2])
+      });
+    }
+    
+    // Then, find Rashad-related terms (only in non-verse parts)
+    const rashadMatches = [];
+    let rashadMatch;
+    while ((rashadMatch = rashadTerms.exec(content)) !== null) {
+      // Check if this overlaps with any verse reference
+      const overlapsVerse = verseMatches.some(vm => 
+        (rashadMatch.index >= vm.start && rashadMatch.index < vm.end) ||
+        (rashadMatch.index + rashadMatch[0].length > vm.start && rashadMatch.index + rashadMatch[0].length <= vm.end)
+      );
+      
+      if (!overlapsVerse) {
+        rashadMatches.push({
+          start: rashadMatch.index,
+          end: rashadMatch.index + rashadMatch[0].length,
+          type: 'rashad',
+          content: rashadMatch[0]
+        });
+      }
+    }
+    
+    // Combine and sort all matches
+    const allMatches = [...verseMatches, ...rashadMatches].sort((a, b) => a.start - b.start);
+    
+    let lastIndex = 0;
+    allMatches.forEach(match => {
       // Add text before the match
-      if (match.index > lastIndex) {
+      if (match.start > lastIndex) {
         parts.push({
           type: 'text',
-          content: content.slice(lastIndex, match.index)
+          content: content.slice(lastIndex, match.start)
         });
       }
       
-      // Add the verse reference as a link
-      parts.push({
-        type: 'verse',
-        content: match[0],
-        chapter: parseInt(match[1]),
-        verse: parseInt(match[2])
-      });
+      // Add the match
+      parts.push(match);
       
-      lastIndex = match.index + match[0].length;
-    }
+      lastIndex = match.end;
+    });
     
     // Add remaining text
     if (lastIndex < content.length) {
@@ -926,6 +1018,28 @@ const DebaterBot = () => {
                               title={`Click to view verse ${part.chapter}:${part.verse}`}
                             >
                               {part.content}
+                            </span>
+                          );
+                        } else if (part.type === 'rashad') {
+                          return (
+                            <span
+                              key={index}
+                              style={{
+                                color: message.role === 'user' ? '#ffeb3b' : '#ff9800',
+                                textDecoration: 'underline',
+                                cursor: 'pointer',
+                                fontWeight: 'bold'
+                              }}
+                              onClick={() => {
+                                // Open semantic search with the term
+                                const searchTerm = part.content.toLowerCase().includes('code 19') || part.content.toLowerCase().includes('miracle 19') 
+                                  ? 'mathematical miracle code 19' 
+                                  : part.content;
+                                window.open(`#vectorsearch?q=${encodeURIComponent(searchTerm)}&source=RashadAllMedia`, '_blank');
+                              }}
+                              title={`Click to search for "${part.content}" in Rashad Khalifa Media`}
+                            >
+                              {part.content} 🔗
                             </span>
                           );
                         }

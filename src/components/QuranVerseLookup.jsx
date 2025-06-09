@@ -432,7 +432,6 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
             /^(\d+)$/, // Just chapter number
             /^(\d+):$/, // Chapter with colon
             /^chapter\s+(\d+)(?:\s+verse\s+(\d+)(?:\s*(?:to|-)\s*(\d+))?)?$/i,
-            /^surah?\s+(\d+)(?:\s+(?:verse|ayah?)\s+(\d+)(?:\s*(?:to|-)\s*(\d+))?)?$/i,
         ];
         
         return versePatterns.some(pattern => pattern.test(trimmed));
