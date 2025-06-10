@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getLanguageConfig, getTranslationText } from '../config/languages';
-import VoiceSearchButton from './VoiceSearchButton';
+import VoiceSearchButtonEnhanced from './VoiceSearchButtonEnhanced';
 import { initializeWordToRootMap, processArabicTranscription } from '../utils/arabicRootConverter';
 import './RootSearch.css';
 
@@ -417,9 +417,9 @@ const RootSearch = () => {
           >
             {isLoading ? 'Searching...' : 'Search'}
           </button>
-          <VoiceSearchButton 
+          <VoiceSearchButtonEnhanced 
             onTranscription={handleVoiceSearch}
-            isArabic={searchMode === 'arabic'}
+            defaultLanguage={searchMode === 'arabic' ? 'ar' : 'en'}
           />
         </div>
       </div>

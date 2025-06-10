@@ -261,7 +261,7 @@ function AppContent() {
               top: "-8px",
               right: "0"
             }}>
-              v1.4.6
+              v1.4.7
             </span>
           </div>
           <div style={{

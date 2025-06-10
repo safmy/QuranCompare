@@ -719,13 +719,10 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
         const meaningsArray = meanings.split(',').map(m => m.trim());
         const hoveredMeaning = hoveredArabicIndex !== null ? meaningsArray[hoveredArabicIndex] : null;
         
-        // Don't return early - we want to parse all words for hover functionality
-        const shouldHighlight = hoveredMeaning && hoveredMeaning !== '-';
-        
         // Get all possible words to highlight including synonyms
         const wordsToHighlight = new Set();
         
-        if (shouldHighlight) {
+        if (hoveredMeaning && hoveredMeaning !== '-') {
             const meaningWords = hoveredMeaning.toLowerCase().split(/\s+/);
             meaningWords.forEach(word => {
                 wordsToHighlight.add(word);
@@ -740,7 +737,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
             if (word.trim() === '') return word; // Return spaces as-is
             
             const cleanWord = word.toLowerCase().replace(/[.,!?;:'"]/g, '');
-            const isHighlighted = shouldHighlight && Array.from(wordsToHighlight).some(hw => {
+            const isHighlighted = hoveredMeaning && hoveredMeaning !== '-' && Array.from(wordsToHighlight).some(hw => {
                 // Check exact match or stem match
                 return cleanWord === hw || 
                        cleanWord.includes(hw) || 
@@ -752,12 +749,13 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
             return (
                 <span 
                     key={idx} 
-                    className={`${isHighlighted ? 'english-word-highlighted' : ''} ${isHighlighted ? 'clickable' : ''}`}
-                    style={{ cursor: isHighlighted ? 'pointer' : 'default' }}
+                    className={`english-word ${isHighlighted ? 'english-word-highlighted' : ''} clickable`}
+                    style={{ cursor: 'pointer' }}
                     onMouseEnter={() => {
                         // Find which Arabic word corresponds to this English word
+                        let foundMatch = false;
                         meaningsArray.forEach((meaning, index) => {
-                            if (meaning && meaning !== '-') {
+                            if (!foundMatch && meaning && meaning !== '-') {
                                 const meaningWords = meaning.toLowerCase().split(/\s+/);
                                 const allRelatedWords = new Set();
                                 
@@ -769,20 +767,21 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                                 if (Array.from(allRelatedWords).some(rw => 
                                     cleanWord === rw || 
                                     cleanWord.includes(rw) || 
-                                    rw.includes(cleanWord))) {
+                                    rw.includes(cleanWord) ||
+                                    (cleanWord.length > 3 && rw.length > 3 && 
+                                     (cleanWord.startsWith(rw.slice(0, -1)) || rw.startsWith(cleanWord.slice(0, -1)))))) {
                                     setHoveredEnglishIndex(index);
+                                    foundMatch = true;
                                 }
                             }
                         });
                     }}
                     onMouseLeave={() => setHoveredEnglishIndex(null)}
                     onClick={() => {
-                        if (isHighlighted) {
-                            // Navigate to root search with this word
-                            window.dispatchEvent(new CustomEvent('openRootSearch', {
-                                detail: { query: word.trim(), mode: 'english' }
-                            }));
-                        }
+                        // Navigate to root search with this word
+                        window.dispatchEvent(new CustomEvent('openRootSearch', {
+                            detail: { query: word.trim(), mode: 'english' }
+                        }));
                     }}
                 >
                     {word}
@@ -794,16 +793,6 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
     // Parse Arabic text with roots and meanings for hover functionality
     const parseArabicText = (arabic, roots, meanings, verse) => {
         if (!arabic) return arabic;
-        
-        // Debug logging
-        console.log('ParseArabicText called with:', {
-            verse: verse.sura_verse,
-            hasArabic: !!arabic,
-            hasRoots: !!roots,
-            hasMeanings: !!meanings,
-            roots: roots,
-            meanings: meanings
-        });
         
         if (!roots || !meanings) {
             // If no roots/meanings, just return plain Arabic text
@@ -821,6 +810,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
             const wordKey = `${verse.sura_verse}-${index}`;
             const isSelected = selectedWord?.key === wordKey;
             
+            // Highlight when English is hovered
             const isHighlighted = hoveredEnglishIndex === index;
             
             return (
@@ -839,6 +829,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                                 root: root,
                                 meaning: meaning
                             });
+                            // Set the Arabic index to highlight English
                             setHoveredArabicIndex(index);
                         }
                     }}
