@@ -65,9 +65,10 @@ const QuranCompare = ({ initialVerses = [] }) => {
         // Check if this is root-specific data
         if (parsedData && parsedData.selectedRoot) {
           setSelectedRootData(parsedData);
+          // Don't remove from sessionStorage yet - let handleCompare use it
+        } else {
+          sessionStorage.removeItem('compareMeaningData'); // Clean up only if not root data
         }
-        
-        sessionStorage.removeItem('compareMeaningData'); // Clean up
       }
       
       // Check for memorization mode
@@ -261,6 +262,11 @@ const QuranCompare = ({ initialVerses = [] }) => {
     }
 
     setLoading(false);
+    
+    // Clean up sessionStorage after processing
+    if (selectedRootData) {
+      sessionStorage.removeItem('compareMeaningData');
+    }
   };
 
   const handleKeyPress = (e) => {

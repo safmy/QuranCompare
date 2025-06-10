@@ -934,13 +934,21 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
             }
         };
         loadAllVerses();
-        
+    }, []);
+    
+    useEffect(() => {
         // Load verses when component mounts or when initialRange changes
         if (initialRange && initialRange !== verseRange) {
             setVerseRange(initialRange);
             setSearchMode('range');
+            // Fetch verses after state update
+            setTimeout(() => {
+                fetchVerses();
+            }, 100);
+        } else if (verseRange) {
+            // If we have a verse range but no initial range, fetch verses
+            fetchVerses();
         }
-        fetchVerses();
     }, [initialRange]);
     
     // Removed auto-search behavior - users must manually search
