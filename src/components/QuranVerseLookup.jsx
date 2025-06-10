@@ -829,14 +829,19 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
             if (hoveredArabicIndex !== null) {
                 const hoveredMeaning = meaningsArray[hoveredArabicIndex];
                 if (hoveredMeaning && hoveredMeaning !== '-') {
-                    const meaningWords = hoveredMeaning.toLowerCase().split(/\s+/);
+                    // Remove articles (a, an, the) from the meaning before processing
+                    const cleanedMeaning = hoveredMeaning.toLowerCase().replace(/^(a|an|the)\s+/i, '');
+                    const meaningWords = cleanedMeaning.split(/\s+/);
                     const allRelatedWords = new Set();
                     
                     // Add the original meaning words
                     meaningWords.forEach(mw => {
-                        allRelatedWords.add(mw.replace(/[^a-z]/gi, ''));
-                        // Add synonyms
-                        getSynonyms(mw).forEach(syn => allRelatedWords.add(syn));
+                        const cleanMw = mw.replace(/[^a-z]/gi, '');
+                        if (cleanMw && cleanMw.length > 2) { // Skip very short words
+                            allRelatedWords.add(cleanMw);
+                            // Add synonyms
+                            getSynonyms(cleanMw).forEach(syn => allRelatedWords.add(syn));
+                        }
                     });
                     
                     // Check if current word matches any related word
@@ -878,12 +883,17 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                         // Find which Arabic word corresponds to this English word
                         meaningsArray.forEach((meaning, index) => {
                             if (meaning && meaning !== '-') {
-                                const meaningWords = meaning.toLowerCase().split(/\s+/);
+                                // Remove articles (a, an, the) from the meaning before processing
+                                const cleanedMeaning = meaning.toLowerCase().replace(/^(a|an|the)\s+/i, '');
+                                const meaningWords = cleanedMeaning.split(/\s+/);
                                 const allRelatedWords = new Set();
                                 
                                 meaningWords.forEach(mw => {
-                                    allRelatedWords.add(mw.replace(/[^a-z]/gi, ''));
-                                    getSynonyms(mw).forEach(syn => allRelatedWords.add(syn));
+                                    const cleanMw = mw.replace(/[^a-z]/gi, '');
+                                    if (cleanMw && cleanMw.length > 2) { // Skip very short words
+                                        allRelatedWords.add(cleanMw);
+                                        getSynonyms(cleanMw).forEach(syn => allRelatedWords.add(syn));
+                                    }
                                 });
                                 
                                 if (Array.from(allRelatedWords).some(rw => {

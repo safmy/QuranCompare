@@ -65,7 +65,10 @@ const QuranCompare = ({ initialVerses = [] }) => {
         // Check if this is root-specific data
         if (parsedData && parsedData.selectedRoot) {
           setSelectedRootData(parsedData);
-          // Don't remove from sessionStorage yet - let handleCompare use it
+          // Only set meaningData if it has variations
+          if (parsedData.variations || parsedData.meaningVariations) {
+            setMeaningData(parsedData);
+          }
         } else {
           sessionStorage.removeItem('compareMeaningData'); // Clean up only if not root data
         }
@@ -93,6 +96,17 @@ const QuranCompare = ({ initialVerses = [] }) => {
       setHighlightedRoot(hoveredRoot);
     }
   }, [lockedRoot, hoveredRoot]);
+  
+  // Clean up sessionStorage after successful render
+  useEffect(() => {
+    if (verses.length > 0 && selectedRootData) {
+      // Clean up after a delay to ensure everything is rendered
+      const timer = setTimeout(() => {
+        sessionStorage.removeItem('compareMeaningData');
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [verses, selectedRootData]);
 
   const analyzeRoots = (versesData, focusedRoot = null) => {
     const rootAnalysis = {};
@@ -242,7 +256,10 @@ const QuranCompare = ({ initialVerses = [] }) => {
         
         // Analyze roots - if selectedRootData exists, only analyze that specific root
         const focusedRoot = selectedRootData?.selectedRoot || null;
+        console.log('QuranCompare handleCompare - selectedRootData:', selectedRootData);
+        console.log('QuranCompare handleCompare - focusedRoot:', focusedRoot);
         const summary = analyzeRoots(foundVerses, focusedRoot);
+        console.log('QuranCompare handleCompare - summary:', summary);
         setRootSummary(summary);
         
         if (notFound.length === 0) {
@@ -262,10 +279,8 @@ const QuranCompare = ({ initialVerses = [] }) => {
 
     setLoading(false);
     
-    // Clean up sessionStorage after processing
-    if (selectedRootData) {
-      sessionStorage.removeItem('compareMeaningData');
-    }
+    // Don't clean up sessionStorage immediately - wait for successful render
+    // This prevents the blank screen issue on first load
   };
 
   const handleKeyPress = (e) => {
@@ -708,7 +723,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
                 )}
                 
                 {/* Show meaning variation for this verse if available */}
-                {meaningData && meaningData.variations[verse.sura_verse] && (
+                {meaningData && meaningData.variations && meaningData.variations[verse.sura_verse] && (
                   <div style={{
                     marginTop: '10px',
                     padding: '8px',
