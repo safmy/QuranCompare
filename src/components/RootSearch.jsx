@@ -299,6 +299,12 @@ const RootSearch = () => {
       let isHighlighted = false;
       let isSearchHighlighted = false;
       
+      // Skip highlighting for articles and very short words
+      const articles = ['a', 'an', 'the', 'in', 'on', 'at', 'to', 'of', 'for', 'by', 'is', 'as'];
+      if (articles.includes(cleanWord)) {
+        return <span key={idx}>{word}{idx < words.length - 1 ? ' ' : ''}</span>;
+      }
+      
       // Check if this English word corresponds to any searched root
       if (searchRoots && searchRoots.length > 0) {
         rootsArray.forEach((root, rootIndex) => {
@@ -745,7 +751,46 @@ const RootSearch = () => {
                   return (
                     <div key={index} className="verse-result">
                       <div className="verse-header">
-                        <span className="verse-ref">{verse.sura_verse}</span>
+                        <span 
+                          className="verse-ref clickable"
+                          onClick={async () => {
+                            try {
+                              // Get the subtitle range for this verse
+                              const response = await fetch(`${API_BASE_URL}/verse-range-for-subtitle`, {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                  verse_ref: verse.sura_verse
+                                })
+                              });
+                              
+                              if (response.ok) {
+                                const data = await response.json();
+                                // Store the verse range and navigate to verse lookup
+                                sessionStorage.setItem('verseRangeForLookup', data.subtitle_range);
+                              } else {
+                                // Fallback to just the single verse
+                                sessionStorage.setItem('verseRangeForLookup', verse.sura_verse);
+                              }
+                            } catch (err) {
+                              console.error('Failed to get verse range:', err);
+                              // Fallback to just the single verse
+                              sessionStorage.setItem('verseRangeForLookup', verse.sura_verse);
+                            }
+                            
+                            // Navigate to verse lookup tab
+                            const event = new CustomEvent('openVerseRange', { 
+                              detail: { range: verse.sura_verse } 
+                            });
+                            window.dispatchEvent(event);
+                          }}
+                          title={`Click to view ${verse.sura_verse} in Verse Lookup`}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          {verse.sura_verse}
+                        </span>
                         <div className="verse-actions">
                           <button 
                             className="add-to-compare-btn"

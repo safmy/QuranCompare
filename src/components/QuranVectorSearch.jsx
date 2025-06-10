@@ -242,21 +242,23 @@ const QuranVectorSearch = ({ savedState = {} }) => {
       
       if (response.ok) {
         const data = await response.json();
-        // Open the verse lookup tab with the subtitle range
-        // We'll need to communicate with the parent App component
-        window.openVerseRange = data.subtitle_range;
-        // Trigger a custom event that the App component can listen to
-        window.dispatchEvent(new CustomEvent('openVerseRange', { 
-          detail: { range: data.subtitle_range } 
-        }));
+        // Store the verse range in sessionStorage
+        sessionStorage.setItem('verseRangeForLookup', data.subtitle_range);
+      } else {
+        // Fallback to just the single verse
+        sessionStorage.setItem('verseRangeForLookup', verseRef);
       }
     } catch (err) {
       console.error('Failed to get verse range:', err);
-      // Fallback: trigger event with single verse
-      window.dispatchEvent(new CustomEvent('openVerseRange', { 
-        detail: { range: verseRef } 
-      }));
+      // Fallback to just the single verse
+      sessionStorage.setItem('verseRangeForLookup', verseRef);
     }
+    
+    // Navigate to verse lookup tab
+    const event = new CustomEvent('openVerseRange', { 
+      detail: { range: verseRef } 
+    });
+    window.dispatchEvent(event);
   };
   
   const renderTitle = (result) => {

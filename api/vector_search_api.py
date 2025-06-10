@@ -23,6 +23,7 @@ from arabic_utils import enhance_arabic_search_query, is_arabic_text, get_phonet
 from tts_endpoint_fastapi import add_tts_routes
 from payment_endpoints import router as payment_router
 from root_search_api import search_verses_by_root, RootSearchRequest, RootSearchResponse
+from enhanced_debate_endpoint import create_enhanced_debate_endpoint
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -314,6 +315,9 @@ async def startup_event():
     
     # Load vector collections
     load_vector_collections()
+    
+    # Add enhanced debate endpoint
+    create_enhanced_debate_endpoint(app, VECTOR_COLLECTIONS, QURAN_VERSES_DATA, client)
     
     logger.info(f"🚀 Vector Search API ready! Loaded collections: {list(VECTOR_COLLECTIONS.keys())}")
     logger.info(f"Combined index total vectors: {COMBINED_INDEX.ntotal if COMBINED_INDEX else 0}")
@@ -900,7 +904,19 @@ def load_debater_rules():
 
 def get_debater_personality():
     """Get submitter personality traits"""
-    return "You are concise in your response and highly in favour of submission, do not be neutral as you are yourself a submitter and believe that Rashad Khalifa was a messenger sent by God."
+    return """You ARE a submitter who follows Submission as clarified by the messenger of the covenant Rashad Khalifa.
+
+CRITICAL FORMATTING:
+- Use HTML: <br><br> between paragraphs, <br> for line breaks within lists
+- Bold with <strong>text</strong>
+- Lists: <br>• Point one<br>• Point two
+- Verses: [2:255] format (auto-linked)
+
+CRITICAL PERSONALITY:
+- NEVER say "as a submitter" or "according to Rashad" - you ARE a submitter
+- NEVER use "Islam/Muslim" - only "Submission/Submitter" 
+- Present beliefs as facts, not opinions
+- Be direct and concise"""
 
 def format_debater_rules(rules):
     """Format rules for system prompt"""
@@ -908,10 +924,20 @@ def format_debater_rules(rules):
         return "No specific rules loaded."
     
     formatted_rules = []
-    for rule in rules[:15]:  # Limit to first 15 rules to keep prompt manageable
+    # Prioritize key rules
+    priority_rules = [
+        rule for rule in rules 
+        if rule.get('id') in [3, 14, 15, 19, 43, 69, 70] and rule.get('active', True)
+    ]
+    other_rules = [
+        rule for rule in rules 
+        if rule.get('id') not in [3, 14, 15, 19, 43, 69, 70] and rule.get('active', True)
+    ][:10]  # Limit other rules
+    
+    for rule in priority_rules + other_rules:
         category = rule.get('category', 'general')
         content = rule.get('content', '').strip()
-        if content and len(content) > 10:  # Skip very short rules
+        if content and len(content) > 10:
             formatted_rules.append(f"[{category.upper()}] {content}")
     
     return "\n".join(formatted_rules)
@@ -937,21 +963,14 @@ async def debate_endpoint(request: DebateRequest):
         # Build system prompt with rules and personality
         system_content = f"""{debater_personality}
 
-You are concise in your responses and highly in favor of Submission. You are yourself a submitter and believe that Rashad Khalifa was a messenger sent by God. Present your answers as facts given by a submitter that accepts all teachings of Rashad Khalifa.
-
 KEY RULES TO FOLLOW:
 {format_debater_rules(debater_rules)}
 
-DEBATE GUIDELINES:
-- Keep responses under 300 words
-- Be direct and to the point
-- Use verses from the Final Testament to support claims
-- Reference Rashad Khalifa's teachings as facts, not opinions
-- Challenge ideas that contradict Submission teachings
-- Include relevant audio/video links when applicable
-- Use "Submission" not "Islam" for the religion
-
-Remember: You are debating from the perspective of a committed submitter who follows Rashad Khalifa's teachings."""
+CRITICAL INSTRUCTIONS:
+- Maximum 250 words per response
+- Use HTML formatting for clarity
+- Never explain you're following Rashad's teachings - just state facts
+- Include specific verse references [x:y] and video links from rules"""
         
         # Build conversation messages
         messages = [

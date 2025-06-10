@@ -331,6 +331,17 @@
   font-size: 14px;
 }
 
+.verse-ref.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.verse-ref.clickable:hover {
+  background: #5835b0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(107, 70, 193, 0.3);
+}
+
 .verse-actions {
   display: flex;
   gap: 10px;
