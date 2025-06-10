@@ -9,9 +9,11 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onre
 const RootSearch = () => {
   const { currentLanguage } = useLanguage();
   
-  // Check for incoming query from session storage
-  const initialQuery = sessionStorage.getItem('rootSearchQuery') || '';
-  const initialMode = sessionStorage.getItem('rootSearchMode') || 'english';
+  // Check for incoming query from session storage or saved state
+  const savedSearchQuery = sessionStorage.getItem('rootSearchSavedQuery') || '';
+  const savedSearchMode = sessionStorage.getItem('rootSearchSavedMode') || 'english';
+  const initialQuery = sessionStorage.getItem('rootSearchQuery') || savedSearchQuery;
+  const initialMode = sessionStorage.getItem('rootSearchMode') || savedSearchMode;
   
   const [searchMode, setSearchMode] = useState(initialMode);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
@@ -53,6 +55,14 @@ const RootSearch = () => {
       sessionStorage.removeItem('rootSearchMode');
     }
   }, [rootMapping]); // Only trigger when rootMapping is loaded
+
+  // Save search state when it changes
+  useEffect(() => {
+    if (searchQuery) {
+      sessionStorage.setItem('rootSearchSavedQuery', searchQuery);
+    }
+    sessionStorage.setItem('rootSearchSavedMode', searchMode);
+  }, [searchQuery, searchMode]);
 
   // Search functionality
   const performSearch = async () => {
@@ -168,6 +178,10 @@ const RootSearch = () => {
     // Auto-detect if it's Arabic
     const isArabic = /[\u0600-\u06FF]/.test(transcript);
     setSearchMode(isArabic ? 'arabic' : 'english');
+    // Trigger search automatically after voice input
+    setTimeout(() => {
+      performSearch();
+    }, 100);
   };
 
   // Toggle verse expansion
@@ -375,7 +389,7 @@ const RootSearch = () => {
             {isLoading ? 'Searching...' : 'Search'}
           </button>
           <VoiceSearchButton 
-            onTranscript={handleVoiceSearch}
+            onTranscription={handleVoiceSearch}
             isArabic={searchMode === 'arabic'}
           />
         </div>

@@ -652,13 +652,13 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
         setShowAllRootVerses(false);
     };
     
-    const navigateToCompare = (verses, meaningData = null) => {
+    const navigateToCompare = (verses, rootAnalysisData = null) => {
         // Store verses in sessionStorage to pass to Compare tab
         sessionStorage.setItem('compareVerses', JSON.stringify(verses.map(v => v.sura_verse)));
         
-        // Store meaning variations data if provided
-        if (meaningData) {
-            sessionStorage.setItem('compareMeaningData', JSON.stringify(meaningData));
+        // Store root analysis data if provided (includes meaning variations)
+        if (rootAnalysisData) {
+            sessionStorage.setItem('compareMeaningData', JSON.stringify(rootAnalysisData));
         } else {
             sessionStorage.removeItem('compareMeaningData');
         }
@@ -667,7 +667,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
         const event = new CustomEvent('navigateToCompare', { 
             detail: { 
                 verses: verses.map(v => v.sura_verse),
-                meaningData: meaningData
+                meaningData: rootAnalysisData
             } 
         });
         window.dispatchEvent(event);

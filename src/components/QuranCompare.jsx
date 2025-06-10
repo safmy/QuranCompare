@@ -23,6 +23,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
   const [showEnhancedPlayer, setShowEnhancedPlayer] = useState(false); // Show enhanced player for single verses
   const [showRootSummary, setShowRootSummary] = useState(true); // Show root summary
   const [rootSummary, setRootSummary] = useState(null); // Root analysis data
+  const [selectedRootData, setSelectedRootData] = useState(null); // Selected root from verse lookup
 
   useEffect(() => {
     // Load Quran data
@@ -58,7 +59,14 @@ const QuranCompare = ({ initialVerses = [] }) => {
       // Check for meaning data in sessionStorage
       const storedMeaningData = sessionStorage.getItem('compareMeaningData');
       if (storedMeaningData) {
-        setMeaningData(JSON.parse(storedMeaningData));
+        const parsedData = JSON.parse(storedMeaningData);
+        setMeaningData(parsedData);
+        
+        // Check if this is root-specific data
+        if (parsedData && parsedData.selectedRoot) {
+          setSelectedRootData(parsedData);
+        }
+        
         sessionStorage.removeItem('compareMeaningData'); // Clean up
       }
       
@@ -102,7 +110,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
   };
 
   // Analyze roots across all compared verses
-  const analyzeRoots = (versesData) => {
+  const analyzeRoots = (versesData, focusedRoot = null) => {
     const rootAnalysis = {};
     
     versesData.forEach(verse => {
@@ -114,6 +122,9 @@ const QuranCompare = ({ initialVerses = [] }) => {
       
       roots.forEach((root, idx) => {
         if (root && root !== '-') {
+          // If focusedRoot is provided, only analyze that specific root
+          if (focusedRoot && root !== focusedRoot) return;
+          
           if (!rootAnalysis[root]) {
             rootAnalysis[root] = {
               root: root,
@@ -229,8 +240,9 @@ const QuranCompare = ({ initialVerses = [] }) => {
       if (foundVerses.length >= 1) {
         setVerses(foundVerses);
         
-        // Analyze roots across all verses
-        const summary = analyzeRoots(foundVerses);
+        // Analyze roots - if selectedRootData exists, only analyze that specific root
+        const focusedRoot = selectedRootData?.selectedRoot || null;
+        const summary = analyzeRoots(foundVerses, focusedRoot);
         setRootSummary(summary);
         
         if (notFound.length === 0) {
@@ -456,7 +468,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
                 marginBottom: showRootSummary ? '15px' : '0'
               }}>
                 <h4 style={{ margin: 0, color: '#1976d2' }}>
-                  🌳 Root Analysis Summary ({rootSummary.length} unique roots)
+                  🌳 Root Analysis Summary {selectedRootData ? `for "${selectedRootData.selectedRoot}"` : `(${rootSummary.length} unique root${rootSummary.length !== 1 ? 's' : ''})`}
                 </h4>
                 <button
                   onClick={() => setShowRootSummary(!showRootSummary)}
@@ -473,6 +485,21 @@ const QuranCompare = ({ initialVerses = [] }) => {
                   {showRootSummary ? '▼ Collapse' : '▶ Expand'}
                 </button>
               </div>
+              
+              {selectedRootData && showRootSummary && (
+                <div style={{
+                  marginBottom: '15px',
+                  padding: '10px',
+                  backgroundColor: '#fff3cd',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  border: '1px solid #ffc107'
+                }}>
+                  <strong>Source:</strong> Clicked "{selectedRootData.clickedWord}" in [{selectedRootData.sourceVerse?.sura_verse || 'N/A'}]<br/>
+                  <strong>Root meaning there:</strong> {selectedRootData.clickedWordMeaning || 'N/A'}<br/>
+                  <strong>Total occurrences in Quran:</strong> {selectedRootData.totalCount || 'N/A'} verses
+                </div>
+              )}
               
               {showRootSummary && (
                 <div style={{ display: 'grid', gap: '15px' }}>

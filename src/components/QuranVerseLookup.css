@@ -410,10 +410,40 @@
     padding: 4px 6px;
 }
 
+.arabic-word.highlighted {
+    background-color: rgba(255, 235, 59, 0.4);
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+.english-word-highlighted {
+    background-color: rgba(255, 235, 59, 0.4);
+    border-radius: 4px;
+    padding: 2px 4px;
+    cursor: pointer;
+}
+
+.english-word-highlighted:hover {
+    background-color: rgba(255, 235, 59, 0.6);
+}
+
 .english-text {
     font-size: 17px;
     line-height: 1.7;
     color: #2c3e50;
+    padding: 18px;
+    font-weight: 400;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e8ecf0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    margin: 10px 0;
+}
+
+.translation-text {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #1a1a1a;
     padding: 18px;
     font-weight: 400;
     background: #ffffff;

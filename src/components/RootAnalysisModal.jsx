@@ -70,7 +70,7 @@ const RootAnalysisModal = ({
         });
         
         if (versesToCompare.length > 1) {
-            onCompare(versesToCompare);
+            onCompare(versesToCompare, rootAnalysisData);
             onClose();
         }
     };
@@ -85,7 +85,7 @@ const RootAnalysisModal = ({
         });
         
         if (versesToCompare.length > 1) {
-            onCompare(versesToCompare);
+            onCompare(versesToCompare, rootAnalysisData);
             onClose();
         }
     };
@@ -170,7 +170,7 @@ const RootAnalysisModal = ({
                                             }
                                         });
                                         
-                                        onCompare(versesToCompare.slice(0, 11));
+                                        onCompare(versesToCompare.slice(0, 11), rootAnalysisData);
                                         onClose();
                                     }}
                                 >
@@ -200,7 +200,7 @@ const RootAnalysisModal = ({
                                             versesToCompare.push(rootAnalysisData.sourceVerse);
                                         }
                                         
-                                        onCompare(versesToCompare.slice(0, 20));
+                                        onCompare(versesToCompare.slice(0, 20), rootAnalysisData);
                                         onClose();
                                     }}
                                 >
@@ -215,7 +215,7 @@ const RootAnalysisModal = ({
                                     className="compare-option-btn"
                                     onClick={() => {
                                         // Compare first 10 verses with this root
-                                        onCompare(rootAnalysisData.relatedVerses.slice(0, 10));
+                                        onCompare(rootAnalysisData.relatedVerses.slice(0, 10), rootAnalysisData);
                                         onClose();
                                     }}
                                 >
