@@ -713,22 +713,26 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
     
     // Parse English text with bidirectional highlighting
     const parseEnglishText = (text, meanings, verse) => {
-        if (!meanings || hoveredArabicIndex === null) return text;
+        // Always parse the text to enable hover functionality
+        if (!meanings) return text;
         
         const meaningsArray = meanings.split(',').map(m => m.trim());
-        const hoveredMeaning = meaningsArray[hoveredArabicIndex];
+        const hoveredMeaning = hoveredArabicIndex !== null ? meaningsArray[hoveredArabicIndex] : null;
         
-        if (!hoveredMeaning || hoveredMeaning === '-') return text;
+        // Don't return early - we want to parse all words for hover functionality
+        const shouldHighlight = hoveredMeaning && hoveredMeaning !== '-';
         
         // Get all possible words to highlight including synonyms
-        const meaningWords = hoveredMeaning.toLowerCase().split(/\s+/);
         const wordsToHighlight = new Set();
         
-        meaningWords.forEach(word => {
-            wordsToHighlight.add(word);
-            const synonyms = getSynonyms(word);
-            synonyms.forEach(syn => wordsToHighlight.add(syn));
-        });
+        if (shouldHighlight) {
+            const meaningWords = hoveredMeaning.toLowerCase().split(/\s+/);
+            meaningWords.forEach(word => {
+                wordsToHighlight.add(word);
+                const synonyms = getSynonyms(word);
+                synonyms.forEach(syn => wordsToHighlight.add(syn));
+            });
+        }
         
         // Create word spans with hover functionality
         const words = text.split(/(\s+)/); // Keep spaces
@@ -736,7 +740,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
             if (word.trim() === '') return word; // Return spaces as-is
             
             const cleanWord = word.toLowerCase().replace(/[.,!?;:'"]/g, '');
-            const isHighlighted = Array.from(wordsToHighlight).some(hw => {
+            const isHighlighted = shouldHighlight && Array.from(wordsToHighlight).some(hw => {
                 // Check exact match or stem match
                 return cleanWord === hw || 
                        cleanWord.includes(hw) || 

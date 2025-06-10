@@ -5,6 +5,7 @@ const VoiceSearchButton = ({ onTranscription, placeholder = "Recording..." }) =>
     const [isProcessing, setIsProcessing] = useState(false);
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
+    const recordingStartTimeRef = useRef(null);
 
     const startRecording = async () => {
         try {
@@ -12,7 +13,10 @@ const VoiceSearchButton = ({ onTranscription, placeholder = "Recording..." }) =>
                 audio: {
                     echoCancellation: true,
                     noiseSuppression: true,
-                    sampleRate: 44100
+                    sampleRate: 44100,
+                    channelCount: 1,
+                    sampleSize: 16,
+                    autoGainControl: true
                 } 
             });
             
@@ -47,8 +51,9 @@ const VoiceSearchButton = ({ onTranscription, placeholder = "Recording..." }) =>
                 stream.getTracks().forEach(track => track.stop());
             };
 
-            mediaRecorder.start(1000); // Collect data every second
+            mediaRecorder.start(100); // Collect data every 100ms for better quality
             setIsRecording(true);
+            recordingStartTimeRef.current = Date.now();
         } catch (error) {
             console.error('Error accessing microphone:', error);
             alert('Unable to access microphone. Please check your permissions and try again.');
@@ -57,6 +62,14 @@ const VoiceSearchButton = ({ onTranscription, placeholder = "Recording..." }) =>
 
     const stopRecording = () => {
         if (mediaRecorderRef.current && isRecording) {
+            const recordingDuration = Date.now() - recordingStartTimeRef.current;
+            
+            // Ensure minimum recording duration of 500ms
+            if (recordingDuration < 500) {
+                alert('Please hold the button longer to record your voice');
+                return;
+            }
+            
             mediaRecorderRef.current.stop();
             setIsRecording(false);
         }
