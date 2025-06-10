@@ -867,59 +867,149 @@
 }
 
 /* Dark mode support */
+.dark-mode .verse-lookup-container {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+}
+
+.dark-mode .verse-card {
+    background: #2d2d2d;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+.dark-mode .arabic-text {
+    background: #333;
+    color: #fff;
+    border-right-color: #7c3aed;
+}
+
+.dark-mode .english-text {
+    color: #ffffff;
+    background: #2d2d2d;
+    border-color: #404040;
+}
+
+.dark-mode .translation-text {
+    color: #ffffff;
+    background: #2d2d2d;
+    border-color: #404040;
+}
+
+.dark-mode .verse-input {
+    background: #2d2d2d;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+.dark-mode .verse-input:focus {
+    border-color: #7c3aed;
+}
+
+.dark-mode .mode-button {
+    background: #2d2d2d;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+.dark-mode .mode-button:hover {
+    border-color: #7c3aed;
+    color: #7c3aed;
+}
+
+.dark-mode .mode-button.active {
+    background: #7c3aed;
+    color: white;
+    border-color: #7c3aed;
+}
+
+.dark-mode .subtitle-text {
+    background: linear-gradient(135deg, #7c3aed, #9b6aed);
+}
+
+.dark-mode .verse-info {
+    background: #333;
+    border-color: #404040;
+    color: #b0b0b0;
+}
+
+.dark-mode .results-header {
+    background-color: #2d2d2d;
+    border-color: #404040;
+}
+
+.dark-mode .search-hint {
+    background: #2d2d2d;
+    color: #7c3aed;
+    border-color: #404040;
+}
+
+.dark-mode .word-tooltip {
+    background: #1a1a1a;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark-mode .footnote {
+    background: #3d3d2d;
+    border-left-color: #ffc107;
+}
+
+.dark-mode .lookup-button {
+    background: #7c3aed;
+}
+
+.dark-mode .lookup-button:hover:not(:disabled) {
+    background: #6b46c1;
+}
+
+.dark-mode .chapter-button {
+    background: #4a90e2;
+}
+
+.dark-mode .chapter-button:hover:not(:disabled) {
+    background: #357abd;
+}
+
+/* Ensure proper contrast for highlighted words in dark mode */
+.dark-mode .arabic-word.highlighted {
+    background-color: #ffeb3b;
+    color: #000000;
+}
+
+.dark-mode .english-word-highlighted {
+    background-color: #ffeb3b;
+    color: #000000;
+}
+
+/* Add responsive dark mode support */
 @media (prefers-color-scheme: dark) {
-    .verse-lookup-container {
+    .verse-lookup-container:not(.light-mode) {
         background-color: #1a1a1a;
         color: #e0e0e0;
     }
-
-    .verse-card {
+    
+    .verse-lookup-container:not(.light-mode) .verse-card {
         background: #2d2d2d;
         border-color: #404040;
         color: #e0e0e0;
     }
-
-    .arabic-text {
+    
+    .verse-lookup-container:not(.light-mode) .arabic-text {
         background: #333;
         color: #fff;
-        border-right-color: #4a90e2;
+        border-right-color: #7c3aed;
     }
-
-    .english-text {
-        color: #e8e8e8;
-        background: #333;
-        border-color: #404040;
-    }
-
-    .verse-input {
+    
+    .verse-lookup-container:not(.light-mode) .english-text {
+        color: #ffffff;
         background: #2d2d2d;
         border-color: #404040;
-        color: #e0e0e0;
     }
-
-    .verse-input:focus {
-        border-color: #4a90e2;
-    }
-
-    .mode-button {
+    
+    .verse-lookup-container:not(.light-mode) .translation-text {
+        color: #ffffff;
         background: #2d2d2d;
         border-color: #404040;
-        color: #e0e0e0;
-    }
-    
-    .mode-button:hover {
-        border-color: #4a90e2;
-        color: #4a90e2;
-    }
-    
-    .subtitle-text {
-        background: linear-gradient(135deg, #4a90e2, #6bb6ff);
-    }
-    
-    .verse-info {
-        background: #333;
-        border-color: #404040;
-        color: #b0b0b0;
     }
 }
 /* Responsive design improvements */

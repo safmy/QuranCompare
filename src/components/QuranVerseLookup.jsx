@@ -225,9 +225,9 @@ const parseVerseRangeFromLocal = (range, versesData) => {
     });
 };
 
-const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
+const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
     const { currentLanguage, changeLanguage } = useLanguage();
-    const [verseRange, setVerseRange] = useState(savedState.verseRange || initialRange || '1:1-7');
+    const [verseRange, setVerseRange] = useState(savedState.verseRange || initialRange || '');
     const [verses, setVerses] = useState(savedState.verses || []);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -246,6 +246,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
     const [selectedMeaningCategory, setSelectedMeaningCategory] = useState(null);
     const [hoveredEnglishIndex, setHoveredEnglishIndex] = useState(null); // For English word hover
     const [hoveredArabicIndex, setHoveredArabicIndex] = useState(null); // For Arabic word hover
+    const [isDarkMode, setIsDarkMode] = useState(false); // Dark mode detection
     
     // Long press functionality
     const [longPressTimer, setLongPressTimer] = useState(null);
@@ -900,8 +901,18 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                        navigator.maxTouchPoints > 0);
         };
         
+        // Detect dark mode
+        const checkDarkMode = () => {
+            setIsDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
+        };
+        
         checkMobile();
+        checkDarkMode();
         window.addEventListener('resize', checkMobile);
+        
+        // Listen for dark mode changes
+        const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        darkModeMediaQuery.addEventListener('change', checkDarkMode);
         
         // Clear selected word when clicking outside
         const handleClickOutside = (e) => {
@@ -918,6 +929,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
         return () => {
             window.removeEventListener('resize', checkMobile);
             document.removeEventListener('click', handleClickOutside);
+            darkModeMediaQuery.removeEventListener('change', checkDarkMode);
         };
     }, [isMobile]);
 
@@ -944,12 +956,12 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
         };
         loadAllVerses();
         
-        // Load verses when component mounts or when initialRange changes
-        if (initialRange && initialRange !== verseRange) {
+        // Only update verseRange from initialRange on first mount or when explicitly changed
+        if (initialRange && initialRange !== verseRange && !savedState.verseRange) {
             setVerseRange(initialRange);
             setSearchMode('range');
+            fetchVerses();
         }
-        fetchVerses();
     }, [initialRange]);
     
     // Removed auto-search behavior - users must manually search
@@ -979,7 +991,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
     }, [verseRange, verses, searchMode, showArabic, exactMatch, excludeVerse0]);
 
     return (
-        <div className="verse-lookup-container">
+        <div className={`verse-lookup-container ${isDarkMode ? 'dark-mode' : ''}`}>
             <div className="verse-lookup-header compact">
                 <h2>📖 Quran Search</h2>
             </div>

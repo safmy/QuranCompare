@@ -22,6 +22,11 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState(() => {
     return sessionStorage.getItem('activeTab') || 'lookup';
   });
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedMode = localStorage.getItem('darkMode');
+    if (savedMode !== null) return savedMode === 'true';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
   const [verseRangeForLookup, setVerseRangeForLookup] = useState(() => {
     return sessionStorage.getItem('verseRangeForLookup') || '';
   });
@@ -47,6 +52,15 @@ function AppContent() {
   useEffect(() => {
     sessionStorage.setItem('activeTab', activeTab);
   }, [activeTab]);
+  
+  useEffect(() => {
+    localStorage.setItem('darkMode', isDarkMode);
+    if (isDarkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  }, [isDarkMode]);
   
   useEffect(() => {
     sessionStorage.setItem('verseRangeForLookup', verseRangeForLookup);
@@ -274,6 +288,31 @@ function AppContent() {
               onLanguageChange={changeLanguage}
               compact={true}
             />
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              style={{
+                background: 'rgba(255,255,255,0.2)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                borderRadius: '6px',
+                padding: '8px 12px',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '16px',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              onMouseOver={(e) => {
+                e.target.style.background = 'rgba(255,255,255,0.3)';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.background = 'rgba(255,255,255,0.2)';
+              }}
+              title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {isDarkMode ? '☀️' : '🌙'}
+            </button>
             <UserProfile />
           </div>
         </div>
