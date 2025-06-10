@@ -118,6 +118,16 @@ export const getTranslationText = (verse, langCode) => {
   if (!translationText && langCode !== DEFAULT_LANGUAGE) {
     console.log(`❌ Translation not found for language ${langCode} (field: ${config.field}), falling back to ${DEFAULT_LANGUAGE}`);
     console.log(`📋 Available fields in verse:`, Object.keys(verse));
+    // Special debug for Lithuanian and Bengali
+    if (langCode === 'lithuanian' || langCode === 'bengali') {
+      console.log(`🔍 Debug ${langCode}:`, {
+        field: config.field,
+        hasField: verse.hasOwnProperty(config.field),
+        value: verse[config.field],
+        lithuanianField: verse.lithuanian,
+        bengaliField: verse.bengali
+      });
+    }
   }
   
   return translationText || verse[AVAILABLE_LANGUAGES[DEFAULT_LANGUAGE].field] || '';
