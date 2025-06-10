@@ -802,7 +802,8 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
             'friends': ['ally', 'allies', 'companions'],
             'protector': ['ally', 'guardian', 'defender', 'helper'],
             'guardian': ['ally', 'protector', 'keeper', 'helper'],
-            'helper': ['ally', 'supporter', 'assistant', 'aid', 'protector'],
+            'helper': ['ally', 'allies', 'supporter', 'supporters', 'assistant', 'aid', 'protector', 'protectors'],
+            'helpers': ['ally', 'allies', 'supporter', 'supporters', 'assistants', 'aids', 'protector', 'protectors'],
             'supporter': ['helper', 'ally', 'backer'],
             'aid': ['help', 'helper', 'assist', 'support'],
             'assist': ['help', 'aid', 'support'],
@@ -839,8 +840,22 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                         const cleanMw = mw.replace(/[^a-z]/gi, '');
                         if (cleanMw && cleanMw.length > 2) { // Skip very short words
                             allRelatedWords.add(cleanMw);
+                            // Add plural/singular forms
+                            if (cleanMw.endsWith('s')) {
+                                allRelatedWords.add(cleanMw.slice(0, -1)); // Remove 's' for singular
+                            } else {
+                                allRelatedWords.add(cleanMw + 's'); // Add 's' for plural
+                            }
                             // Add synonyms
-                            getSynonyms(cleanMw).forEach(syn => allRelatedWords.add(syn));
+                            getSynonyms(cleanMw).forEach(syn => {
+                                allRelatedWords.add(syn);
+                                // Also add plural/singular forms of synonyms
+                                if (syn.endsWith('s')) {
+                                    allRelatedWords.add(syn.slice(0, -1));
+                                } else {
+                                    allRelatedWords.add(syn + 's');
+                                }
+                            });
                         }
                     });
                     
@@ -892,7 +907,21 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                                     const cleanMw = mw.replace(/[^a-z]/gi, '');
                                     if (cleanMw && cleanMw.length > 2) { // Skip very short words
                                         allRelatedWords.add(cleanMw);
-                                        getSynonyms(cleanMw).forEach(syn => allRelatedWords.add(syn));
+                                        // Add plural/singular forms
+                                        if (cleanMw.endsWith('s')) {
+                                            allRelatedWords.add(cleanMw.slice(0, -1));
+                                        } else {
+                                            allRelatedWords.add(cleanMw + 's');
+                                        }
+                                        // Add synonyms and their forms
+                                        getSynonyms(cleanMw).forEach(syn => {
+                                            allRelatedWords.add(syn);
+                                            if (syn.endsWith('s')) {
+                                                allRelatedWords.add(syn.slice(0, -1));
+                                            } else {
+                                                allRelatedWords.add(syn + 's');
+                                            }
+                                        });
                                     }
                                 });
                                 

@@ -155,7 +155,48 @@
     }
 }
 
+/* Translation text styles */
+.translation-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #1a1a1a;
+    padding: 10px;
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px solid #e8ecf0;
+    margin-top: 10px;
+}
+
 /* Dark mode support */
+body.dark-mode .comparison-results .verse-card {
+    background: #2d2d2d;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+body.dark-mode .results-header {
+    color: #e0e0e0;
+}
+
+body.dark-mode .arabic-text {
+    background: #333;
+    color: #fff;
+    border-right-color: #7c3aed;
+}
+
+body.dark-mode .english-text {
+    background: #2d2d2d;
+    border-color: #404040;
+    color: #ffffff;
+}
+
+body.dark-mode .translation-text {
+    background: #2d2d2d;
+    border-color: #404040;
+    color: #ffffff;
+}
+
+/* Legacy dark mode support */
 @media (prefers-color-scheme: dark) {
     .verse-card {
         background: #2d2d2d;
@@ -170,13 +211,19 @@
     .arabic-text {
         background: #333;
         color: #fff;
-        border-right-color: #4a90e2;
+        border-right-color: #7c3aed;
     }
     
     .english-text {
         background: #333;
         border-color: #404040;
-        color: #e8e8e8;
+        color: #ffffff;
+    }
+    
+    .translation-text {
+        background: #333;
+        border-color: #404040;
+        color: #ffffff;
     }
     
     .arabic-word:hover {
