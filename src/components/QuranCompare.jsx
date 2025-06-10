@@ -24,6 +24,8 @@ const QuranCompare = ({ initialVerses = [] }) => {
   const [showRootSummary, setShowRootSummary] = useState(true); // Show root summary
   const [rootSummary, setRootSummary] = useState(null); // Root analysis data
   const [selectedRootData, setSelectedRootData] = useState(null); // Selected root from verse lookup
+  const [hoveredEnglishIndex, setHoveredEnglishIndex] = useState(null); // For English word hover
+  const [hoveredArabicIndex, setHoveredArabicIndex] = useState(null); // For Arabic word hover
 
   useEffect(() => {
     // Load Quran data
@@ -289,6 +291,154 @@ const QuranCompare = ({ initialVerses = [] }) => {
     }
   };
 
+  // Helper function to get synonyms for a word
+  const getSynonyms = (word) => {
+    const synonymMap = {
+      'worship': ['serve', 'obey', 'adore', 'revere'],
+      'serve': ['worship', 'obey', 'submit'],
+      'obey': ['worship', 'serve', 'follow', 'submit'],
+      'path': ['way', 'road', 'route'],
+      'way': ['path', 'road', 'route'],
+      'guide': ['lead', 'direct', 'show'],
+      'lead': ['guide', 'direct'],
+      'straight': ['right', 'direct', 'correct'],
+      'right': ['straight', 'correct'],
+      'ally': ['friend', 'allies', 'protector', 'guardian', 'helper', 'supporter'],
+      'allies': ['ally', 'friends', 'protectors', 'guardians', 'helpers', 'supporters'],
+      'friend': ['ally', 'allies', 'companion'],
+      'friends': ['ally', 'allies', 'companions'],
+      'protector': ['ally', 'guardian', 'defender', 'helper'],
+      'guardian': ['ally', 'protector', 'keeper', 'helper'],
+      'helper': ['ally', 'allies', 'supporter', 'supporters', 'assistant', 'aid', 'protector', 'protectors'],
+      'helpers': ['ally', 'allies', 'supporter', 'supporters', 'assistants', 'aids', 'protector', 'protectors'],
+      'supporter': ['helper', 'ally', 'backer'],
+      'aid': ['help', 'helper', 'assist', 'support'],
+      'assist': ['help', 'aid', 'support'],
+      'help': ['aid', 'assist', 'support'],
+    };
+    return synonymMap[word.toLowerCase()] || [];
+  };
+
+  // Parse English text to make words hoverable
+  const parseEnglishText = (englishText, roots, meanings, verse) => {
+    if (!englishText || !roots || !meanings) return englishText;
+    
+    const rootsArray = roots.split(',').map(r => r.trim());
+    const meaningsArray = meanings.split(',').map(m => m.trim());
+    const words = englishText.split(/\s+/);
+    
+    return words.map((word, idx) => {
+      const cleanWord = word.toLowerCase().replace(/[^a-z]/gi, '');
+      let isHighlighted = false;
+      
+      // Check if this English word corresponds to the hovered Arabic word
+      if (hoveredArabicIndex !== null) {
+        const hoveredMeaning = meaningsArray[hoveredArabicIndex];
+        if (hoveredMeaning && hoveredMeaning !== '-') {
+          const cleanedMeaning = hoveredMeaning.toLowerCase().replace(/^(a|an|the)\s+/i, '');
+          const meaningWords = cleanedMeaning.split(/\s+/);
+          const allRelatedWords = new Set();
+          
+          meaningWords.forEach(mw => {
+            const cleanMw = mw.replace(/[^a-z]/gi, '');
+            if (cleanMw && cleanMw.length > 2) {
+              allRelatedWords.add(cleanMw);
+              if (cleanMw.endsWith('s')) {
+                allRelatedWords.add(cleanMw.slice(0, -1));
+              } else {
+                allRelatedWords.add(cleanMw + 's');
+              }
+              getSynonyms(cleanMw).forEach(syn => {
+                allRelatedWords.add(syn);
+                if (syn.endsWith('s')) {
+                  allRelatedWords.add(syn.slice(0, -1));
+                } else {
+                  allRelatedWords.add(syn + 's');
+                }
+              });
+            }
+          });
+          
+          isHighlighted = Array.from(allRelatedWords).some(rw => {
+            if (cleanWord === rw) return true;
+            if (cleanWord === rw + 's' || cleanWord + 's' === rw) return true;
+            if (cleanWord.length <= 3 || rw.length <= 3) return false;
+            if (rw.length >= 4 && cleanWord.length >= 4) {
+              if (cleanWord.includes(rw)) {
+                const index = cleanWord.indexOf(rw);
+                const beforeChar = index > 0 ? cleanWord[index - 1] : ' ';
+                const afterChar = index + rw.length < cleanWord.length ? cleanWord[index + rw.length] : ' ';
+                return /[^a-z]/i.test(beforeChar) && /[^a-z]/i.test(afterChar);
+              }
+              return rw.includes(cleanWord);
+            }
+            return false;
+          });
+        }
+      }
+      
+      return (
+        <span 
+          key={idx} 
+          className={`english-word ${isHighlighted ? 'english-word-highlighted' : ''} clickable`}
+          style={{ cursor: 'pointer' }}
+          onMouseEnter={() => {
+            meaningsArray.forEach((meaning, index) => {
+              if (meaning && meaning !== '-') {
+                const cleanedMeaning = meaning.toLowerCase().replace(/^(a|an|the)\s+/i, '');
+                const meaningWords = cleanedMeaning.split(/\s+/);
+                const allRelatedWords = new Set();
+                
+                meaningWords.forEach(mw => {
+                  const cleanMw = mw.replace(/[^a-z]/gi, '');
+                  if (cleanMw && cleanMw.length > 2) {
+                    allRelatedWords.add(cleanMw);
+                    if (cleanMw.endsWith('s')) {
+                      allRelatedWords.add(cleanMw.slice(0, -1));
+                    } else {
+                      allRelatedWords.add(cleanMw + 's');
+                    }
+                    getSynonyms(cleanMw).forEach(syn => {
+                      allRelatedWords.add(syn);
+                      if (syn.endsWith('s')) {
+                        allRelatedWords.add(syn.slice(0, -1));
+                      } else {
+                        allRelatedWords.add(syn + 's');
+                      }
+                    });
+                  }
+                });
+                
+                if (Array.from(allRelatedWords).some(rw => {
+                  if (cleanWord === rw) return true;
+                  if (cleanWord === rw + 's' || cleanWord + 's' === rw) return true;
+                  if (cleanWord.length <= 3 || rw.length <= 3) return false;
+                  if (rw.length >= 4 && cleanWord.length >= 4) {
+                    if (cleanWord.includes(rw)) {
+                      const index = cleanWord.indexOf(rw);
+                      const beforeChar = index > 0 ? cleanWord[index - 1] : ' ';
+                      const afterChar = index + rw.length < cleanWord.length ? cleanWord[index + rw.length] : ' ';
+                      return /[^a-z]/i.test(beforeChar) && /[^a-z]/i.test(afterChar);
+                    }
+                    return rw.includes(cleanWord);
+                  }
+                  return false;
+                })) {
+                  setHoveredEnglishIndex(index);
+                }
+              }
+            });
+          }}
+          onMouseLeave={() => {
+            setHoveredEnglishIndex(null);
+          }}
+        >
+          {word}{idx < words.length - 1 ? ' ' : ''}
+        </span>
+      );
+    });
+  };
+
   // Parse Arabic text with roots and meanings for hover functionality
   const parseArabicText = (arabic, roots, meanings, verseIndex) => {
     if (!arabic || !roots || !meanings) return arabic;
@@ -301,11 +451,12 @@ const QuranCompare = ({ initialVerses = [] }) => {
       const root = rootsArray[index] || '';
       const meaning = meaningsArray[index] || '';
       const isHighlighted = highlightedRoot && root === highlightedRoot;
+      const isHighlightedFromEnglish = hoveredEnglishIndex === index;
       
       return (
         <span
           key={`${verseIndex}-${index}`}
-          className={`arabic-word ${isHighlighted ? 'highlighted' : ''} ${root && root !== '-' ? 'clickable' : ''}`}
+          className={`arabic-word ${isHighlighted ? 'highlighted' : ''} ${isHighlightedFromEnglish ? 'highlighted' : ''} ${root && root !== '-' ? 'clickable' : ''}`}
           onMouseEnter={(e) => {
             // Only allow hover if no root is locked
             if (!lockedRoot) {
@@ -327,12 +478,14 @@ const QuranCompare = ({ initialVerses = [] }) => {
                 meaning: meaning
               });
             }
+            setHoveredArabicIndex(index);
           }}
           onMouseLeave={() => {
             setHoveredWord(null);
             if (!lockedRoot) {
               setHoveredRoot(null);
             }
+            setHoveredArabicIndex(null);
           }}
           onClick={() => {
             if (root && root !== '-') {
@@ -712,7 +865,10 @@ const QuranCompare = ({ initialVerses = [] }) => {
                 
                 {getTranslationText(verse, currentLanguage) && (
                   <div className="translation-text" style={{ direction: getLanguageConfig(currentLanguage).direction }}>
-                    {getTranslationText(verse, currentLanguage)}
+                    {verse.roots && verse.meanings && currentLanguage === 'english' 
+                      ? parseEnglishText(getTranslationText(verse, currentLanguage), verse.roots, verse.meanings, verse)
+                      : getTranslationText(verse, currentLanguage)
+                    }
                   </div>
                 )}
                 
