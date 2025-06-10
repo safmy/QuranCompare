@@ -100,7 +100,7 @@ const InteractiveChunkEditor = ({ arabicText, repeatCount = 3, pauseBetweenRepea
     <div style={{
       marginTop: '15px',
       padding: '15px',
-      backgroundColor: '#f5f5f5',
+      backgroundColor: '#ffffff',
       borderRadius: '4px'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
@@ -245,8 +245,8 @@ const InteractiveChunkEditor = ({ arabicText, repeatCount = 3, pauseBetweenRepea
                 display: 'inline-block',
                 padding: '8px 12px',
                 margin: '4px',
-                backgroundColor: '#fff',
-                border: '2px solid #2196F3',
+                backgroundColor: '#ffffff',
+                border: '2px solid #1976d2',
                 borderRadius: '8px',
                 position: 'relative'
               }}

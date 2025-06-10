@@ -467,17 +467,27 @@ const QuranCompare = ({ initialVerses = [] }) => {
               borderRadius: '8px',
               border: '1px solid #1976d2'
             }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: showRootSummary ? '15px' : '0'
-              }}>
+              <div 
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: showRootSummary ? '15px' : '0',
+                  cursor: 'pointer',
+                  padding: '10px',
+                  marginLeft: '-10px',
+                  marginRight: '-10px',
+                  borderRadius: '8px',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onClick={() => setShowRootSummary(!showRootSummary)}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(25, 118, 210, 0.05)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
                 <h4 style={{ margin: 0, color: '#1976d2' }}>
                   🌳 Root Analysis Summary {selectedRootData ? `for "${selectedRootData.selectedRoot}"` : `(${rootSummary.length} unique root${rootSummary.length !== 1 ? 's' : ''})`}
                 </h4>
                 <button
-                  onClick={() => setShowRootSummary(!showRootSummary)}
                   style={{
                     background: 'none',
                     border: '1px solid #1976d2',
@@ -485,7 +495,8 @@ const QuranCompare = ({ initialVerses = [] }) => {
                     padding: '5px 10px',
                     borderRadius: '4px',
                     cursor: 'pointer',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    pointerEvents: 'none'
                   }}
                 >
                   {showRootSummary ? '▼ Collapse' : '▶ Expand'}
@@ -536,11 +547,12 @@ const QuranCompare = ({ initialVerses = [] }) => {
                             cursor: 'pointer'
                           }}
                           onClick={() => {
-                            if (lockedRoot === rootData.root) {
-                              setLockedRoot(null);
-                            } else {
-                              setLockedRoot(rootData.root);
-                            }
+                            // Navigate to Root Search with this root
+                            sessionStorage.setItem('rootSearchQuery', rootData.root);
+                            sessionStorage.setItem('rootSearchMode', 'arabic');
+                            window.dispatchEvent(new CustomEvent('openRootSearch', {
+                              detail: { query: rootData.root, mode: 'arabic' }
+                            }));
                           }}
                           onMouseEnter={() => !lockedRoot && setHoveredRoot(rootData.root)}
                           onMouseLeave={() => !lockedRoot && setHoveredRoot(null)}

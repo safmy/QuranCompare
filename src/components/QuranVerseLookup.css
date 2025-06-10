@@ -270,17 +270,17 @@
 
 .verse-card {
     background: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 16px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
     transition: all 0.2s ease;
-    margin-bottom: 12px;
+    margin-bottom: 20px;
 }
 
 .verse-card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-    border-color: #d0d0d0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
 }
 
 .verse-header {
@@ -369,13 +369,13 @@
 
 .arabic-text {
     font-family: 'Amiri', 'Scheherazade', 'Arabic Typesetting', serif;
-    font-size: 22px;
-    line-height: 1.7;
+    font-size: 28px;
+    line-height: 2;
     text-align: right;
-    padding: 12px 0;
-    color: #1a1a1a;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #e0e0e0;
+    padding: 20px 0;
+    color: #111827;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
 }
 
 .arabic-word {
@@ -404,11 +404,11 @@
 }
 
 .arabic-word.highlighted {
-    background-color: #ffeb3b;
-    border-radius: 3px;
-    padding: 2px 4px;
-    font-weight: 600;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    background-color: rgba(124, 58, 237, 0.15);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-weight: 500;
+    border-bottom: 2px solid #7c3aed;
 }
 
 .english-word {
@@ -425,18 +425,16 @@
 }
 
 .english-word-highlighted {
-    background-color: #ffeb3b;
-    border-radius: 3px;
+    background-color: rgba(124, 58, 237, 0.15);
+    border-radius: 4px;
     padding: 2px 4px;
     cursor: pointer;
-    font-weight: 600;
-    color: #000;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    font-weight: 500;
+    border-bottom: 2px solid #7c3aed;
 }
 
 .english-word-highlighted:hover {
-    background-color: #fdd835;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    background-color: rgba(124, 58, 237, 0.25);
 }
 
 .english-text {
@@ -453,12 +451,13 @@
 }
 
 .translation-text {
-    font-size: 15px;
-    line-height: 1.6;
-    color: #2c3e50;
+    font-size: 17px;
+    line-height: 1.8;
+    color: #1f2937;
     padding: 0;
     font-weight: 400;
     word-spacing: 0.5px;
+    margin-top: 16px;
 }
 
 .footnote {

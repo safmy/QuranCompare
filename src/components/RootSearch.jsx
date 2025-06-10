@@ -432,11 +432,14 @@ const RootSearch = () => {
       {results && (
         <div className="search-results">
           <div className="results-summary">
-            <div className="results-summary-header">
+            <div 
+              className="results-summary-header"
+              onClick={() => setIsResultsSummaryExpanded(!isResultsSummaryExpanded)}
+              style={{ cursor: 'pointer' }}
+            >
               <h3>Search Results for "{results.query}"</h3>
               <button
                 className="collapse-toggle-btn"
-                onClick={() => setIsResultsSummaryExpanded(!isResultsSummaryExpanded)}
                 title={isResultsSummaryExpanded ? "Collapse summary" : "Expand summary"}
               >
                 {isResultsSummaryExpanded ? '▼' : '▶'}
