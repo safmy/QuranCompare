@@ -427,12 +427,118 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
         }
     };
 
+    // Helper function to parse footnote references
+    const parseFootnoteReferences = (footnoteText) => {
+        if (!footnoteText) return [];
+        
+        // Pattern to match verse references like 60:8-9, 2:255, etc.
+        const versePattern = /(\d+):(\d+)(?:-(\d+))?/g;
+        const matches = [];
+        let match;
+        
+        while ((match = versePattern.exec(footnoteText)) !== null) {
+            matches.push(match[0]);
+        }
+        
+        return matches;
+    };
+    
+    // Helper function to make footnotes clickable
+    const parseFootnoteText = (footnoteText, currentLanguage) => {
+        if (!footnoteText) return null;
+        
+        // Pattern to match verse references
+        const versePattern = /(\d+):(\d+)(?:-(\d+))?/g;
+        const parts = [];
+        let lastIndex = 0;
+        let match;
+        
+        while ((match = versePattern.exec(footnoteText)) !== null) {
+            // Add text before the match
+            if (match.index > lastIndex) {
+                parts.push(footnoteText.substring(lastIndex, match.index));
+            }
+            
+            // Add the clickable verse reference
+            const verseRef = match[0];
+            parts.push(
+                <span
+                    key={match.index}
+                    style={{
+                        color: '#1976d2',
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                        fontWeight: 'bold'
+                    }}
+                    onClick={() => {
+                        setVerseRange(verseRef);
+                        setSearchMode('range');
+                        setTimeout(() => {
+                            fetchVerses();
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }, 100);
+                    }}
+                    title={`Click to view ${verseRef}`}
+                >
+                    {verseRef}
+                </span>
+            );
+            
+            lastIndex = match.index + match[0].length;
+        }
+        
+        // Add remaining text
+        if (lastIndex < footnoteText.length) {
+            parts.push(footnoteText.substring(lastIndex));
+        }
+        
+        return parts.length > 0 ? parts : footnoteText;
+    };
+    
+    // Helper function to normalize verse input (handle whitespace between chapter and verse)
+    const normalizeVerseInput = (input) => {
+        // Trim the input
+        let normalized = input.trim();
+        
+        // Handle comma-separated verses
+        if (normalized.includes(',')) {
+            // Split by comma and normalize each part
+            const parts = normalized.split(',').map(part => {
+                const trimmed = part.trim();
+                // Replace whitespace between chapter and verse with colon
+                // Pattern: digits, whitespace, digits (optionally followed by dash and more digits)
+                return trimmed.replace(/(\d+)\s+(\d+(?:-\d+)?)/g, '$1:$2');
+            });
+            return parts.join(', ');
+        } else {
+            // Single verse - replace whitespace between chapter and verse
+            return normalized.replace(/(\d+)\s+(\d+(?:-\d+)?)/g, '$1:$2');
+        }
+    };
+
     const detectSearchType = (input) => {
         const trimmed = input.trim();
+        
+        // Check if it's comma-separated verses
+        if (trimmed.includes(',')) {
+            // Check if all parts are verse references
+            const parts = trimmed.split(',').map(p => p.trim());
+            return parts.every(part => {
+                // Normalize the part first
+                const normalized = part.replace(/(\d+)\s+(\d+(?:-\d+)?)/g, '$1:$2');
+                const versePatterns = [
+                    /^(\d+):(\d+)(?:-(\d+))?$/,  // Standard format: 1:1 or 1:1-7
+                    /^(\d+)$/, // Just chapter number
+                    /^(\d+):$/, // Chapter with colon
+                ];
+                return versePatterns.some(pattern => pattern.test(normalized));
+            });
+        }
         
         // Patterns for verse ranges
         const versePatterns = [
             /^(\d+):(\d+)(?:-(\d+))?$/,  // Standard format: 1:1 or 1:1-7
+            /^(\d+)\s+(\d+)(?:-(\d+))?$/,  // Space format: 1 1 or 1 1-7
             /^(\d+)$/, // Just chapter number
             /^(\d+):$/, // Chapter with colon
             /^chapter\s+(\d+)(?:\s+verse\s+(\d+)(?:\s*(?:to|-)\s*(\d+))?)?$/i,
@@ -444,24 +550,79 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
     const fetchVerses = async () => {
         if (!verseRange.trim()) return;
         
+        // Normalize the input first
+        const normalizedInput = normalizeVerseInput(verseRange);
+        
         setLoading(true);
         setError(null);
         
         try {
-            const isVerseRange = detectSearchType(verseRange);
+            const isVerseRange = detectSearchType(normalizedInput);
             
             if (isVerseRange) {
-                // Range lookup (e.g., 1:1-7)
-                try {
-                    const response = await fetch(`${API_BASE_URL}/verses`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            verse_range: verseRange
-                        })
-                    });
+                // Check if it's comma-separated verses
+                if (normalizedInput.includes(',')) {
+                    // Handle multiple verses
+                    const verseRefs = normalizedInput.split(',').map(v => v.trim());
+                    const allVerses = [];
+                    const notFound = [];
+                    
+                    for (const ref of verseRefs) {
+                        try {
+                            const response = await fetch(`${API_BASE_URL}/verses`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    verse_range: ref
+                                })
+                            });
+                            
+                            if (response.ok) {
+                                const data = await response.json();
+                                // Ensure subtitle data is included
+                                const versesWithSubtitles = data.verses.map(verse => {
+                                    if (!verse.subtitle && allVersesData.length > 0) {
+                                        const localVerse = allVersesData.find(v => v.sura_verse === verse.sura_verse);
+                                        if (localVerse && localVerse.subtitle) {
+                                            return { ...verse, subtitle: localVerse.subtitle };
+                                        }
+                                    }
+                                    return verse;
+                                });
+                                allVerses.push(...versesWithSubtitles);
+                            } else {
+                                notFound.push(ref);
+                            }
+                        } catch (err) {
+                            console.error(`Failed to fetch ${ref}:`, err);
+                            notFound.push(ref);
+                        }
+                    }
+                    
+                    if (notFound.length > 0 && allVerses.length === 0) {
+                        throw new Error(`Could not find verses: ${notFound.join(', ')}`);
+                    }
+                    
+                    setVerses(allVerses);
+                    setSearchMode('range');
+                    
+                    if (notFound.length > 0) {
+                        setError(`Some verses not found: ${notFound.join(', ')}`);
+                    }
+                } else {
+                    // Single verse or range
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/verses`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                verse_range: normalizedInput
+                            })
+                        });
                     
                     if (!response.ok) {
                         throw new Error(`API returned ${response.status}`);
@@ -1066,7 +1227,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
 
             <form onSubmit={handleSubmit} className="verse-lookup-form">
                 <div className="search-hint-inline">
-                    Enter verse references (1:1-7, 2:5, chapter 3) or search for text within verses
+                    Enter verse references (1:1-7, 2:5, 4:89, 60:8-9) or search for text. Use commas for multiple verses
                     {searchMode === 'text' && (
                         <>
                             <label className="toggle-compact inline">
@@ -1094,7 +1255,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                         value={verseRange}
                         onChange={(e) => setVerseRange(e.target.value)}
                         onFocus={(e) => e.target.select()}
-                        placeholder="1:1-7, chapter 2, or search text..."
+                        placeholder="1:1-7, 4:89, 60:8-9, or search text..."
                         className="verse-input"
                     />
                     <label className="toggle-compact" style={{ marginLeft: '10px', marginRight: '10px' }}>
@@ -1264,7 +1425,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                             
                             {getFootnoteText(verse, currentLanguage) && (
                                 <div className="footnote" style={{ direction: getLanguageConfig(currentLanguage).direction }}>
-                                    <small>{getFootnoteText(verse, currentLanguage)}</small>
+                                    <small>{parseFootnoteText(getFootnoteText(verse, currentLanguage), currentLanguage)}</small>
                                 </div>
                             )}
                             </div>

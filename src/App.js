@@ -275,7 +275,7 @@ function AppContent() {
               top: "-8px",
               right: "0"
             }}>
-              v1.4.19
+              v1.4.20
             </span>
           </div>
           <div style={{
@@ -372,4 +372,4 @@ function App() {
 }
 
 export default App;
-// Trigger Netlify deployment - Mon 10 Jun 2025 16:40:00 BST - v1.4.19 - Compare tab English highlighting
+// Trigger Netlify deployment - Mon 10 Jun 2025 16:45:00 BST - v1.4.20 - Clickable footnotes and multi-verse lookup
