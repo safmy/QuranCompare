@@ -4,9 +4,10 @@
 
 [build.environment]
   CI = "false"
-  REACT_APP_SUPABASE_URL = "https://fmmeyglbkzhxpqoicmbs.supabase.co"
-  REACT_APP_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtbWV5Z2xia3poeHBxb2ljbWJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyMjI1NjAsImV4cCI6MjA2Mzc5ODU2MH0.oQ1KxdJgMoIFzGnrWjEJz6n6qJ1sksosJ8vkrb6L3XU"
+  REACT_APP_SUPABASE_URL = "https://fsubmqjevlfpcirgsbhi.supabase.co"
+  REACT_APP_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzdWJtcWpldmxmcGNpcmdzYmhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzNTgyNzgsImV4cCI6MjA2NDkzNDI3OH0.Hfo1kCUCVMvr2ffhLJ3rp7qLMchWYdmBkzOYcorQVQE"
   REACT_APP_API_URL = "https://qurancompare.onrender.com"
+  STRIPE_DEBATER_PRICE_ID = "price_1RXeD5ImvcH9DSE1KcvO2Iy9"
 
 [[redirects]]
   from = "/*"
