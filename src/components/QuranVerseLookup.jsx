@@ -683,8 +683,36 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
         }, 100);
     };
 
+    // Common synonyms and related words mapping
+    const synonymMap = {
+        'most': ['majority', 'most', 'greater', 'more', 'many', 'abundant'],
+        'majority': ['most', 'majority', 'greater', 'many', 'bulk'],
+        'people': ['people', 'mankind', 'humans', 'folk', 'persons'],
+        'earth': ['earth', 'world', 'land', 'ground'],
+        'path': ['path', 'way', 'road', 'course'],
+        'god': ['god', 'allah', 'lord'],
+        'follow': ['follow', 'obey', 'pursue'],
+        'guess': ['guess', 'conjecture', 'assume', 'suppose'],
+        'divert': ['divert', 'mislead', 'lead astray', 'turn away'],
+        'obey': ['obey', 'follow', 'comply', 'submit']
+    };
+    
+    // Get synonyms for a word
+    const getSynonyms = (word) => {
+        const lower = word.toLowerCase();
+        // Check if word is in any synonym group
+        for (const [key, synonyms] of Object.entries(synonymMap)) {
+            if (synonyms.includes(lower)) {
+                return synonyms;
+            }
+        }
+        // Return the word itself and its stem
+        const stem = lower.replace(/ing$|ed$|s$|es$|ly$/, '');
+        return [lower, stem].filter(w => w.length > 2);
+    };
+    
     // Parse English text with bidirectional highlighting
-    const parseEnglishText = (text, meanings) => {
+    const parseEnglishText = (text, meanings, verse) => {
         if (!meanings || hoveredArabicIndex === null) return text;
         
         const meaningsArray = meanings.split(',').map(m => m.trim());
@@ -692,14 +720,30 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
         
         if (!hoveredMeaning || hoveredMeaning === '-') return text;
         
+        // Get all possible words to highlight including synonyms
+        const meaningWords = hoveredMeaning.toLowerCase().split(/\s+/);
+        const wordsToHighlight = new Set();
+        
+        meaningWords.forEach(word => {
+            wordsToHighlight.add(word);
+            const synonyms = getSynonyms(word);
+            synonyms.forEach(syn => wordsToHighlight.add(syn));
+        });
+        
         // Create word spans with hover functionality
         const words = text.split(/(\s+)/); // Keep spaces
         return words.map((word, idx) => {
             if (word.trim() === '') return word; // Return spaces as-is
             
-            const cleanWord = word.toLowerCase().replace(/[.,!?;:]/g, '');
-            const hoveredWords = hoveredMeaning.toLowerCase().split(/\s+/);
-            const isHighlighted = hoveredWords.some(hw => cleanWord.includes(hw) || hw.includes(cleanWord));
+            const cleanWord = word.toLowerCase().replace(/[.,!?;:'"]/g, '');
+            const isHighlighted = Array.from(wordsToHighlight).some(hw => {
+                // Check exact match or stem match
+                return cleanWord === hw || 
+                       cleanWord.includes(hw) || 
+                       hw.includes(cleanWord) ||
+                       (cleanWord.length > 3 && hw.length > 3 && 
+                        (cleanWord.startsWith(hw.slice(0, -1)) || hw.startsWith(cleanWord.slice(0, -1))));
+            });
             
             return (
                 <span 
@@ -711,7 +755,17 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                         meaningsArray.forEach((meaning, index) => {
                             if (meaning && meaning !== '-') {
                                 const meaningWords = meaning.toLowerCase().split(/\s+/);
-                                if (meaningWords.some(mw => cleanWord.includes(mw) || mw.includes(cleanWord))) {
+                                const allRelatedWords = new Set();
+                                
+                                meaningWords.forEach(mw => {
+                                    allRelatedWords.add(mw);
+                                    getSynonyms(mw).forEach(syn => allRelatedWords.add(syn));
+                                });
+                                
+                                if (Array.from(allRelatedWords).some(rw => 
+                                    cleanWord === rw || 
+                                    cleanWord.includes(rw) || 
+                                    rw.includes(cleanWord))) {
                                     setHoveredEnglishIndex(index);
                                 }
                             }
@@ -1113,7 +1167,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                                 onContextMenu={(e) => e.preventDefault()}
                             >
                                 {currentLanguage === 'en' && verse.meanings && showArabic && verse.arabic 
-                                    ? parseEnglishText(getTranslationText(verse, currentLanguage), verse.meanings)
+                                    ? parseEnglishText(getTranslationText(verse, currentLanguage), verse.meanings, verse)
                                     : getTranslationText(verse, currentLanguage)}
                             </div>
                             

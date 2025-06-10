@@ -24,6 +24,9 @@ const RootSearch = () => {
   const [hoveredWord, setHoveredWord] = useState(null);
   const [hoveredArabicWord, setHoveredArabicWord] = useState(null);
   const [expandedVerses, setExpandedVerses] = useState(new Set());
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [highlightedRoot, setHighlightedRoot] = useState(null);
+  const [lockedRoot, setLockedRoot] = useState(null);
   
   // Load root mapping data
   useEffect(() => {
@@ -207,6 +210,71 @@ const RootSearch = () => {
     });
     
     return arabicWords;
+  };
+
+  // Parse Arabic text with word-by-word hover and highlighting
+  const parseArabicText = (verse, searchRoots) => {
+    if (!verse.arabic || !verse.roots) return verse.arabic;
+    
+    const arabicWords = verse.arabic.split(/\s+/);
+    const roots = verse.roots.split(',').map(r => r.trim());
+    const meanings = verse.meanings ? verse.meanings.split(',').map(m => m.trim()) : [];
+    
+    return arabicWords.map((word, index) => {
+      const root = roots[index] || '';
+      const meaning = meanings[index] || '';
+      const isClickable = root && root !== '-';
+      
+      // Check if this word's root matches any of the search roots
+      const isHighlighted = searchRoots && searchRoots.includes(root);
+      // Check if this root is currently hovered or locked
+      const isRootHighlighted = (lockedRoot && root === lockedRoot) || 
+                               (!lockedRoot && highlightedRoot === root);
+      
+      return (
+        <span
+          key={index}
+          className={`arabic-word ${isClickable ? 'clickable' : ''} ${isHighlighted ? 'search-highlighted' : ''} ${isRootHighlighted ? 'root-highlighted' : ''}`}
+          onMouseEnter={(e) => {
+            if (root || meaning) {
+              const rect = e.target.getBoundingClientRect();
+              setTooltipPosition({
+                x: rect.left + rect.width / 2,
+                y: rect.top - 10
+              });
+              setHoveredWord({
+                word: word,
+                root: root,
+                meaning: meaning
+              });
+              if (root && root !== '-' && !lockedRoot) {
+                setHighlightedRoot(root);
+              }
+            }
+          }}
+          onMouseLeave={() => {
+            setHoveredWord(null);
+            if (!lockedRoot) {
+              setHighlightedRoot(null);
+            }
+          }}
+          onClick={() => {
+            if (isClickable) {
+              if (lockedRoot === root) {
+                setLockedRoot(null);
+                setHighlightedRoot(null);
+              } else {
+                setLockedRoot(root);
+                setHighlightedRoot(root);
+              }
+            }
+          }}
+        >
+          {word}
+          {index < arabicWords.length - 1 && ' '}
+        </span>
+      );
+    });
   };
 
   // Handle clicking on a root to show its verses
@@ -434,21 +502,13 @@ const RootSearch = () => {
                         <div 
                           className="arabic-text"
                           dir="rtl"
-                          onMouseEnter={() => setHoveredArabicWord(verse.roots)}
-                          onMouseLeave={() => setHoveredArabicWord(null)}
                         >
-                          {verse.arabic}
+                          {parseArabicText(verse, results.roots)}
                         </div>
                         
                         <div className="translation-text">
                           {getTranslationText(verse, currentLanguage)}
                         </div>
-                        
-                        {hoveredArabicWord && (
-                          <div className="hover-info">
-                            Roots: {verse.roots}
-                          </div>
-                        )}
                       </div>
                       
                       {isExpanded && (
@@ -474,6 +534,74 @@ const RootSearch = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+      
+      {/* Word hover tooltip */}
+      {hoveredWord && (
+        <div 
+          className="word-tooltip"
+          style={{
+            position: 'fixed',
+            left: tooltipPosition.x,
+            top: tooltipPosition.y,
+            transform: 'translateX(-50%) translateY(-100%)',
+            zIndex: 1000
+          }}
+        >
+          <div className="tooltip-content">
+            <div className="tooltip-word">{hoveredWord.word}</div>
+            {hoveredWord.root && hoveredWord.root !== '-' && (
+              <div className="tooltip-root">
+                <strong>Root:</strong> {hoveredWord.root}
+              </div>
+            )}
+            {hoveredWord.meaning && (
+              <div className="tooltip-meaning">
+                <strong>Meaning:</strong> {hoveredWord.meaning}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Locked root indicator */}
+      {lockedRoot && (
+        <div style={{
+          position: 'fixed',
+          top: '70px',
+          right: '20px',
+          background: '#fff3cd',
+          border: '1px solid #ffc107',
+          borderRadius: '8px',
+          padding: '10px 15px',
+          boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+          zIndex: 999
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontWeight: 'bold' }}>Locked Root:</span>
+            <span style={{
+              fontFamily: 'Traditional Arabic, serif',
+              fontSize: '20px',
+              direction: 'rtl'
+            }}>{lockedRoot}</span>
+            <button
+              onClick={() => {
+                setLockedRoot(null);
+                setHighlightedRoot(null);
+              }}
+              style={{
+                background: 'none',
+                border: '1px solid #ffc107',
+                borderRadius: '4px',
+                padding: '2px 8px',
+                cursor: 'pointer',
+                fontSize: '12px'
+              }}
+            >
+              Unlock
+            </button>
+          </div>
         </div>
       )}
     </div>

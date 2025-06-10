@@ -414,6 +414,83 @@
   min-width: 120px;
 }
 
+/* Word highlighting styles */
+.arabic-word {
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.arabic-word.clickable {
+  cursor: pointer;
+}
+
+.arabic-word.clickable:hover {
+  background: rgba(107, 70, 193, 0.1);
+}
+
+.arabic-word.search-highlighted {
+  background: #ffeb3b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.arabic-word.root-highlighted {
+  background: #b3e5fc;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.arabic-word.search-highlighted.root-highlighted {
+  background: linear-gradient(45deg, #ffeb3b 50%, #b3e5fc 50%);
+}
+
+/* Tooltip styles */
+.word-tooltip {
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-size: 14px;
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: 300px;
+}
+
+.word-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.9);
+}
+
+.tooltip-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tooltip-word {
+  font-size: 18px;
+  font-weight: bold;
+  font-family: 'Traditional Arabic', 'Scheherazade', serif;
+  direction: rtl;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.tooltip-root, .tooltip-meaning {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.tooltip-root strong, .tooltip-meaning strong {
+  color: #ffd54f;
+  margin-right: 4px;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .root-search-container {
