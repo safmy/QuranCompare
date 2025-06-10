@@ -275,7 +275,7 @@ function AppContent() {
               top: "-8px",
               right: "0"
             }}>
-              v1.4.21
+              v1.4.22
             </span>
           </div>
           <div style={{
@@ -372,4 +372,4 @@ function App() {
 }
 
 export default App;
-// Trigger Netlify deployment - Mon 10 Jun 2025 16:55:00 BST - v1.4.21 - Fix Prayer Times blank screen on mobile
+// Trigger Netlify deployment - Mon 10 Jun 2025 17:00:00 BST - v1.4.22 - Add English word highlighting for roots in Root Search

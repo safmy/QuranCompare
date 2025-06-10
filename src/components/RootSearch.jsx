@@ -286,8 +286,8 @@ const RootSearch = () => {
     return synonymMap[word.toLowerCase()] || [];
   };
 
-  // Parse English text to make words hoverable
-  const parseEnglishText = (englishText, verse) => {
+  // Parse English text to make words hoverable and highlight search results
+  const parseEnglishText = (englishText, verse, searchRoots) => {
     if (!englishText || !verse.roots || !verse.meanings) return englishText;
     
     const rootsArray = verse.roots.split(',').map(r => r.trim());
@@ -297,6 +297,57 @@ const RootSearch = () => {
     return words.map((word, idx) => {
       const cleanWord = word.toLowerCase().replace(/[^a-z]/gi, '');
       let isHighlighted = false;
+      let isSearchHighlighted = false;
+      
+      // Check if this English word corresponds to any searched root
+      if (searchRoots && searchRoots.length > 0) {
+        rootsArray.forEach((root, rootIndex) => {
+          if (searchRoots.includes(root) && meaningsArray[rootIndex] && meaningsArray[rootIndex] !== '-') {
+            const meaning = meaningsArray[rootIndex];
+            const cleanedMeaning = meaning.toLowerCase().replace(/^(a|an|the)\s+/i, '');
+            const meaningWords = cleanedMeaning.split(/\s+/);
+            const allRelatedWords = new Set();
+            
+            meaningWords.forEach(mw => {
+              const cleanMw = mw.replace(/[^a-z]/gi, '');
+              if (cleanMw && cleanMw.length > 2) {
+                allRelatedWords.add(cleanMw);
+                if (cleanMw.endsWith('s')) {
+                  allRelatedWords.add(cleanMw.slice(0, -1));
+                } else {
+                  allRelatedWords.add(cleanMw + 's');
+                }
+                getSynonyms(cleanMw).forEach(syn => {
+                  allRelatedWords.add(syn);
+                  if (syn.endsWith('s')) {
+                    allRelatedWords.add(syn.slice(0, -1));
+                  } else {
+                    allRelatedWords.add(syn + 's');
+                  }
+                });
+              }
+            });
+            
+            if (Array.from(allRelatedWords).some(rw => {
+              if (cleanWord === rw) return true;
+              if (cleanWord === rw + 's' || cleanWord + 's' === rw) return true;
+              if (cleanWord.length <= 3 || rw.length <= 3) return false;
+              if (rw.length >= 4 && cleanWord.length >= 4) {
+                if (cleanWord.includes(rw)) {
+                  const index = cleanWord.indexOf(rw);
+                  const beforeChar = index > 0 ? cleanWord[index - 1] : ' ';
+                  const afterChar = index + rw.length < cleanWord.length ? cleanWord[index + rw.length] : ' ';
+                  return /[^a-z]/i.test(beforeChar) && /[^a-z]/i.test(afterChar);
+                }
+                return rw.includes(cleanWord);
+              }
+              return false;
+            })) {
+              isSearchHighlighted = true;
+            }
+          }
+        });
+      }
       
       // Check if this English word corresponds to the hovered Arabic word
       if (hoveredArabicIndex !== null) {
@@ -347,7 +398,7 @@ const RootSearch = () => {
       return (
         <span 
           key={idx} 
-          className={`english-word ${isHighlighted ? 'english-word-highlighted' : ''} clickable`}
+          className={`english-word ${isHighlighted ? 'english-word-highlighted' : ''} ${isSearchHighlighted ? 'search-highlighted' : ''} clickable`}
           style={{ cursor: 'pointer' }}
           onMouseEnter={() => {
             meaningsArray.forEach((meaning, index) => {
@@ -722,7 +773,7 @@ const RootSearch = () => {
                         
                         <div className="translation-text">
                           {currentLanguage === 'english' && verse.roots && verse.meanings
-                            ? parseEnglishText(getTranslationText(verse, currentLanguage), verse)
+                            ? parseEnglishText(getTranslationText(verse, currentLanguage), verse, results.roots)
                             : getTranslationText(verse, currentLanguage)
                           }
                         </div>

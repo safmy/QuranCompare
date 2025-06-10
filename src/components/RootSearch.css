@@ -432,6 +432,17 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+.english-word.search-highlighted {
+  background-color: #b3e5fc;
+  border-radius: 3px;
+  padding: 1px 3px;
+  font-weight: 600;
+}
+
+.english-word.search-highlighted.english-word-highlighted {
+  background: linear-gradient(45deg, #ffeb3b 50%, #b3e5fc 50%);
+}
+
 .hover-info {
   position: absolute;
   bottom: -30px;
@@ -727,6 +738,15 @@ body.dark-mode .word-tooltip {
 body.dark-mode .error-message {
   background: #4a1f1f;
   color: #ff6b6b;
+}
+
+body.dark-mode .english-word.search-highlighted {
+  background-color: #1976d2;
+  color: white;
+}
+
+body.dark-mode .english-word.search-highlighted.english-word-highlighted {
+  background: linear-gradient(45deg, #ffc107 50%, #1976d2 50%);
 }
 
 /* Responsive design */
