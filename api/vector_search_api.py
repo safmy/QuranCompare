@@ -117,6 +117,8 @@ class VerseResult(BaseModel):
     fquran: Optional[str] = None
     bquran: Optional[str] = None
     myquran: Optional[str] = None
+    lithuanian: Optional[str] = None
+    bengali: Optional[str] = None
     # Language-specific footnotes
     tquran_footnote: Optional[str] = None
     tmquran_footnote: Optional[str] = None
@@ -127,6 +129,8 @@ class VerseResult(BaseModel):
     fquran_footnote: Optional[str] = None
     bquran_footnote: Optional[str] = None
     myquran_footnote: Optional[str] = None
+    lithuanian_footnote: Optional[str] = None
+    bengali_footnote: Optional[str] = None
     # Additional fields
     transliteration: Optional[str] = None
     subtitle: Optional[str] = None
@@ -510,6 +514,8 @@ async def get_verse_range(request: VerseRangeRequest):
                     fquran=verse_data.get('fquran'),
                     bquran=verse_data.get('bquran'),
                     myquran=verse_data.get('myquran'),
+                    lithuanian=verse_data.get('lithuanian'),
+                    bengali=verse_data.get('bengali'),
                     # Include language-specific footnotes
                     tquran_footnote=verse_data.get('tquran_footnote'),
                     tmquran_footnote=verse_data.get('tmquran_footnote'),
@@ -520,6 +526,8 @@ async def get_verse_range(request: VerseRangeRequest):
                     fquran_footnote=verse_data.get('fquran_footnote'),
                     bquran_footnote=verse_data.get('bquran_footnote'),
                     myquran_footnote=verse_data.get('myquran_footnote'),
+                    lithuanian_footnote=verse_data.get('lithuanian_footnote'),
+                    bengali_footnote=verse_data.get('bengali_footnote'),
                     # Additional fields
                     transliteration=verse_data.get('transliteration'),
                     subtitle=verse_data.get('subtitle')
