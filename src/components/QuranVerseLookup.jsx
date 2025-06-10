@@ -795,6 +795,12 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
             'lead': ['guide', 'direct'],
             'straight': ['right', 'direct', 'correct'],
             'right': ['straight', 'correct'],
+            'ally': ['friend', 'allies', 'protector', 'guardian', 'helper'],
+            'allies': ['ally', 'friends', 'protectors', 'guardians', 'helpers'],
+            'friend': ['ally', 'allies', 'companion'],
+            'friends': ['ally', 'allies', 'companions'],
+            'protector': ['ally', 'guardian', 'defender'],
+            'guardian': ['ally', 'protector', 'keeper'],
             // Add more synonym mappings as needed
         };
         return synonymMap[word.toLowerCase()] || [];
@@ -828,11 +834,18 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                     });
                     
                     // Check if current word matches any related word
-                    isHighlighted = Array.from(allRelatedWords).some(rw => 
-                        cleanWord === rw || 
-                        cleanWord.includes(rw) || 
-                        rw.includes(cleanWord)
-                    );
+                    // Use exact match first, then check if the word contains the meaning
+                    isHighlighted = Array.from(allRelatedWords).some(rw => {
+                        // Exact match
+                        if (cleanWord === rw) return true;
+                        // Check if it's a plural/singular form
+                        if (cleanWord === rw + 's' || cleanWord + 's' === rw) return true;
+                        // Only do substring matching for longer words to avoid false positives
+                        if (rw.length >= 4 && cleanWord.length >= 4) {
+                            return cleanWord.includes(rw) || rw.includes(cleanWord);
+                        }
+                        return false;
+                    });
                 }
             }
             
@@ -853,10 +866,17 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                                     getSynonyms(mw).forEach(syn => allRelatedWords.add(syn));
                                 });
                                 
-                                if (Array.from(allRelatedWords).some(rw => 
-                                    cleanWord === rw || 
-                                    cleanWord.includes(rw) || 
-                                    rw.includes(cleanWord))) {
+                                if (Array.from(allRelatedWords).some(rw => {
+                                    // Exact match
+                                    if (cleanWord === rw) return true;
+                                    // Check if it's a plural/singular form
+                                    if (cleanWord === rw + 's' || cleanWord + 's' === rw) return true;
+                                    // Only do substring matching for longer words
+                                    if (rw.length >= 4 && cleanWord.length >= 4) {
+                                        return cleanWord.includes(rw) || rw.includes(cleanWord);
+                                    }
+                                    return false;
+                                })) {
                                     setHoveredEnglishIndex(index);
                                 }
                             }
