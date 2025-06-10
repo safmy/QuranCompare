@@ -34,7 +34,17 @@ const QuranCompare = ({ initialVerses = [] }) => {
           throw new Error('Failed to load Quran data');
         }
         const data = await response.json();
-        setQuranData(data);
+        // Ensure data is an array
+        if (Array.isArray(data)) {
+          setQuranData(data);
+        } else if (data && typeof data === 'object') {
+          // If it's an object, try to extract the verses array
+          const verses = data.verses || data.data || [];
+          setQuranData(Array.isArray(verses) ? verses : []);
+        } else {
+          console.error('Unexpected data format:', data);
+          setQuranData([]);
+        }
       } catch (err) {
         console.error('Error loading Quran data:', err);
         setError('Failed to load Quran data. Please refresh the page.');
@@ -223,7 +233,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
         const verseRef = parseVerseReference(input);
         
         if (verseRef) {
-          const verseData = quranData.find(v => v.sura_verse === verseRef);
+          const verseData = Array.isArray(quranData) ? quranData.find(v => v && v.sura_verse === verseRef) : null;
           if (verseData) {
             foundVerses.push(formatVerse(verseData));
           } else {
