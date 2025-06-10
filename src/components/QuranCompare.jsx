@@ -34,17 +34,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
           throw new Error('Failed to load Quran data');
         }
         const data = await response.json();
-        // Ensure data is an array
-        if (Array.isArray(data)) {
-          setQuranData(data);
-        } else if (data && typeof data === 'object') {
-          // If it's an object, try to extract the verses array
-          const verses = data.verses || data.data || [];
-          setQuranData(Array.isArray(verses) ? verses : []);
-        } else {
-          console.error('Unexpected data format:', data);
-          setQuranData([]);
-        }
+        setQuranData(data);
       } catch (err) {
         console.error('Error loading Quran data:', err);
         setError('Failed to load Quran data. Please refresh the page.');
@@ -104,23 +94,6 @@ const QuranCompare = ({ initialVerses = [] }) => {
     }
   }, [lockedRoot, hoveredRoot]);
 
-  const formatVerse = (verseData) => {
-    if (!verseData) return null;
-
-    const verseRef = verseData.sura_verse;
-    return {
-      reference: `[${verseRef}]`,
-      sura_verse: verseRef,
-      english: verseData.english || '',
-      arabic: verseData.arabic || '',
-      roots: verseData.roots || '',
-      meanings: verseData.meanings || '',
-      footnote: verseData.footnote || null,
-      subtitle: verseData.subtitle || null
-    };
-  };
-
-  // Analyze roots across all compared verses
   const analyzeRoots = (versesData, focusedRoot = null) => {
     const rootAnalysis = {};
     
@@ -173,6 +146,22 @@ const QuranCompare = ({ initialVerses = [] }) => {
       .sort((a, b) => b.totalCount - a.totalCount);
     
     return sortedRoots;
+  };
+
+  const formatVerse = (verseData) => {
+    if (!verseData) return null;
+
+    const verseRef = verseData.sura_verse;
+    return {
+      reference: `[${verseRef}]`,
+      sura_verse: verseRef,
+      english: verseData.english || '',
+      arabic: verseData.arabic || '',
+      roots: verseData.roots || '',
+      meanings: verseData.meanings || '',
+      footnote: verseData.footnote || null,
+      subtitle: verseData.subtitle || null
+    };
   };
 
   const parseVerseReference = (input) => {
@@ -233,7 +222,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
         const verseRef = parseVerseReference(input);
         
         if (verseRef) {
-          const verseData = Array.isArray(quranData) ? quranData.find(v => v && v.sura_verse === verseRef) : null;
+          const verseData = quranData.find(v => v.sura_verse === verseRef);
           if (verseData) {
             foundVerses.push(formatVerse(verseData));
           } else {
@@ -559,58 +548,46 @@ const QuranCompare = ({ initialVerses = [] }) => {
                           onClick={() => {
                             // Navigate to Root Search with this root
                             sessionStorage.setItem('rootSearchQuery', rootData.root);
-                            sessionStorage.setItem('rootSearchMode', 'arabic');
-                            window.dispatchEvent(new CustomEvent('openRootSearch', {
-                              detail: { query: rootData.root, mode: 'arabic' }
-                            }));
+                            sessionStorage.setItem('rootSearchMode', 'arabic-english');
+                            const event = new CustomEvent('openRootSearch', { 
+                              detail: { query: rootData.root, mode: 'arabic-english' } 
+                            });
+                            window.dispatchEvent(event);
                           }}
-                          onMouseEnter={() => !lockedRoot && setHoveredRoot(rootData.root)}
-                          onMouseLeave={() => !lockedRoot && setHoveredRoot(null)}
                           >
                             {rootData.root}
                           </span>
-                          <span style={{
-                            marginLeft: '10px',
-                            fontSize: '14px',
-                            color: '#666'
-                          }}>
-                            ({rootData.totalCount} occurrence{rootData.totalCount !== 1 ? 's' : ''})
-                          </span>
                         </div>
+                        <span style={{
+                          backgroundColor: '#e3f2fd',
+                          color: '#1976d2',
+                          padding: '4px 12px',
+                          borderRadius: '16px',
+                          fontSize: '13px',
+                          fontWeight: '500'
+                        }}>
+                          {rootData.totalCount} occurrence{rootData.totalCount !== 1 ? 's' : ''}
+                        </span>
                       </div>
                       
-                      <div style={{ marginBottom: '10px' }}>
-                        <strong style={{ color: '#555' }}>Meanings:</strong>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '5px' }}>
-                          {rootData.meanings.map((meaning, mIdx) => (
-                            <span key={mIdx} style={{
-                              padding: '3px 10px',
-                              backgroundColor: '#e3f2fd',
-                              color: '#1976d2',
-                              borderRadius: '15px',
-                              fontSize: '13px'
-                            }}>
-                              {meaning}
-                            </span>
-                          ))}
+                      {rootData.meanings.length > 0 && (
+                        <div style={{ marginTop: '10px' }}>
+                          <strong style={{ color: '#666', fontSize: '14px' }}>Meanings found:</strong>
+                          <div style={{ marginTop: '5px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                            {rootData.meanings.map((meaning, midx) => (
+                              <span key={midx} style={{
+                                backgroundColor: '#f0f0f0',
+                                color: '#333',
+                                padding: '3px 10px',
+                                borderRadius: '12px',
+                                fontSize: '13px'
+                              }}>
+                                {meaning}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div>
-                        <strong style={{ color: '#555' }}>Appears in:</strong>
-                        <div style={{ marginTop: '5px', fontSize: '13px', color: '#666' }}>
-                          {rootData.occurrences.map((occ, oIdx) => (
-                            <span key={oIdx}>
-                              [{occ.verse}] <span style={{ 
-                                fontFamily: 'Traditional Arabic, serif',
-                                fontSize: '16px',
-                                color: '#333'
-                              }}>{occ.arabicWord}</span> → {occ.meaning}
-                              {oIdx < rootData.occurrences.length - 1 && ' • '}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
+                      )}
                     </div>
                   ))}
                 </div>

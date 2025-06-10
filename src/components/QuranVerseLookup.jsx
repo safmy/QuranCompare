@@ -244,8 +244,8 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
     const [selectedWord, setSelectedWord] = useState(null); // For mobile touch interaction
     const [isMobile, setIsMobile] = useState(false);
     const [selectedMeaningCategory, setSelectedMeaningCategory] = useState(null);
-    const [hoveredEnglishIndex, setHoveredEnglishIndex] = useState(null);
-    const [hoveredArabicIndex, setHoveredArabicIndex] = useState(null);
+    const [hoveredEnglishIndex, setHoveredEnglishIndex] = useState(null); // For English word hover
+    const [hoveredArabicIndex, setHoveredArabicIndex] = useState(null); // For Arabic word hover
     
     // Long press functionality
     const [longPressTimer, setLongPressTimer] = useState(null);
@@ -652,13 +652,13 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
         setShowAllRootVerses(false);
     };
     
-    const navigateToCompare = (verses, rootAnalysisData = null) => {
+    const navigateToCompare = (verses, meaningData = null) => {
         // Store verses in sessionStorage to pass to Compare tab
         sessionStorage.setItem('compareVerses', JSON.stringify(verses.map(v => v.sura_verse)));
         
-        // Store root analysis data if provided (includes meaning variations)
-        if (rootAnalysisData) {
-            sessionStorage.setItem('compareMeaningData', JSON.stringify(rootAnalysisData));
+        // Store meaning variations data if provided
+        if (meaningData) {
+            sessionStorage.setItem('compareMeaningData', JSON.stringify(meaningData));
         } else {
             sessionStorage.removeItem('compareMeaningData');
         }
@@ -667,7 +667,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
         const event = new CustomEvent('navigateToCompare', { 
             detail: { 
                 verses: verses.map(v => v.sura_verse),
-                meaningData: rootAnalysisData
+                meaningData: meaningData
             } 
         });
         window.dispatchEvent(event);
@@ -683,116 +683,19 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
         }, 100);
     };
 
-    // Common synonyms and related words mapping
-    const synonymMap = {
-        'most': ['majority', 'most', 'greater', 'more', 'many', 'abundant'],
-        'majority': ['most', 'majority', 'greater', 'many', 'bulk'],
-        'people': ['people', 'mankind', 'humans', 'folk', 'persons'],
-        'earth': ['earth', 'world', 'land', 'ground'],
-        'path': ['path', 'way', 'road', 'course'],
-        'god': ['god', 'allah', 'lord'],
-        'follow': ['follow', 'obey', 'pursue'],
-        'guess': ['guess', 'conjecture', 'assume', 'suppose'],
-        'divert': ['divert', 'mislead', 'lead astray', 'turn away'],
-        'obey': ['obey', 'follow', 'comply', 'submit']
-    };
-    
-    // Get synonyms for a word
-    const getSynonyms = (word) => {
-        const lower = word.toLowerCase();
-        // Check if word is in any synonym group
-        for (const [key, synonyms] of Object.entries(synonymMap)) {
-            if (synonyms.includes(lower)) {
-                return synonyms;
-            }
-        }
-        // Return the word itself and its stem
-        const stem = lower.replace(/ing$|ed$|s$|es$|ly$/, '');
-        return [lower, stem].filter(w => w.length > 2);
-    };
-    
-    // Parse English text with bidirectional highlighting
-    const parseEnglishText = (text, meanings, verse) => {
-        // Always parse the text to enable hover functionality
-        if (!meanings) return text;
-        
-        const meaningsArray = meanings.split(',').map(m => m.trim());
-        const hoveredMeaning = hoveredArabicIndex !== null ? meaningsArray[hoveredArabicIndex] : null;
-        
-        // Get all possible words to highlight including synonyms
-        const wordsToHighlight = new Set();
-        
-        if (hoveredMeaning && hoveredMeaning !== '-') {
-            const meaningWords = hoveredMeaning.toLowerCase().split(/\s+/);
-            meaningWords.forEach(word => {
-                wordsToHighlight.add(word);
-                const synonyms = getSynonyms(word);
-                synonyms.forEach(syn => wordsToHighlight.add(syn));
-            });
-        }
-        
-        // Create word spans with hover functionality
-        const words = text.split(/(\s+)/); // Keep spaces
-        return words.map((word, idx) => {
-            if (word.trim() === '') return word; // Return spaces as-is
-            
-            const cleanWord = word.toLowerCase().replace(/[.,!?;:'"]/g, '');
-            const isHighlighted = hoveredMeaning && hoveredMeaning !== '-' && Array.from(wordsToHighlight).some(hw => {
-                // Check exact match or stem match
-                return cleanWord === hw || 
-                       cleanWord.includes(hw) || 
-                       hw.includes(cleanWord) ||
-                       (cleanWord.length > 3 && hw.length > 3 && 
-                        (cleanWord.startsWith(hw.slice(0, -1)) || hw.startsWith(cleanWord.slice(0, -1))));
-            });
-            
-            return (
-                <span 
-                    key={idx} 
-                    className={`english-word ${isHighlighted ? 'english-word-highlighted' : ''} clickable`}
-                    style={{ cursor: 'pointer' }}
-                    onMouseEnter={() => {
-                        // Find which Arabic word corresponds to this English word
-                        let foundMatch = false;
-                        meaningsArray.forEach((meaning, index) => {
-                            if (!foundMatch && meaning && meaning !== '-') {
-                                const meaningWords = meaning.toLowerCase().split(/\s+/);
-                                const allRelatedWords = new Set();
-                                
-                                meaningWords.forEach(mw => {
-                                    allRelatedWords.add(mw);
-                                    getSynonyms(mw).forEach(syn => allRelatedWords.add(syn));
-                                });
-                                
-                                if (Array.from(allRelatedWords).some(rw => 
-                                    cleanWord === rw || 
-                                    cleanWord.includes(rw) || 
-                                    rw.includes(cleanWord) ||
-                                    (cleanWord.length > 3 && rw.length > 3 && 
-                                     (cleanWord.startsWith(rw.slice(0, -1)) || rw.startsWith(cleanWord.slice(0, -1)))))) {
-                                    setHoveredEnglishIndex(index);
-                                    foundMatch = true;
-                                }
-                            }
-                        });
-                    }}
-                    onMouseLeave={() => setHoveredEnglishIndex(null)}
-                    onClick={() => {
-                        // Navigate to root search with this word
-                        window.dispatchEvent(new CustomEvent('openRootSearch', {
-                            detail: { query: word.trim(), mode: 'english' }
-                        }));
-                    }}
-                >
-                    {word}
-                </span>
-            );
-        });
-    };
-
     // Parse Arabic text with roots and meanings for hover functionality
     const parseArabicText = (arabic, roots, meanings, verse) => {
         if (!arabic) return arabic;
+        
+        // Debug logging
+        console.log('ParseArabicText called with:', {
+            verse: verse.sura_verse,
+            hasArabic: !!arabic,
+            hasRoots: !!roots,
+            hasMeanings: !!meanings,
+            roots: roots,
+            meanings: meanings
+        });
         
         if (!roots || !meanings) {
             // If no roots/meanings, just return plain Arabic text
@@ -809,8 +712,6 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
             const isClickable = root && root !== '-';
             const wordKey = `${verse.sura_verse}-${index}`;
             const isSelected = selectedWord?.key === wordKey;
-            
-            // Highlight when English is hovered
             const isHighlighted = hoveredEnglishIndex === index;
             
             return (
@@ -829,7 +730,6 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                                 root: root,
                                 meaning: meaning
                             });
-                            // Set the Arabic index to highlight English
                             setHoveredArabicIndex(index);
                         }
                     }}
@@ -878,6 +778,95 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                 >
                     {word}
                     {index < arabicWords.length - 1 && ' '}
+                </span>
+            );
+        });
+    };
+    
+    // Helper function to get synonyms for a word
+    const getSynonyms = (word) => {
+        const synonymMap = {
+            'worship': ['serve', 'obey', 'adore', 'revere'],
+            'serve': ['worship', 'obey', 'submit'],
+            'obey': ['worship', 'serve', 'follow', 'submit'],
+            'path': ['way', 'road', 'route'],
+            'way': ['path', 'road', 'route'],
+            'guide': ['lead', 'direct', 'show'],
+            'lead': ['guide', 'direct'],
+            'straight': ['right', 'direct', 'correct'],
+            'right': ['straight', 'correct'],
+            // Add more synonym mappings as needed
+        };
+        return synonymMap[word.toLowerCase()] || [];
+    };
+    
+    // Parse English text to make words hoverable
+    const parseEnglishText = (englishText, roots, meanings, verse) => {
+        if (!englishText || !roots || !meanings) return englishText;
+        
+        const rootsArray = roots.split(',').map(r => r.trim());
+        const meaningsArray = meanings.split(',').map(m => m.trim());
+        const words = englishText.split(/\s+/);
+        
+        return words.map((word, idx) => {
+            // Clean the word of punctuation for matching
+            const cleanWord = word.toLowerCase().replace(/[^a-z]/gi, '');
+            let isHighlighted = false;
+            
+            // Check if this English word corresponds to the hovered Arabic word
+            if (hoveredArabicIndex !== null) {
+                const hoveredMeaning = meaningsArray[hoveredArabicIndex];
+                if (hoveredMeaning && hoveredMeaning !== '-') {
+                    const meaningWords = hoveredMeaning.toLowerCase().split(/\s+/);
+                    const allRelatedWords = new Set();
+                    
+                    // Add the original meaning words
+                    meaningWords.forEach(mw => {
+                        allRelatedWords.add(mw.replace(/[^a-z]/gi, ''));
+                        // Add synonyms
+                        getSynonyms(mw).forEach(syn => allRelatedWords.add(syn));
+                    });
+                    
+                    // Check if current word matches any related word
+                    isHighlighted = Array.from(allRelatedWords).some(rw => 
+                        cleanWord === rw || 
+                        cleanWord.includes(rw) || 
+                        rw.includes(cleanWord)
+                    );
+                }
+            }
+            
+            return (
+                <span 
+                    key={idx} 
+                    className={`english-word ${isHighlighted ? 'english-word-highlighted' : ''} clickable`}
+                    style={{ cursor: 'pointer' }}
+                    onMouseEnter={() => {
+                        // Find which Arabic word corresponds to this English word
+                        meaningsArray.forEach((meaning, index) => {
+                            if (meaning && meaning !== '-') {
+                                const meaningWords = meaning.toLowerCase().split(/\s+/);
+                                const allRelatedWords = new Set();
+                                
+                                meaningWords.forEach(mw => {
+                                    allRelatedWords.add(mw.replace(/[^a-z]/gi, ''));
+                                    getSynonyms(mw).forEach(syn => allRelatedWords.add(syn));
+                                });
+                                
+                                if (Array.from(allRelatedWords).some(rw => 
+                                    cleanWord === rw || 
+                                    cleanWord.includes(rw) || 
+                                    rw.includes(cleanWord))) {
+                                    setHoveredEnglishIndex(index);
+                                }
+                            }
+                        });
+                    }}
+                    onMouseLeave={() => {
+                        setHoveredEnglishIndex(null);
+                    }}
+                >
+                    {word}{idx < words.length - 1 ? ' ' : ''}
                 </span>
             );
         });
@@ -934,21 +923,13 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
             }
         };
         loadAllVerses();
-    }, []);
-    
-    useEffect(() => {
+        
         // Load verses when component mounts or when initialRange changes
         if (initialRange && initialRange !== verseRange) {
             setVerseRange(initialRange);
             setSearchMode('range');
-            // Fetch verses after state update
-            setTimeout(() => {
-                fetchVerses();
-            }, 100);
-        } else if (verseRange) {
-            // If we have a verse range but no initial range, fetch verses
-            fetchVerses();
         }
+        fetchVerses();
     }, [initialRange]);
     
     // Removed auto-search behavior - users must manually search
@@ -1169,9 +1150,10 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                                 onTouchCancel={handleLongPressEnd}
                                 onContextMenu={(e) => e.preventDefault()}
                             >
-                                {currentLanguage === 'en' && verse.meanings && showArabic && verse.arabic 
-                                    ? parseEnglishText(getTranslationText(verse, currentLanguage), verse.meanings, verse)
-                                    : getTranslationText(verse, currentLanguage)}
+                                {verse.arabic && verse.roots && verse.meanings && currentLanguage === 'english' 
+                                    ? parseEnglishText(getTranslationText(verse, currentLanguage), verse.roots, verse.meanings, verse)
+                                    : getTranslationText(verse, currentLanguage)
+                                }
                             </div>
                             
                             {searchMode === 'text' && !verse.arabic && (
