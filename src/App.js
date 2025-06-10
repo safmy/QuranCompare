@@ -275,7 +275,7 @@ function AppContent() {
               top: "-8px",
               right: "0"
             }}>
-              v1.4.17
+              v1.4.18
             </span>
           </div>
           <div style={{
@@ -372,4 +372,4 @@ function App() {
 }
 
 export default App;
-// Trigger Netlify deployment - Mon 10 Jun 2025 16:23:00 BST - English highlighting and root focus
+// Trigger Netlify deployment - Mon 10 Jun 2025 16:35:00 BST - v1.4.18 - Root Search English highlighting and global visibility fixes
