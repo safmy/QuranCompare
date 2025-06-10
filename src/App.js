@@ -4,13 +4,14 @@ import QuranSearch from './components/QuranSearch';
 import QuranVectorSearch from './components/QuranVectorSearch';
 import QuranVerseLookup from './components/QuranVerseLookup';
 import QuranCompare from './components/QuranCompare';
-import EnhancedDebaterBot from './components/EnhancedDebaterBot';
+// import EnhancedDebaterBot from './components/EnhancedDebaterBot'; // Removed for iOS
 import RootSearch from './components/RootSearch';
 import AuthCallback from './components/AuthCallback';
-import PaymentSuccess from './components/PaymentSuccess';
-import PaymentCancel from './components/PaymentCancel';
+// import PaymentSuccess from './components/PaymentSuccess'; // Removed for iOS
+// import PaymentCancel from './components/PaymentCancel'; // Removed for iOS
 import LanguageSwitcher from './components/LanguageSwitcher';
-import UserProfile from './components/UserProfile';
+// import UserProfile from './components/UserProfile'; // Removed for iOS
+import UserProfileIOS from './components/UserProfileIOS'; // iOS version without payments
 import SidebarMenu from './components/SidebarMenu';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -153,24 +154,7 @@ function AppContent() {
     },
     { id: 'compare', label: 'Compare', component: <QuranCompare key={compareVerses.join(',')} initialVerses={compareVerses} /> },
     { id: 'roots', label: '🌳 Root Search', component: <RootSearch /> },
-    { 
-      id: 'debater', 
-      label: '🤖 AI Debater', 
-      component: <EnhancedDebaterBot 
-        onNavigateToTab={(tabId, data) => {
-          if (data && data.query) {
-            sessionStorage.setItem(tabId === 'semanticSearch' ? 'vectorSearchQuery' : 'rootSearchQuery', data.query);
-            if (data.source) {
-              sessionStorage.setItem('vectorSearchSource', data.source);
-            }
-          }
-          setActiveTab(tabId);
-        }}
-        currentTab={activeTab}
-        currentVerses={lookupState.verses || []}
-        recentSearch={vectorSearchState.lastQuery || ''}
-      /> 
-    },
+    // AI Debater removed for iOS build
     {
       id: 'discord',
       label: (
@@ -241,12 +225,7 @@ function AppContent() {
   if (window.location.pathname === '/auth/callback') {
     return <AuthCallback />;
   }
-  if (window.location.pathname === '/payment/success') {
-    return <PaymentSuccess />;
-  }
-  if (window.location.pathname === '/payment/cancel') {
-    return <PaymentCancel />;
-  }
+  // Payment routes removed for iOS
 
   return (
     <div className="App">
@@ -292,7 +271,7 @@ function AppContent() {
               top: "-8px",
               right: "0"
             }}>
-              v1.4.24
+              v1.4.25
             </span>
           </div>
           <div style={{
@@ -330,7 +309,7 @@ function AppContent() {
             >
               {isDarkMode ? '☀️' : '🌙'}
             </button>
-            <UserProfile />
+            <UserProfileIOS />
           </div>
         </div>
         <nav style={{
@@ -389,4 +368,4 @@ function App() {
 }
 
 export default App;
-// Trigger Netlify deployment - Mon 10 Jun 2025 21:45:00 GMT - v1.4.24 - Fixed debater bot verse click, conversation persistence, and first response failure
+// Trigger Netlify deployment - Mon 10 Jun 2025 22:00:00 GMT - v1.4.25 - iOS build without Stripe payments and AI debater
