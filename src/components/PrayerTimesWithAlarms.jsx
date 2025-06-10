@@ -26,13 +26,24 @@ const PrayerTimesWithAlarms = () => {
   });
   
   const [activeAlarms, setActiveAlarms] = useState(new Set());
-  const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
+  const [notificationPermission, setNotificationPermission] = useState(() => {
+    // Check if Notification API is available
+    if ('Notification' in window) {
+      return Notification.permission;
+    }
+    return 'unavailable';
+  });
 
   // Request notification permission
   const requestNotificationPermission = async () => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      const permission = await Notification.requestPermission();
-      setNotificationPermission(permission);
+    try {
+      if ('Notification' in window && Notification.permission === 'default') {
+        const permission = await Notification.requestPermission();
+        setNotificationPermission(permission);
+      }
+    } catch (e) {
+      console.log('Notification permission request failed:', e);
+      setNotificationPermission('unavailable');
     }
   };
 
@@ -44,7 +55,7 @@ const PrayerTimesWithAlarms = () => {
 
   // Show notification
   const showNotification = (prayerName, minutesBefore = 0) => {
-    if (notificationPermission === 'granted') {
+    if ('Notification' in window && notificationPermission === 'granted') {
       const title = minutesBefore > 0 
         ? `${prayerName} prayer in ${minutesBefore} minutes`
         : `${prayerName} prayer time`;
@@ -255,8 +266,15 @@ const PrayerTimesWithAlarms = () => {
       return;
     }
 
+    // Add timeout for mobile browsers
+    const timeoutId = setTimeout(() => {
+      setError('Location request timed out. Please try entering a city manually.');
+      setLoading(false);
+    }, 10000); // 10 second timeout
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
+        clearTimeout(timeoutId);
         const { latitude, longitude } = position.coords;
         setLocation({ lat: latitude, lon: longitude });
         
@@ -279,8 +297,30 @@ const PrayerTimesWithAlarms = () => {
         setLoading(false);
       },
       (error) => {
-        setError('Unable to retrieve your location. Please enter a city manually.');
+        clearTimeout(timeoutId);
+        let errorMessage = 'Unable to retrieve your location. ';
+        
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage += 'Location permission denied. Please enable location access in your browser settings.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage += 'Location information unavailable.';
+            break;
+          case error.TIMEOUT:
+            errorMessage += 'Location request timed out.';
+            break;
+          default:
+            errorMessage += 'Please enter a city manually.';
+        }
+        
+        setError(errorMessage);
         setLoading(false);
+      },
+      {
+        enableHighAccuracy: false, // Use low accuracy for faster response on mobile
+        timeout: 8000, // 8 second timeout
+        maximumAge: 300000 // Accept cached position up to 5 minutes old
       }
     );
   };
@@ -342,10 +382,23 @@ const PrayerTimesWithAlarms = () => {
     }
   }, [selectedDate, location, timezone]);
 
-  // Initial location fetch
+  // Initial location fetch with mobile-friendly handling
   useEffect(() => {
-    getCurrentLocation();
-    requestNotificationPermission();
+    // Don't automatically request location on mobile to avoid blank screen
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (!isMobile) {
+      getCurrentLocation();
+    } else {
+      // On mobile, set a default state so UI shows immediately
+      setLoading(false);
+      setError('Tap the 📍 button to use your location or enter a city name');
+    }
+    
+    // Request notification permission after a delay on mobile
+    setTimeout(() => {
+      requestNotificationPermission();
+    }, 2000);
   }, []);
 
   // Update current time and check alarms

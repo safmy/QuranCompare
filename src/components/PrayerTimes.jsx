@@ -303,7 +303,14 @@ const PrayerTimes = () => {
         />
       </div>
 
-      {loading && <div className="loading">Loading prayer times...</div>}
+      {loading && (
+        <div className="loading">
+          <div>Loading prayer times...</div>
+          <small style={{ marginTop: '10px', display: 'block', opacity: 0.7 }}>
+            This may take a few seconds on mobile devices
+          </small>
+        </div>
+      )}
       
       {error && (
         <div className="error">
@@ -314,7 +321,7 @@ const PrayerTimes = () => {
       {prayerTimes && !loading && (
         <div className="prayer-times-display">
           <div className="current-location">
-            <p className="city-name">{cityName}</p>
+            <p className="city-name">{cityName || 'No location selected'}</p>
             {location && (
               <>
                 <p className="coordinates">
