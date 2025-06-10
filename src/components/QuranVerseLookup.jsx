@@ -796,12 +796,17 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
             'lead': ['guide', 'direct'],
             'straight': ['right', 'direct', 'correct'],
             'right': ['straight', 'correct'],
-            'ally': ['friend', 'allies', 'protector', 'guardian', 'helper'],
-            'allies': ['ally', 'friends', 'protectors', 'guardians', 'helpers'],
+            'ally': ['friend', 'allies', 'protector', 'guardian', 'helper', 'supporter'],
+            'allies': ['ally', 'friends', 'protectors', 'guardians', 'helpers', 'supporters'],
             'friend': ['ally', 'allies', 'companion'],
             'friends': ['ally', 'allies', 'companions'],
-            'protector': ['ally', 'guardian', 'defender'],
-            'guardian': ['ally', 'protector', 'keeper'],
+            'protector': ['ally', 'guardian', 'defender', 'helper'],
+            'guardian': ['ally', 'protector', 'keeper', 'helper'],
+            'helper': ['ally', 'supporter', 'assistant', 'aid', 'protector'],
+            'supporter': ['helper', 'ally', 'backer'],
+            'aid': ['help', 'helper', 'assist', 'support'],
+            'assist': ['help', 'aid', 'support'],
+            'help': ['aid', 'assist', 'support'],
             // Add more synonym mappings as needed
         };
         return synonymMap[word.toLowerCase()] || [];
@@ -841,9 +846,23 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                         if (cleanWord === rw) return true;
                         // Check if it's a plural/singular form
                         if (cleanWord === rw + 's' || cleanWord + 's' === rw) return true;
-                        // Only do substring matching for longer words to avoid false positives
+                        // For very short words (2-3 chars), only allow exact matches to avoid false positives
+                        if (cleanWord.length <= 3 || rw.length <= 3) {
+                            return false;
+                        }
+                        // Only do substring matching for longer words
                         if (rw.length >= 4 && cleanWord.length >= 4) {
-                            return cleanWord.includes(rw) || rw.includes(cleanWord);
+                            // Avoid matching if the word is part of a larger unrelated word
+                            // e.g., 'as' should not match 'nasiran'
+                            if (cleanWord.includes(rw)) {
+                                // Check if it's a word boundary
+                                const index = cleanWord.indexOf(rw);
+                                const beforeChar = index > 0 ? cleanWord[index - 1] : ' ';
+                                const afterChar = index + rw.length < cleanWord.length ? cleanWord[index + rw.length] : ' ';
+                                // Only match if it's at a word boundary
+                                return /[^a-z]/i.test(beforeChar) && /[^a-z]/i.test(afterChar);
+                            }
+                            return rw.includes(cleanWord);
                         }
                         return false;
                     });
@@ -872,9 +891,19 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                                     if (cleanWord === rw) return true;
                                     // Check if it's a plural/singular form
                                     if (cleanWord === rw + 's' || cleanWord + 's' === rw) return true;
+                                    // For very short words, only allow exact matches
+                                    if (cleanWord.length <= 3 || rw.length <= 3) {
+                                        return false;
+                                    }
                                     // Only do substring matching for longer words
                                     if (rw.length >= 4 && cleanWord.length >= 4) {
-                                        return cleanWord.includes(rw) || rw.includes(cleanWord);
+                                        if (cleanWord.includes(rw)) {
+                                            const index = cleanWord.indexOf(rw);
+                                            const beforeChar = index > 0 ? cleanWord[index - 1] : ' ';
+                                            const afterChar = index + rw.length < cleanWord.length ? cleanWord[index + rw.length] : ' ';
+                                            return /[^a-z]/i.test(beforeChar) && /[^a-z]/i.test(afterChar);
+                                        }
+                                        return rw.includes(cleanWord);
                                     }
                                     return false;
                                 })) {
