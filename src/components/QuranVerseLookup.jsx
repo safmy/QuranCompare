@@ -3,7 +3,7 @@ import './QuranVerseLookup.css';
 import VoiceSearchButton from './VoiceSearchButton';
 import RootAnalysisModal from './RootAnalysisModal';
 import { useLanguage } from '../contexts/LanguageContext';
-import { getLanguageConfig, getTranslationText, getFootnoteText } from '../config/languages';
+import { getLanguageConfig, getTranslationText, getFootnoteText, getSubtitleText } from '../config/languages';
 import { getVerseAudioUrl, getAllVerseAudioUrls } from '../utils/verseMapping';
 import { Clipboard } from '@capacitor/clipboard';
 
@@ -280,8 +280,9 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
             let verseText = `[${verse.sura_verse}] ${getTranslationText(verse, currentLanguage)}`;
             
             // Add subtitle if present
-            if (verse.subtitle) {
-                verseText = `${verse.subtitle}\n\n${verseText}`;
+            const subtitleText = getSubtitleText(verse, currentLanguage);
+            if (subtitleText) {
+                verseText = `${subtitleText}\n\n${verseText}`;
             }
             
             // Add footnote if present
@@ -957,10 +958,14 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
 
             <div className="verses-container">
                 {verses.map((verse, index) => {
+                    // Get subtitle for current language
+                    const currentSubtitle = getSubtitleText(verse, currentLanguage);
+                    const previousSubtitle = index > 0 ? getSubtitleText(verses[index - 1], currentLanguage) : null;
+                    
                     // Check if this is the first verse or if subtitle is different from previous
-                    const showSubtitle = verse.subtitle && (
+                    const showSubtitle = currentSubtitle && (
                         index === 0 || 
-                        verse.subtitle !== verses[index - 1]?.subtitle
+                        currentSubtitle !== previousSubtitle
                     );
                     
                     return (
@@ -969,7 +974,7 @@ const QuranVerseLookup = ({ initialRange = '1:1-7', savedState = {} }) => {
                             {/* Display subtitle if this verse has one and it's different from previous */}
                             {showSubtitle && (
                                 <div className="subtitle-header">
-                                    <h3 className="subtitle-text">{verse.subtitle}</h3>
+                                    <h3 className="subtitle-text">{currentSubtitle}</h3>
                                 </div>
                             )}
                         

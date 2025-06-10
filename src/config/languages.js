@@ -127,3 +127,25 @@ export const getFootnoteText = (verse, langCode) => {
   const config = getLanguageConfig(langCode);
   return verse[config.footnoteField] || verse[AVAILABLE_LANGUAGES[DEFAULT_LANGUAGE].footnoteField] || '';
 };
+
+export const getSubtitleText = (verse, langCode) => {
+  const config = getLanguageConfig(langCode);
+  
+  // For languages with 'quran' suffix, add _subtitle
+  const subtitleField = config.field.includes('quran') 
+    ? config.field + '_subtitle' 
+    : config.field + '_subtitle';
+  
+  // Special case for English which uses 'subtitle' field
+  if (langCode === 'english') {
+    return verse.subtitle || '';
+  }
+  
+  // Try language-specific subtitle field first
+  if (verse[subtitleField]) {
+    return verse[subtitleField];
+  }
+  
+  // Fallback to English subtitle
+  return verse.subtitle || '';
+};
