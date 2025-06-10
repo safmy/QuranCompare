@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Lithuanian Translation</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1>Test Lithuanian Translation Display</h1>
+    
+    <div id="results"></div>
+    
+    <script>
+        // Test fetching verse 1:1 and displaying Lithuanian translation
+        const API_URL = 'https://qurancompare.onrender.com';
+        
+        async function testLithuanian() {
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                // Fetch verse 1:1
+                const response = await fetch(`${API_URL}/verses`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        verse_range: '1:1'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('API Response:', data);
+                
+                if (data.verses && data.verses.length > 0) {
+                    const verse = data.verses[0];
+                    
+                    // Display results
+                    resultsDiv.innerHTML = `
+                        <h2>Verse ${verse.sura_verse}</h2>
+                        <p><strong>English:</strong> ${verse.english || 'NOT FOUND'}</p>
+                        <p><strong>Lithuanian:</strong> ${verse.lithuanian || 'NOT FOUND'}</p>
+                        <p><strong>Bengali:</strong> ${verse.bengali || 'NOT FOUND'}</p>
+                        <p><strong>Arabic:</strong> ${verse.arabic || 'NOT FOUND'}</p>
+                        
+                        <h3>Debug Info:</h3>
+                        <p>Has Lithuanian field: ${verse.hasOwnProperty('lithuanian') ? 'YES' : 'NO'}</p>
+                        <p>Has Bengali field: ${verse.hasOwnProperty('bengali') ? 'YES' : 'NO'}</p>
+                        
+                        <h3>All Fields:</h3>
+                        <pre>${JSON.stringify(Object.keys(verse).sort(), null, 2)}</pre>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = '<p>No verses returned from API</p>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                console.error('Error:', error);
+            }
+        }
+        
+        // Run test when page loads
+        testLithuanian();
+    </script>
+</body>
+</html>
