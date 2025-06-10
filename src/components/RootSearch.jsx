@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getLanguageConfig, getTranslationText } from '../config/languages';
 import VoiceSearchButton from './VoiceSearchButton';
+import { initializeWordToRootMap, processArabicTranscription } from '../utils/arabicRootConverter';
 import './RootSearch.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
@@ -30,7 +31,7 @@ const RootSearch = () => {
   const [highlightedRoot, setHighlightedRoot] = useState(null);
   const [lockedRoot, setLockedRoot] = useState(null);
   
-  // Load root mapping data
+  // Load root mapping data and initialize word-to-root map
   useEffect(() => {
     const loadRootMapping = async () => {
       try {
@@ -44,6 +45,9 @@ const RootSearch = () => {
       }
     };
     loadRootMapping();
+    
+    // Initialize word-to-root mapping
+    initializeWordToRootMap();
   }, []);
   
   // Perform search if there's an initial query
@@ -74,7 +78,23 @@ const RootSearch = () => {
     setVerses([]);
     
     try {
-      const query = searchQuery.trim().toLowerCase();
+      let query = searchQuery.trim();
+      
+      // If in Arabic mode and the query contains Arabic words (not roots), convert them
+      if (searchMode === 'arabic' && /[\u0600-\u06FF]/.test(query)) {
+        // Check if it looks like a word rather than a root (roots typically have spaces between letters)
+        const hasNoSpaces = !query.includes(' ') || query.split(' ').every(part => part.length > 1);
+        if (hasNoSpaces) {
+          // This looks like Arabic words, not roots - convert them
+          const processedQuery = await processArabicTranscription(query);
+          if (processedQuery && processedQuery !== query) {
+            query = processedQuery;
+            setSearchQuery(processedQuery); // Update the input field
+          }
+        }
+      }
+      
+      query = query.toLowerCase();
       let foundRoots = [];
       let searchResults = {
         mode: searchMode,
@@ -173,11 +193,20 @@ const RootSearch = () => {
   };
 
   // Handle voice search
-  const handleVoiceSearch = (transcript) => {
-    setSearchQuery(transcript);
+  const handleVoiceSearch = async (transcript) => {
     // Auto-detect if it's Arabic
     const isArabic = /[\u0600-\u06FF]/.test(transcript);
-    setSearchMode(isArabic ? 'arabic' : 'english');
+    
+    if (isArabic) {
+      // Convert Arabic words to roots
+      const processedQuery = await processArabicTranscription(transcript);
+      setSearchQuery(processedQuery);
+      setSearchMode('arabic');
+    } else {
+      setSearchQuery(transcript);
+      setSearchMode('english');
+    }
+    
     // Trigger search automatically after voice input
     setTimeout(() => {
       performSearch();
