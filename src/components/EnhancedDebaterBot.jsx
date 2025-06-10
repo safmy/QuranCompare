@@ -4,7 +4,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import AuthModal from './AuthModal';
 import SubscriptionModal from './SubscriptionModal';
 import VoiceSearchButton from './VoiceSearchButton';
-import './DebaterBot.css';
+import './EnhancedDebaterBot.css';
 import { FaPaperPlane, FaTrash, FaChevronDown, FaChevronUp, FaSearch, FaBook, FaLanguage, FaPlay, FaExternalLinkAlt } from 'react-icons/fa';
 import { supabase } from '../utils/supabase';
 import { checkPremiumStatus } from '../utils/subscriptionManager';
@@ -16,7 +16,10 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
   const { user, loading: authLoading } = useAuth();
   const { language } = useLanguage();
   const [message, setMessage] = useState('');
-  const [conversation, setConversation] = useState([]);
+  const [conversation, setConversation] = useState(() => {
+    const saved = sessionStorage.getItem('debaterConversation');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -25,22 +28,44 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState(null);
   const [savedConversations, setSavedConversations] = useState([]);
-  const [currentConversationId, setCurrentConversationId] = useState(null);
+  const [currentConversationId, setCurrentConversationId] = useState(() => {
+    return sessionStorage.getItem('debaterConversationId') || null;
+  });
   const [showRelatedContent, setShowRelatedContent] = useState(true);
-  const [relatedData, setRelatedData] = useState({
-    verses: [],
-    searchResults: [],
-    rootAnalysis: [],
-    suggestedTabs: [],
-    citations: []
+  const [relatedData, setRelatedData] = useState(() => {
+    const saved = sessionStorage.getItem('debaterRelatedData');
+    return saved ? JSON.parse(saved) : {
+      verses: [],
+      searchResults: [],
+      rootAnalysis: [],
+      suggestedTabs: [],
+      citations: []
+    };
   });
   const messagesEndRef = useRef(null);
   const conversationRef = useRef(conversation);
 
-  // Update conversation ref when conversation changes
+  // Update conversation ref and save to session when conversation changes
   useEffect(() => {
     conversationRef.current = conversation;
+    if (conversation.length > 0) {
+      sessionStorage.setItem('debaterConversation', JSON.stringify(conversation));
+    }
   }, [conversation]);
+  
+  // Save related data when it changes
+  useEffect(() => {
+    if (Object.values(relatedData).some(arr => arr.length > 0)) {
+      sessionStorage.setItem('debaterRelatedData', JSON.stringify(relatedData));
+    }
+  }, [relatedData]);
+  
+  // Save conversation ID when it changes
+  useEffect(() => {
+    if (currentConversationId) {
+      sessionStorage.setItem('debaterConversationId', currentConversationId);
+    }
+  }, [currentConversationId]);
 
   // Check subscription status
   useEffect(() => {
@@ -125,12 +150,15 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
 
   // Handle verse click navigation
   const handleVerseClick = (verseRef) => {
-    const [chapter, verseRange] = verseRef.split(':');
-    onNavigateToTab('verseLookup', {
-      chapter: parseInt(chapter),
-      verse: verseRange.includes('-') ? parseInt(verseRange.split('-')[0]) : parseInt(verseRange),
-      range: verseRef
-    });
+    // Save current conversation state before navigating
+    sessionStorage.setItem('debaterConversation', JSON.stringify(conversation));
+    sessionStorage.setItem('debaterConversationId', currentConversationId || '');
+    sessionStorage.setItem('debaterRelatedData', JSON.stringify(relatedData));
+    
+    // Dispatch event to open verse in lookup tab
+    window.dispatchEvent(new CustomEvent('openVerseRange', {
+      detail: { range: verseRef }
+    }));
   };
 
   // Handle root word click
@@ -179,7 +207,9 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
     }
 
     try {
-      const response = await fetch(`${API_URL}/debate/enhanced`, {
+      // First try enhanced endpoint, fallback to regular if it fails
+      let endpoint = '/debate/enhanced';
+      let response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -197,19 +227,52 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response');
+        // If enhanced endpoint fails, try regular endpoint
+        if (endpoint === '/debate/enhanced') {
+          console.log('Enhanced endpoint failed, trying regular endpoint...');
+          endpoint = '/debate';
+          response = await fetch(`${API_URL}${endpoint}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: isNewTopic ? null : messageToSend,
+              topic: isNewTopic ? messageToSend : null,
+              isNewTopic,
+              conversationHistory: conversationRef.current.slice(-10)
+            }),
+          });
+          
+          if (!response.ok) {
+            throw new Error('Both endpoints failed');
+          }
+        } else {
+          throw new Error('Failed to get response');
+        }
       }
 
       const data = await response.json();
       
-      // Update related data
-      setRelatedData({
-        verses: data.relatedVerses || [],
-        searchResults: data.searchResults || [],
-        rootAnalysis: data.rootAnalysis || [],
-        suggestedTabs: data.suggestedTabs || [],
-        citations: data.citations || []
-      });
+      // Update related data (enhanced endpoint provides more data)
+      if (endpoint === '/debate/enhanced') {
+        setRelatedData({
+          verses: data.relatedVerses || [],
+          searchResults: data.searchResults || [],
+          rootAnalysis: data.rootAnalysis || [],
+          suggestedTabs: data.suggestedTabs || [],
+          citations: data.citations || []
+        });
+      } else {
+        // Regular endpoint doesn't provide related data
+        setRelatedData({
+          verses: [],
+          searchResults: [],
+          rootAnalysis: [],
+          suggestedTabs: [],
+          citations: []
+        });
+      }
 
       const aiMessage = { 
         role: 'assistant', 
@@ -346,6 +409,10 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       suggestedTabs: [],
       citations: []
     });
+    // Clear session storage
+    sessionStorage.removeItem('debaterConversation');
+    sessionStorage.removeItem('debaterConversationId');
+    sessionStorage.removeItem('debaterRelatedData');
   };
 
   // Handle voice search result

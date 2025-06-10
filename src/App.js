@@ -4,7 +4,7 @@ import QuranSearch from './components/QuranSearch';
 import QuranVectorSearch from './components/QuranVectorSearch';
 import QuranVerseLookup from './components/QuranVerseLookup';
 import QuranCompare from './components/QuranCompare';
-import DebaterBot from './components/DebaterBot';
+import EnhancedDebaterBot from './components/EnhancedDebaterBot';
 import RootSearch from './components/RootSearch';
 import AuthCallback from './components/AuthCallback';
 import PaymentSuccess from './components/PaymentSuccess';
@@ -153,7 +153,24 @@ function AppContent() {
     },
     { id: 'compare', label: 'Compare', component: <QuranCompare key={compareVerses.join(',')} initialVerses={compareVerses} /> },
     { id: 'roots', label: '🌳 Root Search', component: <RootSearch /> },
-    { id: 'debater', label: '🤖 AI Debater', component: <DebaterBot /> },
+    { 
+      id: 'debater', 
+      label: '🤖 AI Debater', 
+      component: <EnhancedDebaterBot 
+        onNavigateToTab={(tabId, data) => {
+          if (data && data.query) {
+            sessionStorage.setItem(tabId === 'semanticSearch' ? 'vectorSearchQuery' : 'rootSearchQuery', data.query);
+            if (data.source) {
+              sessionStorage.setItem('vectorSearchSource', data.source);
+            }
+          }
+          setActiveTab(tabId);
+        }}
+        currentTab={activeTab}
+        currentVerses={lookupState.verses || []}
+        recentSearch={vectorSearchState.lastQuery || ''}
+      /> 
+    },
     {
       id: 'discord',
       label: (
@@ -275,7 +292,7 @@ function AppContent() {
               top: "-8px",
               right: "0"
             }}>
-              v1.4.23
+              v1.4.24
             </span>
           </div>
           <div style={{
@@ -372,4 +389,4 @@ function App() {
 }
 
 export default App;
-// Trigger Netlify deployment - Mon 10 Jun 2025 21:33:00 GMT - v1.4.23 - Enhanced AI Debater Bot with integrated search
+// Trigger Netlify deployment - Mon 10 Jun 2025 21:45:00 GMT - v1.4.24 - Fixed debater bot verse click, conversation persistence, and first response failure
