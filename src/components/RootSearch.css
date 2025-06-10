@@ -159,10 +159,15 @@
   font-family: 'Traditional Arabic', 'Scheherazade', serif;
 }
 
-.root-tag:hover {
+.root-tag.clickable {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.root-tag.clickable:hover {
   background: #1976d2;
   color: white;
   transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .meanings-list {
@@ -227,6 +232,31 @@
   margin-bottom: 20px;
 }
 
+.verses-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.add-all-to-compare-btn {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.add-all-to-compare-btn:hover {
+  background: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+}
+
 .verses-list {
   display: flex;
   flex-direction: column;
@@ -258,6 +288,30 @@
   border-radius: 8px;
   font-weight: 600;
   font-size: 14px;
+}
+
+.verse-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.add-to-compare-btn {
+  background: #8bc34a;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.add-to-compare-btn:hover {
+  background: #7cb342;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(139, 195, 74, 0.3);
 }
 
 .expand-btn {

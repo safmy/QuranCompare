@@ -8,8 +8,13 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onre
 
 const RootSearch = () => {
   const { currentLanguage } = useLanguage();
-  const [searchMode, setSearchMode] = useState('english'); // 'english', 'arabic', 'smart'
-  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Check for incoming query from session storage
+  const initialQuery = sessionStorage.getItem('rootSearchQuery') || '';
+  const initialMode = sessionStorage.getItem('rootSearchMode') || 'english';
+  
+  const [searchMode, setSearchMode] = useState(initialMode);
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [results, setResults] = useState(null);
   const [rootMapping, setRootMapping] = useState(null);
   const [verses, setVerses] = useState([]);
@@ -35,6 +40,16 @@ const RootSearch = () => {
     };
     loadRootMapping();
   }, []);
+  
+  // Perform search if there's an initial query
+  useEffect(() => {
+    if (initialQuery && rootMapping) {
+      performSearch();
+      // Clear the session storage
+      sessionStorage.removeItem('rootSearchQuery');
+      sessionStorage.removeItem('rootSearchMode');
+    }
+  }, [rootMapping]); // Only trigger when rootMapping is loaded
 
   // Search functionality
   const performSearch = async () => {
@@ -194,6 +209,51 @@ const RootSearch = () => {
     return arabicWords;
   };
 
+  // Handle clicking on a root to show its verses
+  const handleRootClick = async (root) => {
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/verses/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          query: `rt:${root}`,
+          search_type: 'root',
+          limit: 100
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setVerses(data.verses || []);
+        setResults({
+          query: root,
+          roots: [root],
+          meanings: rootMapping.arabicToEnglish[root]?.meanings || [],
+          verses: data.verses || []
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching verses for root:', err);
+      setError('Failed to fetch verses for root.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Add verses to compare
+  const addToCompare = (verses) => {
+    const versesToAdd = verses.map(v => v.sura_verse);
+    sessionStorage.setItem('compareVerses', JSON.stringify(versesToAdd));
+    
+    // Dispatch event to navigate to compare tab
+    window.dispatchEvent(new CustomEvent('navigateToCompare', {
+      detail: { verses: versesToAdd }
+    }));
+  };
+
   return (
     <div className="root-search-container">
       <div className="root-search-header">
@@ -269,8 +329,9 @@ const RootSearch = () => {
                   {results.roots.map((root, index) => (
                     <span 
                       key={index} 
-                      className="root-tag"
-                      onClick={() => setSelectedWord(root)}
+                      className="root-tag clickable"
+                      onClick={() => handleRootClick(root)}
+                      title="Click to see all verses with this root"
                     >
                       {root}
                     </span>
@@ -333,7 +394,16 @@ const RootSearch = () => {
 
           {verses.length > 0 && (
             <div className="verses-section">
-              <h3>Verses containing these roots ({verses.length} found)</h3>
+              <div className="verses-header">
+                <h3>Verses containing these roots ({verses.length} found)</h3>
+                <button 
+                  className="add-all-to-compare-btn"
+                  onClick={() => addToCompare(verses)}
+                  title="Add all verses to compare"
+                >
+                  Add All to Compare
+                </button>
+              </div>
               <div className="verses-list">
                 {verses.map((verse, index) => {
                   const isExpanded = expandedVerses.has(verse.sura_verse);
@@ -343,12 +413,21 @@ const RootSearch = () => {
                     <div key={index} className="verse-result">
                       <div className="verse-header">
                         <span className="verse-ref">{verse.sura_verse}</span>
-                        <button 
-                          className="expand-btn"
-                          onClick={() => toggleVerseExpansion(verse.sura_verse)}
-                        >
-                          {isExpanded ? '▼' : '▶'}
-                        </button>
+                        <div className="verse-actions">
+                          <button 
+                            className="add-to-compare-btn"
+                            onClick={() => addToCompare([verse])}
+                            title="Add to compare"
+                          >
+                            + Compare
+                          </button>
+                          <button 
+                            className="expand-btn"
+                            onClick={() => toggleVerseExpansion(verse.sura_verse)}
+                          >
+                            {isExpanded ? '▼' : '▶'}
+                          </button>
+                        </div>
                       </div>
                       
                       <div className="verse-content">

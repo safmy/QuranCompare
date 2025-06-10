@@ -566,6 +566,21 @@
 
 /* Removed root-analysis-btn styles as we're using clickable words instead */
 
+/* Bidirectional highlighting */
+.arabic-word.highlighted {
+    background-color: #ffeb3b;
+    border-radius: 4px;
+    padding: 2px 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.english-word-highlighted {
+    background-color: #ffeb3b;
+    border-radius: 3px;
+    padding: 1px 3px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
 /* Root Analysis Modal */
 .root-analysis-modal {
     position: fixed;

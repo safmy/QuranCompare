@@ -88,6 +88,15 @@ function AppContent() {
       setActiveTab('compare');
     };
     
+    // Listen for navigate to root search events
+    const handleOpenRootSearch = (event) => {
+      const { query, mode } = event.detail;
+      // Store the query in session storage for the root search component
+      sessionStorage.setItem('rootSearchQuery', query);
+      sessionStorage.setItem('rootSearchMode', mode);
+      setActiveTab('roots');
+    };
+    
     // Listen for state updates from child components
     const handleStateUpdate = (event) => {
       const { component, state } = event.detail;
@@ -100,11 +109,13 @@ function AppContent() {
     
     window.addEventListener('openVerseRange', handleOpenVerseRange);
     window.addEventListener('navigateToCompare', handleNavigateToCompare);
+    window.addEventListener('openRootSearch', handleOpenRootSearch);
     window.addEventListener('updateComponentState', handleStateUpdate);
     
     return () => {
       window.removeEventListener('openVerseRange', handleOpenVerseRange);
       window.removeEventListener('navigateToCompare', handleNavigateToCompare);
+      window.removeEventListener('openRootSearch', handleOpenRootSearch);
       window.removeEventListener('updateComponentState', handleStateUpdate);
     };
   }, []);
@@ -250,7 +261,7 @@ function AppContent() {
               top: "-8px",
               right: "0"
             }}>
-              v1.4.1
+              v1.4.2
             </span>
           </div>
           <div style={{

@@ -1,6 +1,6 @@
 {
   "name": "quran-manuscript-analysis",
-  "version": "1.3.0",
+  "version": "1.4.2",
   "private": true,
   "dependencies": {
     "@capacitor/cli": "^7.2.0",
