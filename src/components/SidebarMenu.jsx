@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import QiblaDirection from './QiblaDirection';
-import PrayerTimes from './PrayerTimes';
+import PrayerTimesWithAlarms from './PrayerTimesWithAlarms';
 import Appendices from './Appendices';
 import './SidebarMenu.css';
 
@@ -77,12 +77,12 @@ const SidebarMenu = () => {
               onClick={() => toggleSection('prayer')}
             >
               <span className="section-icon">🕌</span>
-              <span className="section-title">Prayer Times</span>
+              <span className="section-title">Prayer Times & Alarms</span>
               <span className={`toggle-icon ${activeSection === 'prayer' ? 'open' : ''}`}>▼</span>
             </div>
             {activeSection === 'prayer' && (
               <div className="sidebar-section-content">
-                <PrayerTimes />
+                <PrayerTimesWithAlarms />
               </div>
             )}
           </div>

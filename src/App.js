@@ -5,6 +5,7 @@ import QuranVectorSearch from './components/QuranVectorSearch';
 import QuranVerseLookup from './components/QuranVerseLookup';
 import QuranCompare from './components/QuranCompare';
 import DebaterBot from './components/DebaterBot';
+import RootSearch from './components/RootSearch';
 import AuthCallback from './components/AuthCallback';
 import PaymentSuccess from './components/PaymentSuccess';
 import PaymentCancel from './components/PaymentCancel';
@@ -126,6 +127,7 @@ function AppContent() {
       /> 
     },
     { id: 'compare', label: 'Compare', component: <QuranCompare key={compareVerses.join(',')} initialVerses={compareVerses} /> },
+    { id: 'roots', label: '🌳 Root Search', component: <RootSearch /> },
     { id: 'debater', label: '🤖 AI Debater', component: <DebaterBot /> },
     {
       id: 'discord',

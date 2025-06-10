@@ -1,0 +1,397 @@
+.root-search-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.root-search-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.root-search-header h2 {
+  font-size: 2.5em;
+  color: #6b46c1;
+  margin-bottom: 10px;
+}
+
+.root-search-header .subtitle {
+  font-size: 1.1em;
+  color: #666;
+}
+
+.search-controls {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.search-mode-selector {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.search-mode-selector button {
+  padding: 10px 20px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  color: #333;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.search-mode-selector button:hover {
+  border-color: #6b46c1;
+  color: #6b46c1;
+}
+
+.search-mode-selector button.active {
+  background: #6b46c1;
+  color: white;
+  border-color: #6b46c1;
+}
+
+.search-input-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  padding: 15px 20px;
+  font-size: 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  transition: border-color 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #6b46c1;
+}
+
+.search-button {
+  padding: 15px 30px;
+  background: #6b46c1;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.search-button:hover:not(:disabled) {
+  background: #5835b0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.3);
+}
+
+.search-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.error-message {
+  background: #fee;
+  color: #c00;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.search-results {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.results-summary {
+  margin-bottom: 30px;
+  padding-bottom: 30px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.results-summary h3 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.found-roots, .meanings-section, .related-words, .partial-matches {
+  margin-bottom: 20px;
+}
+
+.found-roots h4, .meanings-section h4, .related-words h4, .partial-matches h4 {
+  color: #666;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.root-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.root-tag {
+  background: #f0f8ff;
+  color: #1976d2;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  direction: rtl;
+  font-family: 'Traditional Arabic', 'Scheherazade', serif;
+}
+
+.root-tag:hover {
+  background: #1976d2;
+  color: white;
+  transform: scale(1.05);
+}
+
+.meanings-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meaning-tag {
+  background: #f5f5f5;
+  color: #666;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+}
+
+.word-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.related-word {
+  background: #fff3cd;
+  color: #856404;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.related-word:hover {
+  background: #ffc107;
+  color: white;
+  transform: scale(1.05);
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.suggestion-btn {
+  background: #e3f2fd;
+  color: #1976d2;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.suggestion-btn:hover {
+  background: #1976d2;
+  color: white;
+}
+
+.verses-section h3 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.verses-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.verse-result {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.verse-result:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.verse-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.verse-ref {
+  background: #6b46c1;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #6b46c1;
+  transition: transform 0.3s ease;
+}
+
+.expand-btn:hover {
+  transform: scale(1.2);
+}
+
+.verse-content {
+  position: relative;
+}
+
+.arabic-text {
+  font-size: 24px;
+  line-height: 2;
+  margin-bottom: 15px;
+  font-family: 'Traditional Arabic', 'Scheherazade', serif;
+  color: #333;
+  padding: 10px;
+  background: white;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.arabic-text:hover {
+  background: #f0f8ff;
+}
+
+.arabic-text mark {
+  background: #ffeb3b;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.translation-text {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #555;
+  padding: 10px;
+}
+
+.translation-text mark {
+  background: #ffeb3b;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.hover-info {
+  position: absolute;
+  bottom: -30px;
+  left: 10px;
+  background: #333;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 10;
+}
+
+.expanded-content {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.verse-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-row {
+  display: flex;
+  gap: 10px;
+  font-size: 14px;
+  color: #666;
+}
+
+.detail-row strong {
+  color: #333;
+  min-width: 120px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .root-search-container {
+    padding: 15px;
+  }
+
+  .search-controls {
+    padding: 20px;
+  }
+
+  .search-mode-selector {
+    flex-wrap: wrap;
+  }
+
+  .search-mode-selector button {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .search-input-container {
+    flex-direction: column;
+  }
+
+  .search-input, .search-button {
+    width: 100%;
+  }
+
+  .arabic-text {
+    font-size: 20px;
+  }
+
+  .translation-text {
+    font-size: 14px;
+  }
+}

@@ -22,6 +22,7 @@ from subtitle_ranges import get_cached_verse_range, get_subtitle_for_range
 from arabic_utils import enhance_arabic_search_query, is_arabic_text, get_phonetic_variations
 from tts_endpoint_fastapi import add_tts_routes
 from payment_endpoints import router as payment_router
+from root_search_api import search_verses_by_root, RootSearchRequest, RootSearchResponse
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -996,6 +997,33 @@ Remember: You are debating from the perspective of a committed submitter who fol
     except Exception as e:
         logger.error(f"Error in debate endpoint: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# Root search endpoint
+@app.options("/verses/search")
+async def verses_search_options():
+    """Handle preflight requests for /verses/search endpoint"""
+    return {"message": "OK"}
+
+@app.post("/verses/search", response_model=RootSearchResponse)
+async def search_verses(request: RootSearchRequest):
+    """Search verses by root or text"""
+    
+    if not QURAN_VERSES_DATA:
+        raise HTTPException(status_code=503, detail="Verses data not loaded")
+    
+    try:
+        result = search_verses_by_root(
+            verses_data=QURAN_VERSES_DATA,
+            query=request.query,
+            search_type=request.search_type,
+            limit=request.limit
+        )
+        
+        return RootSearchResponse(**result)
+        
+    except Exception as e:
+        logger.error(f"Error in root search: {e}")
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 # Catch-all OPTIONS handler for any endpoint
 @app.options("/{path:path}")
