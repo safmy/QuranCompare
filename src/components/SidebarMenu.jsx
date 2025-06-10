@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import QiblaDirection from './QiblaDirection';
+// import QiblaDirection from './QiblaDirection'; // Removed for iOS
+import QiblaDirectionIOS from './QiblaDirectionIOS'; // iOS fixed version
 // import PrayerTimesWithAlarms from './PrayerTimesWithAlarms'; // Removed for iOS
 import PrayerTimesWithAlarmsIOSFixed from './PrayerTimesWithAlarmsIOSFixed'; // iOS fixed version
 import Appendices from './Appendices';
@@ -66,7 +67,7 @@ const SidebarMenu = () => {
             </div>
             {activeSection === 'qibla' && (
               <div className="sidebar-section-content">
-                <QiblaDirection />
+                <QiblaDirectionIOS />
               </div>
             )}
           </div>
