@@ -30,6 +30,7 @@ const RootSearch = () => {
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [highlightedRoot, setHighlightedRoot] = useState(null);
   const [lockedRoot, setLockedRoot] = useState(null);
+  const [isResultsSummaryExpanded, setIsResultsSummaryExpanded] = useState(true);
   
   // Load root mapping data and initialize word-to-root map
   useEffect(() => {
@@ -431,74 +432,87 @@ const RootSearch = () => {
       {results && (
         <div className="search-results">
           <div className="results-summary">
-            <h3>Search Results for "{results.query}"</h3>
+            <div className="results-summary-header">
+              <h3>Search Results for "{results.query}"</h3>
+              <button
+                className="collapse-toggle-btn"
+                onClick={() => setIsResultsSummaryExpanded(!isResultsSummaryExpanded)}
+                title={isResultsSummaryExpanded ? "Collapse summary" : "Expand summary"}
+              >
+                {isResultsSummaryExpanded ? '▼' : '▶'}
+              </button>
+            </div>
             
-            {results.roots.length > 0 && (
-              <div className="found-roots">
-                <h4>Found Roots:</h4>
-                <div className="root-list">
-                  {results.roots.map((root, index) => (
-                    <span 
-                      key={index} 
-                      className="root-tag clickable"
-                      onClick={() => handleRootClick(root)}
-                      title="Click to see all verses with this root"
-                    >
-                      {root}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {results.meanings && results.meanings.length > 0 && (
-              <div className="meanings-section">
-                <h4>Meanings:</h4>
-                <div className="meanings-list">
-                  {results.meanings.map((meaning, index) => (
-                    <span key={index} className="meaning-tag">{meaning}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {results.relatedWords && results.relatedWords.length > 0 && (
-              <div className="related-words">
-                <h4>Related Words:</h4>
-                <div className="word-cloud">
-                  {results.relatedWords.slice(0, 20).map((word, index) => (
-                    <span 
-                      key={index} 
-                      className="related-word"
-                      onClick={() => {
-                        setSearchQuery(word);
-                        setSearchMode('english');
-                      }}
-                    >
-                      {word}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {results.partialMatches && (
-              <div className="partial-matches">
-                <h4>Did you mean:</h4>
-                <div className="suggestions">
-                  {results.partialMatches.map((match, index) => (
-                    <button
-                      key={index}
-                      className="suggestion-btn"
-                      onClick={() => {
-                        setSearchQuery(match);
-                        performSearch();
-                      }}
-                    >
-                      {match}
-                    </button>
-                  ))}
-                </div>
+            {isResultsSummaryExpanded && (
+              <div className="results-summary-content">
+                {results.roots.length > 0 && (
+                  <div className="found-roots">
+                    <h4>Found Roots:</h4>
+                    <div className="root-list">
+                      {results.roots.map((root, index) => (
+                        <span 
+                          key={index} 
+                          className="root-tag clickable"
+                          onClick={() => handleRootClick(root)}
+                          title="Click to see all verses with this root"
+                        >
+                          {root}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {results.meanings && results.meanings.length > 0 && (
+                  <div className="meanings-section">
+                    <h4>Meanings:</h4>
+                    <div className="meanings-list">
+                      {results.meanings.map((meaning, index) => (
+                        <span key={index} className="meaning-tag">{meaning}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {results.relatedWords && results.relatedWords.length > 0 && (
+                  <div className="related-words">
+                    <h4>Related Words:</h4>
+                    <div className="word-cloud">
+                      {results.relatedWords.slice(0, 20).map((word, index) => (
+                        <span 
+                          key={index} 
+                          className="related-word"
+                          onClick={() => {
+                            setSearchQuery(word);
+                            setSearchMode('english');
+                          }}
+                        >
+                          {word}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {results.partialMatches && (
+                  <div className="partial-matches">
+                    <h4>Did you mean:</h4>
+                    <div className="suggestions">
+                      {results.partialMatches.map((match, index) => (
+                        <button
+                          key={index}
+                          className="suggestion-btn"
+                          onClick={() => {
+                            setSearchQuery(match);
+                            performSearch();
+                          }}
+                        >
+                          {match}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

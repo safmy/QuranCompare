@@ -501,9 +501,9 @@ const QuranCompare = ({ initialVerses = [] }) => {
                 </div>
               )}
               
-              {showRootSummary && (
+              {showRootSummary && rootSummary && rootSummary.length > 0 && (
                 <div style={{ display: 'grid', gap: '15px' }}>
-                  {rootSummary.slice(0, 10).map((rootData, idx) => (
+                  {rootSummary.map((rootData, idx) => (
                     <div key={idx} style={{
                       padding: '15px',
                       backgroundColor: 'white',
@@ -585,18 +585,6 @@ const QuranCompare = ({ initialVerses = [] }) => {
                       </div>
                     </div>
                   ))}
-                  
-                  {rootSummary.length > 10 && (
-                    <div style={{
-                      padding: '10px',
-                      textAlign: 'center',
-                      color: '#666',
-                      fontSize: '14px',
-                      fontStyle: 'italic'
-                    }}>
-                      Showing top 10 roots. Total: {rootSummary.length} unique roots found.
-                    </div>
-                  )}
                 </div>
               )}
             </div>
