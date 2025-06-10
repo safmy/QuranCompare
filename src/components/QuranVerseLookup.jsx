@@ -641,15 +641,16 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                     });
                     setVerses(versesWithSubtitles);
                     setSearchMode('range'); // Update mode indicator
-                } catch (apiError) {
-                    console.error('API call failed, falling back to local data:', apiError);
-                    // Fallback to local data processing
-                    if (allVersesData.length > 0) {
-                        const verses = parseVerseRangeFromLocal(verseRange, allVersesData);
-                        setVerses(verses);
-                        setSearchMode('range');
-                    } else {
-                        throw new Error('No data available');
+                    } catch (apiError) {
+                        console.error('API call failed, falling back to local data:', apiError);
+                        // Fallback to local data processing
+                        if (allVersesData.length > 0) {
+                            const verses = parseVerseRangeFromLocal(normalizedInput, allVersesData);
+                            setVerses(verses);
+                            setSearchMode('range');
+                        } else {
+                            throw new Error('No data available');
+                        }
                     }
                 }
             } else {
@@ -658,7 +659,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                     throw new Error('Verses data not loaded yet. Please try again.');
                 }
                 
-                const searchTerm = verseRange.trim();
+                const searchTerm = normalizedInput.trim();
                 if (!searchTerm) {
                     setVerses([]);
                     return;
