@@ -18,7 +18,12 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
   const [message, setMessage] = useState('');
   const [conversation, setConversation] = useState(() => {
     const saved = sessionStorage.getItem('debaterConversation');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+      console.error('Error parsing saved conversation:', error);
+      return [];
+    }
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -34,13 +39,24 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
   const [showRelatedContent, setShowRelatedContent] = useState(true);
   const [relatedData, setRelatedData] = useState(() => {
     const saved = sessionStorage.getItem('debaterRelatedData');
-    return saved ? JSON.parse(saved) : {
-      verses: [],
-      searchResults: [],
-      rootAnalysis: [],
-      suggestedTabs: [],
-      citations: []
-    };
+    try {
+      return saved ? JSON.parse(saved) : {
+        verses: [],
+        searchResults: [],
+        rootAnalysis: [],
+        suggestedTabs: [],
+        citations: []
+      };
+    } catch (error) {
+      console.error('Error parsing saved related data:', error);
+      return {
+        verses: [],
+        searchResults: [],
+        rootAnalysis: [],
+        suggestedTabs: [],
+        citations: []
+      };
+    }
   });
   const messagesEndRef = useRef(null);
   const conversationRef = useRef(conversation);
@@ -71,9 +87,21 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
   useEffect(() => {
     const checkSubscription = async () => {
       if (user) {
-        const premiumStatus = await checkPremiumStatus(user.id);
-        setIsPremium(premiumStatus);
+        console.log('Enhanced Debater - User data:', {
+          email: user.email,
+          subscriptionStatus: user.subscriptionStatus,
+          subscriptionExpiry: user.subscriptionExpiry
+        });
+        
+        // Check if user has active subscription from AuthContext
+        const hasActiveSubscription = user?.subscriptionStatus === 'active' && 
+                                      user?.subscriptionExpiry && 
+                                      new Date(user.subscriptionExpiry) > new Date();
+        
+        console.log('Enhanced Debater - Premium status:', hasActiveSubscription);
+        setIsPremium(hasActiveSubscription);
       } else {
+        console.log('Enhanced Debater - No user logged in');
         setIsPremium(false);
       }
     };
@@ -305,7 +333,12 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
 
   // Save conversation to Supabase
   const saveConversation = async (messages) => {
-    if (!user || !currentConversationId) {
+    if (!user) {
+      console.log('No user, skipping save');
+      return;
+    }
+    
+    if (!currentConversationId) {
       // Create new conversation
       try {
         const { data, error } = await supabase
@@ -318,7 +351,12 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error creating conversation:', error);
+          // Don't throw, just log - allow conversation to continue
+          return;
+        }
+        
         setCurrentConversationId(data.id);
         setSavedConversations(prev => [data, ...prev]);
       } catch (error) {
@@ -335,7 +373,10 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
           })
           .eq('id', currentConversationId);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating conversation:', error);
+          // Don't throw, just log - allow conversation to continue
+        }
       } catch (error) {
         console.error('Error updating conversation:', error);
       }
