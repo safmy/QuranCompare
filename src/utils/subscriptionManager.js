@@ -35,6 +35,12 @@ export const cancelSubscription = async (userId) => {
   }
 };
 
+// Check if user has premium status (alias for compatibility)
+export const checkPremiumStatus = async (userId) => {
+  const result = await checkSubscriptionStatus(userId);
+  return result.isActive || false;
+};
+
 // Check if user has active subscription
 export const checkSubscriptionStatus = async (userId) => {
   try {
