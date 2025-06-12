@@ -265,7 +265,7 @@ function AppContent() {
   return (
     <div className="App">
       <header style={{
-        backgroundColor: "#6b46c1",
+        backgroundColor: isDarkMode ? "#1e1e1e" : "#6b46c1",
         padding: "20px",
         color: "white",
         display: "flex",
@@ -273,7 +273,9 @@ function AppContent() {
         gap: "15px",
         position: "sticky",
         top: 0,
-        zIndex: 999
+        zIndex: 999,
+        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+        borderBottom: isDarkMode ? "1px solid #333" : "none"
       }}>
         <div style={{
           display: "flex",
@@ -294,20 +296,25 @@ function AppContent() {
               fontSize: "24px", 
               fontWeight: "bold", 
               margin: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
               flex: 1,
-              textAlign: "center"
+              justifyContent: "center"
             }}>
               Quran Analysis & Comparison Tool
+              <span style={{
+                fontSize: "14px",
+                color: "rgba(255,255,255,0.8)",
+                fontWeight: "normal",
+                backgroundColor: "rgba(255,255,255,0.15)",
+                padding: "4px 10px",
+                borderRadius: "12px",
+                border: "1px solid rgba(255,255,255,0.2)"
+              }}>
+                v{appConfig.version}
+              </span>
             </h1>
-            <span style={{
-              fontSize: "10px",
-              color: "rgba(255,255,255,0.7)",
-              position: "absolute",
-              top: "-8px",
-              right: "0"
-            }}>
-              v1.4.24
-            </span>
           </div>
           <div style={{
             display: "flex",
@@ -322,9 +329,9 @@ function AppContent() {
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
               style={{
-                background: 'rgba(255,255,255,0.2)',
-                border: '1px solid rgba(255,255,255,0.3)',
-                borderRadius: '6px',
+                background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
+                border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.3)'}`,
+                borderRadius: '8px',
                 padding: '8px 12px',
                 color: 'white',
                 cursor: 'pointer',
@@ -332,13 +339,18 @@ function AppContent() {
                 transition: 'all 0.2s ease',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px'
+                gap: '6px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
               }}
               onMouseOver={(e) => {
-                e.target.style.background = 'rgba(255,255,255,0.3)';
+                e.target.style.background = isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.3)';
+                e.target.style.transform = 'translateY(-1px)';
+                e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
               }}
               onMouseOut={(e) => {
-                e.target.style.background = 'rgba(255,255,255,0.2)';
+                e.target.style.background = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
               }}
               title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
@@ -358,22 +370,25 @@ function AppContent() {
               onClick={() => setActiveTab(tab.id)}
               style={{
                 padding: "10px 20px",
-                backgroundColor: activeTab === tab.id ? "#8b5cf6" : "rgba(255,255,255,0.1)",
+                backgroundColor: activeTab === tab.id 
+                  ? (isDarkMode ? "#4a4a4a" : "#8b5cf6") 
+                  : (isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.1)"),
                 color: "white",
-                border: "1px solid rgba(255,255,255,0.2)",
-                borderRadius: "5px",
+                border: `1px solid ${isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.2)"}`,
+                borderRadius: "8px",
                 cursor: "pointer",
                 transition: "all 0.2s ease",
-                fontWeight: activeTab === tab.id ? "600" : "400"
+                fontWeight: activeTab === tab.id ? "600" : "400",
+                boxShadow: activeTab === tab.id ? "0 2px 4px rgba(0,0,0,0.2)" : "none"
               }}
               onMouseOver={(e) => {
                 if (activeTab !== tab.id) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.2)";
+                  e.target.style.backgroundColor = isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.2)";
                 }
               }}
               onMouseOut={(e) => {
                 if (activeTab !== tab.id) {
-                  e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
+                  e.target.style.backgroundColor = isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.1)";
                 }
               }}
             >
@@ -382,11 +397,22 @@ function AppContent() {
           ))}
         </nav>
       </header>
-      <main style={{padding: "20px", minHeight: "80vh"}}>
+      <main style={{
+        padding: "20px", 
+        minHeight: "80vh",
+        backgroundColor: isDarkMode ? "#121212" : "#fafafa",
+        transition: "background-color 0.3s ease"
+      }}>
         {tabs.find(tab => tab.id === activeTab)?.component}
       </main>
-      <footer style={{padding: "20px", backgroundColor: "#6b46c1", color: "white", textAlign: "center"}}>
-        <p>© 2025 Quran Analysis & Comparison Tool - v{appConfig.version}</p>
+      <footer style={{
+        padding: "20px", 
+        backgroundColor: isDarkMode ? "#1a1a1a" : "#f5f5f5", 
+        color: isDarkMode ? "#ccc" : "#666", 
+        textAlign: "center",
+        borderTop: `1px solid ${isDarkMode ? "#333" : "#e0e0e0"}`
+      }}>
+        <p style={{ margin: 0, fontSize: "14px" }}>© 2025 Quran Analysis & Comparison Tool</p>
       </footer>
     </div>
   );
