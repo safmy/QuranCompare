@@ -878,6 +878,25 @@ body.dark-mode .root-word-group {
   padding: 0;
 }
 
+.verse-ref-inline {
+  font-size: 11px;
+  color: #6b46c1;
+  background: #f0f8ff;
+  padding: 2px 6px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-block;
+  margin-left: 4px;
+  font-weight: 500;
+}
+
+.verse-ref-inline:hover {
+  background: #6b46c1;
+  color: white;
+  transform: scale(1.05);
+}
+
 /* Dark mode support for word with Arabic */
 body.dark-mode .arabic-example {
   background: rgba(156, 127, 211, 0.1);
@@ -889,4 +908,14 @@ body.dark-mode .arabic-example .arabic-word {
 
 body.dark-mode .arabic-example .verse-ref {
   color: #aaa;
+}
+
+body.dark-mode .verse-ref-inline {
+  background: rgba(156, 127, 211, 0.2);
+  color: #9b7fd3;
+}
+
+body.dark-mode .verse-ref-inline:hover {
+  background: #9b7fd3;
+  color: white;
 }

@@ -34,6 +34,11 @@ const RootSearch = () => {
   const [hoveredEnglishIndex, setHoveredEnglishIndex] = useState(null);
   const [hoveredArabicIndex, setHoveredArabicIndex] = useState(null);
   const [englishToArabicWords, setEnglishToArabicWords] = useState(null);
+  const [searchHistory, setSearchHistory] = useState({
+    english: { query: '', results: null },
+    arabic: { query: '', results: null },
+    smart: { query: '', results: null }
+  });
   
   // Load root mapping data and initialize word-to-root map
   useEffect(() => {
@@ -81,8 +86,33 @@ const RootSearch = () => {
   }, [searchQuery, searchMode]);
 
   // Search functionality
-  const performSearch = async () => {
+  // Helper function to scroll to a specific verse
+  const scrollToVerse = (verseRef) => {
+    const verseElements = document.querySelectorAll('.verse-result');
+    verseElements.forEach(element => {
+      const refElement = element.querySelector('.verse-ref');
+      if (refElement && refElement.textContent === verseRef) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Highlight the verse temporarily
+        element.style.backgroundColor = '#ffeb3b';
+        setTimeout(() => {
+          element.style.backgroundColor = '';
+        }, 2000);
+      }
+    });
+  };
+
+  const performSearch = async (useCache = false) => {
     if (!searchQuery.trim() || !rootMapping) return;
+    
+    // Check if we have cached results for this mode and query
+    if (useCache && searchHistory[searchMode] && 
+        searchHistory[searchMode].query === searchQuery.trim() && 
+        searchHistory[searchMode].results) {
+      setResults(searchHistory[searchMode].results);
+      setVerses(searchHistory[searchMode].results.verses || []);
+      return;
+    }
     
     setIsLoading(true);
     setError(null);
@@ -214,6 +244,15 @@ const RootSearch = () => {
       }
       
       setResults(searchResults);
+      
+      // Cache the results
+      setSearchHistory(prev => ({
+        ...prev,
+        [searchMode]: {
+          query: searchQuery.trim(),
+          results: searchResults
+        }
+      }));
       
     } catch (err) {
       console.error('Search error:', err);
@@ -616,19 +655,49 @@ const RootSearch = () => {
         <div className="search-mode-selector">
           <button 
             className={searchMode === 'english' ? 'active' : ''}
-            onClick={() => setSearchMode('english')}
+            onClick={() => {
+              setSearchMode('english');
+              // If we have cached results for English mode, load them
+              if (searchHistory.english.query) {
+                setSearchQuery(searchHistory.english.query);
+                if (searchHistory.english.results) {
+                  setResults(searchHistory.english.results);
+                  setVerses(searchHistory.english.results.verses || []);
+                }
+              }
+            }}
           >
             English → Arabic
           </button>
           <button 
             className={searchMode === 'arabic' ? 'active' : ''}
-            onClick={() => setSearchMode('arabic')}
+            onClick={() => {
+              setSearchMode('arabic');
+              // If we have cached results for Arabic mode, load them
+              if (searchHistory.arabic.query) {
+                setSearchQuery(searchHistory.arabic.query);
+                if (searchHistory.arabic.results) {
+                  setResults(searchHistory.arabic.results);
+                  setVerses(searchHistory.arabic.results.verses || []);
+                }
+              }
+            }}
           >
             Arabic → English
           </button>
           <button 
             className={searchMode === 'smart' ? 'active' : ''}
-            onClick={() => setSearchMode('smart')}
+            onClick={() => {
+              setSearchMode('smart');
+              // If we have cached results for Smart mode, load them
+              if (searchHistory.smart.query) {
+                setSearchQuery(searchHistory.smart.query);
+                if (searchHistory.smart.results) {
+                  setResults(searchHistory.smart.results);
+                  setVerses(searchHistory.smart.results.verses || []);
+                }
+              }
+            }}
           >
             🔍 Smart Search
           </button>
@@ -696,6 +765,14 @@ const RootSearch = () => {
                           key={index} 
                           className="root-tag clickable"
                           onClick={() => {
+                            // Cache current search before switching
+                            setSearchHistory(prev => ({
+                              ...prev,
+                              [searchMode]: {
+                                query: searchQuery.trim(),
+                                results: results
+                              }
+                            }));
                             setSearchQuery(root);
                             setSearchMode('arabic');
                             handleRootClick(root);
@@ -729,8 +806,17 @@ const RootSearch = () => {
                           <span 
                             className="root-tag clickable"
                             onClick={() => {
+                              // Cache current search before switching
+                              setSearchHistory(prev => ({
+                                ...prev,
+                                [searchMode]: {
+                                  query: searchQuery.trim(),
+                                  results: results
+                                }
+                              }));
                               setSearchQuery(root);
                               setSearchMode('arabic');
+                              setTimeout(() => performSearch(), 100);
                             }}
                             title="Click to search this root"
                           >
@@ -760,7 +846,17 @@ const RootSearch = () => {
                                       <div key={idx} className="arabic-example">
                                         <span className="arabic-word" dir="rtl">{arabic}</span>
                                         {info.verses && info.verses[0] && (
-                                          <span className="verse-ref">({info.verses[0].ref})</span>
+                                          <span 
+                                            className="verse-ref-inline"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              const verseRef = info.verses[0].ref;
+                                              scrollToVerse(verseRef);
+                                            }}
+                                            title={`Scroll to ${info.verses[0].ref}`}
+                                          >
+                                            {info.verses[0].ref}
+                                          </span>
                                         )}
                                       </div>
                                     ))}
