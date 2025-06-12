@@ -324,6 +324,11 @@ const QuranVectorSearch = ({ savedState = {} }) => {
     window.dispatchEvent(event);
   };
   
+  // Appendix title corrections mapping
+  const appendixTitleCorrections = {
+    7: "Why Were We Created?"
+  };
+
   const renderTitle = (result) => {
     if (result.collection === 'FinalTestament' || result.collection === 'ArabicVerses') {
       // Extract verse reference and make it clickable
@@ -368,6 +373,42 @@ const QuranVectorSearch = ({ savedState = {} }) => {
             </span>
             {afterVerse}
           </span>
+        );
+      }
+    }
+    
+    // For Appendices collection
+    if (result.collection === 'Appendices' && result.title) {
+      const match = result.title.match(/Appendix (\d+)/i);
+      if (match) {
+        const appendixNum = parseInt(match[1]);
+        const paddedNum = appendixNum.toString().padStart(2, '0');
+        
+        // Apply title corrections if needed
+        let displayTitle = result.title;
+        if (appendixTitleCorrections[appendixNum]) {
+          displayTitle = `Appendix ${appendixNum}: ${appendixTitleCorrections[appendixNum]}`;
+        }
+        
+        return (
+          <a 
+            href={`/appendices/appendix_${paddedNum}.pdf`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: '#FF5722',
+              textDecoration: 'none',
+              fontWeight: 'bold'
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              window.open(`/appendices/appendix_${paddedNum}.pdf`, '_blank');
+            }}
+            onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+            onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+          >
+            {displayTitle}
+          </a>
         );
       }
     }
