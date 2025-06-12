@@ -324,9 +324,46 @@ const QuranVectorSearch = ({ savedState = {} }) => {
     window.dispatchEvent(event);
   };
   
-  // Appendix title corrections mapping
-  const appendixTitleCorrections = {
-    7: "Why Were We Created?"
+  // Correct appendix titles (source of truth)
+  const correctAppendixTitles = {
+    1: "One of the Great Miracles",
+    2: "God's Messenger of the Covenant",
+    3: "We Made the Quran Easy",
+    4: "Why Was the Quran Revealed in Arabic?",
+    5: "The Quran's Common Denominator",
+    6: "Greatness of God",
+    7: "Why Were We Created?",
+    8: "The Myth of Intercession",
+    9: "Abraham: Original Messenger of Islam",
+    10: "God's Usage of the Plural Tense",
+    11: "The Day of Resurrection",
+    12: "Role of the Prophet Muhammad",
+    13: "The First Pillar of Islam",
+    14: "Predestination",
+    15: "Religious Duties: Gift from God",
+    16: "Dietary Prohibition",
+    17: "Death",
+    18: "Quran: The Ultimate Reference",
+    19: "Hadith & Sunna: Satan's Hypocritical Inventions",
+    20: "Quran: Unlike Any Other Book",
+    21: "Satan's Clever Trick",
+    22: "Jesus",
+    23: "Mathematical Coding of the Quran",
+    24: "Tampering With the Word of God",
+    25: "The End of the World",
+    26: "The Three Messengers of Islam",
+    27: "Who Is Your God?",
+    28: "The Age of 40",
+    29: "The Missing Basmalah",
+    30: "Messengers vs. Prophets",
+    31: "Chronological Order of Revelation",
+    32: "God's Usage of the Plural",
+    33: "Why Did God Send a Messenger Now?",
+    34: "Virginity",
+    35: "Drugs & Alcohol",
+    36: "What Price A Great Nation",
+    37: "The Crucial Age of 40",
+    38: "19 - The Creator's Signature"
   };
 
   const renderTitle = (result) => {
@@ -384,11 +421,8 @@ const QuranVectorSearch = ({ savedState = {} }) => {
         const appendixNum = parseInt(match[1]);
         const paddedNum = appendixNum.toString().padStart(2, '0');
         
-        // Apply title corrections if needed
-        let displayTitle = result.title;
-        if (appendixTitleCorrections[appendixNum]) {
-          displayTitle = `Appendix ${appendixNum}: ${appendixTitleCorrections[appendixNum]}`;
-        }
+        // Always use the correct title from our mapping
+        let displayTitle = `Appendix ${appendixNum}: ${correctAppendixTitles[appendixNum] || 'Unknown'}`;
         
         return (
           <a 

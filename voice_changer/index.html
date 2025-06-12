@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domain Control Panel - Voice Changer</title>
+    <link rel="stylesheet" href="static/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-microphone-alt"></i> Domain Voice Changer</h1>
+            <p class="subtitle">Transform your voice with AI-powered technology</p>
+        </header>
+
+        <main>
+            <!-- Recording Section -->
+            <section class="panel recording-panel">
+                <h2><i class="fas fa-record-vinyl"></i> Voice Recording</h2>
+                <div class="recording-controls">
+                    <button id="recordBtn" class="btn btn-primary">
+                        <i class="fas fa-microphone"></i> Start Recording
+                    </button>
+                    <button id="stopBtn" class="btn btn-danger" disabled>
+                        <i class="fas fa-stop"></i> Stop Recording
+                    </button>
+                    <div class="recording-indicator" id="recordingIndicator">
+                        <span class="pulse"></span>
+                        <span>Recording...</span>
+                    </div>
+                </div>
+                <div class="audio-visualizer" id="audioVisualizer">
+                    <canvas id="waveform"></canvas>
+                </div>
+            </section>
+
+            <!-- Upload Section -->
+            <section class="panel upload-panel">
+                <h2><i class="fas fa-upload"></i> Upload Audio</h2>
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="audioUpload" accept="audio/*" hidden>
+                    <label for="audioUpload" class="upload-label">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Click to upload or drag and drop</span>
+                        <small>Supported formats: MP3, WAV, M4A, OGG</small>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Current Audio Section -->
+            <section class="panel current-audio-panel" id="currentAudioPanel" style="display: none;">
+                <h2><i class="fas fa-file-audio"></i> Current Audio</h2>
+                <div class="current-audio-info">
+                    <p id="currentFileName"></p>
+                    <audio id="currentAudioPlayer" controls></audio>
+                    <button id="transcribeBtn" class="btn btn-secondary">
+                        <i class="fas fa-closed-captioning"></i> Transcribe to Text
+                    </button>
+                    <div id="transcriptionResult" class="transcription-result"></div>
+                </div>
+            </section>
+
+            <!-- Voice Transformation Section -->
+            <section class="panel transformation-panel">
+                <h2><i class="fas fa-magic"></i> Voice Transformation</h2>
+                
+                <!-- TTS Tab -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="tts">
+                        <i class="fas fa-comment-dots"></i> Text to Speech
+                    </button>
+                    <button class="tab-btn" data-tab="effects">
+                        <i class="fas fa-sliders-h"></i> Audio Effects
+                    </button>
+                </div>
+
+                <div class="tab-content" id="ttsTab">
+                    <div class="tts-controls">
+                        <div class="form-group">
+                            <label for="ttsText">Enter Text</label>
+                            <textarea id="ttsText" rows="4" placeholder="Type or paste your text here..."></textarea>
+                        </div>
+                        
+                        <div class="voice-selection">
+                            <h3>Select Voice</h3>
+                            <div class="voice-grid" id="voiceGrid">
+                                <!-- Voice options will be populated here -->
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="speedSlider">Speech Speed</label>
+                            <div class="slider-container">
+                                <input type="range" id="speedSlider" min="0.5" max="2" step="0.1" value="1">
+                                <span id="speedValue">1.0x</span>
+                            </div>
+                        </div>
+
+                        <button id="generateTtsBtn" class="btn btn-primary">
+                            <i class="fas fa-play"></i> Generate Speech
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="effectsTab" style="display: none;">
+                    <div class="effects-controls">
+                        <h3>Select Effect</h3>
+                        <div class="effects-grid" id="effectsGrid">
+                            <!-- Effects will be populated here -->
+                        </div>
+                        
+                        <div id="effectParams" class="effect-params">
+                            <!-- Effect parameters will be shown here -->
+                        </div>
+
+                        <button id="applyEffectBtn" class="btn btn-primary" disabled>
+                            <i class="fas fa-wand-magic-sparkles"></i> Apply Effect
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="panel results-panel" id="resultsPanel" style="display: none;">
+                <h2><i class="fas fa-headphones"></i> Transformed Audio</h2>
+                <div class="results-list" id="resultsList">
+                    <!-- Results will be populated here -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+            <p id="loadingText">Processing...</p>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toastContainer"></div>
+    </div>
+
+    <script src="static/app.js"></script>
+</body>
+</html>

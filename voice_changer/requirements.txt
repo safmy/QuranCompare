@@ -1,0 +1,25 @@
+# Voice Changer Application Requirements
+
+# Core dependencies
+flask==3.0.0
+flask-cors==4.0.0
+openai==1.6.1
+python-dotenv==1.0.0
+
+# Audio processing
+pyaudio==0.2.14
+pydub==0.25.1
+numpy==1.26.2
+scipy==1.11.4
+soundfile==0.12.1
+
+# Audio format support
+ffmpeg-python==0.2.0
+
+# Additional utilities
+requests==2.31.0
+werkzeug==3.0.1
+
+# For Windows users (if pyaudio installation fails)
+# pipwin==0.5.2
+# Then run: pipwin install pyaudio

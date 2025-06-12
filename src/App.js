@@ -485,4 +485,4 @@ function App() {
 }
 
 export default App;
-// Trigger Netlify deployment - Fri 13 Dec 2024 - v1.5.12 - Make appendix titles clickable and fix Appendix 7 title
+// Trigger Netlify deployment - Fri 13 Dec 2024 - v1.5.13 - Fix all appendix titles in search results and hamburger menu
