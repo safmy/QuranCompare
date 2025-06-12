@@ -795,3 +795,64 @@ body.dark-mode .english-word.search-highlighted.english-word-highlighted {
     font-size: 14px;
   }
 }
+
+/* Grouped words by root */
+.related-words-by-root {
+  margin-top: 15px;
+}
+
+.root-word-group {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.root-group-header {
+  margin: 0 0 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.root-group-header .root-tag {
+  background: #6b46c1;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.root-group-header .root-tag:hover {
+  background: #5835b0;
+  transform: translateY(-1px);
+}
+
+.word-with-arabic {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 10px;
+  margin-bottom: 5px;
+}
+
+.word-arabic-hint {
+  font-size: 11px;
+  color: #666;
+  margin-top: 2px;
+  font-family: 'Amiri', 'Traditional Arabic', serif;
+}
+
+/* Dark mode support for grouped words */
+body.dark-mode .root-word-group {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
+body.dark-mode .word-arabic-hint {
+  color: #999;
+}

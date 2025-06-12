@@ -8,6 +8,13 @@ A comprehensive voice changing application with AI-powered text-to-speech and au
 - **File Upload**: Upload existing audio files (MP3, WAV, M4A, OGG)
 - **Speech-to-Text**: Transcribe audio to text using OpenAI's Whisper
 - **Text-to-Speech**: Generate natural speech with multiple voice options
+- **Voice Disguise**: Automatically applies subtle modifications to OpenAI TTS voices to make them less recognizable:
+  - Subtle pitch variations
+  - Formant shifting for voice character modification
+  - Light distortion and filtering
+  - Background ambience mixing
+  - Subtle reverb for room acoustics
+  - Dynamic processing for natural variation
 - **Audio Effects**: Apply various effects including:
   - Pitch shifting
   - Robot voice
@@ -17,6 +24,10 @@ A comprehensive voice changing application with AI-powered text-to-speech and au
   - Whisper effect
   - Deep voice
   - Alien voice
+  - Formant shifting
+  - Vocal texture
+  - Subtle reverb
+  - Background ambience
 
 ## Setup
 
@@ -39,9 +50,9 @@ pip install -r requirements.txt
 - **Windows**: Download from [ffmpeg.org](https://ffmpeg.org/download.html)
 
 3. Configure the application:
-   - Copy `.env.example` to `.env`
-   - Add your OpenAI API key to the `.env` file
-   - Or update `config.json` with your API key
+   - Create a `.env` file in the voice_changer directory
+   - Add your OpenAI API key: `OPENAI_API_KEY=your-api-key-here`
+   - Or update `config.json` with your API key (`.env` takes precedence)
 
 ### Running the Application
 
@@ -79,6 +90,8 @@ http://localhost:5000
 3. Adjust speech speed if desired
 4. Click "Generate Speech"
 
+**Note**: Voice disguise is enabled by default to make OpenAI voices sound less recognizable. Each generation will have subtle variations in pitch, tone, and acoustic properties.
+
 ### Applying Effects
 1. Upload or record audio first
 2. Switch to the "Audio Effects" tab
@@ -110,6 +123,32 @@ Edit `config.json` to customize:
 - Audio parameters
 - File size limits
 - Storage settings
+
+### Voice Disguise Settings
+
+The voice disguise feature can be configured in `config.json`:
+
+```json
+"tts": {
+    "apply_disguise_by_default": true,
+    "disguise_settings": {
+        "pitch_variation_range": [-1.5, 1.5],
+        "formant_shift_range": [0.95, 1.05],
+        "vibrato_freq_range": [4.0, 6.0],
+        "vibrato_depth_range": [0.02, 0.04],
+        "ambience_level": -55,
+        "reverb_decay": 0.15
+    }
+}
+```
+
+- **apply_disguise_by_default**: Whether to automatically disguise OpenAI voices
+- **pitch_variation_range**: Random pitch shift in semitones
+- **formant_shift_range**: Voice character modification range
+- **vibrato_freq_range**: Subtle vibrato frequency in Hz
+- **vibrato_depth_range**: Vibrato intensity
+- **ambience_level**: Background room tone level in dB
+- **reverb_decay**: Room acoustics intensity
 
 ## Troubleshooting
 

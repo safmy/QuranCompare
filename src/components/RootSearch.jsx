@@ -113,18 +113,37 @@ const RootSearch = () => {
           foundRoots = rootMapping.englishToArabic[query];
           searchResults.roots = foundRoots;
           
-          // Find related English words
-          const relatedWords = new Set();
+          // Find related English words grouped by root
+          const relatedWordsByRoot = {};
           foundRoots.forEach(root => {
             if (rootMapping.arabicToEnglish[root]) {
-              rootMapping.arabicToEnglish[root].meanings.forEach(meaning => {
-                meaning.split(/\s+/).forEach(word => {
-                  if (word.length > 2) relatedWords.add(word);
-                });
+              const rootWords = new Set();
+              const rootData = rootMapping.arabicToEnglish[root];
+              
+              // Collect unique meaningful words from meanings
+              rootData.meanings.forEach(meaning => {
+                // Split by common delimiters and filter
+                const words = meaning.split(/[\s\/\-,]+/)
+                  .map(w => w.toLowerCase().replace(/[^a-z]/g, ''))
+                  .filter(w => w.length > 2 && !['the', 'and', 'for', 'from', 'you', 'all'].includes(w));
+                words.forEach(word => rootWords.add(word));
               });
+              
+              relatedWordsByRoot[root] = {
+                englishWords: Array.from(rootWords).slice(0, 15), // Limit to 15 words per root
+                arabicRoot: root,
+                verses: rootData.verses || []
+              };
             }
           });
-          searchResults.relatedWords = Array.from(relatedWords);
+          searchResults.relatedWordsByRoot = relatedWordsByRoot;
+          
+          // Keep the flat list for backward compatibility
+          const allRelatedWords = new Set();
+          Object.values(relatedWordsByRoot).forEach(data => {
+            data.englishWords.forEach(word => allRelatedWords.add(word));
+          });
+          searchResults.relatedWords = Array.from(allRelatedWords);
         }
       } else if (searchMode === 'arabic') {
         // Search Arabic root
@@ -667,8 +686,12 @@ const RootSearch = () => {
                         <span 
                           key={index} 
                           className="root-tag clickable"
-                          onClick={() => handleRootClick(root)}
-                          title="Click to see all verses with this root"
+                          onClick={() => {
+                            setSearchQuery(root);
+                            setSearchMode('arabic');
+                            handleRootClick(root);
+                          }}
+                          title="Click to search this root and see all verses"
                         >
                           {root}
                         </span>
@@ -688,7 +711,46 @@ const RootSearch = () => {
                   </div>
                 )}
                 
-                {results.relatedWords && results.relatedWords.length > 0 && (
+                {results.relatedWordsByRoot && Object.keys(results.relatedWordsByRoot).length > 0 ? (
+                  <div className="related-words-by-root">
+                    <h4>Related Words:</h4>
+                    {Object.entries(results.relatedWordsByRoot).map(([root, data]) => (
+                      <div key={root} className="root-word-group">
+                        <h5 className="root-group-header">
+                          <span 
+                            className="root-tag clickable"
+                            onClick={() => {
+                              setSearchQuery(root);
+                              setSearchMode('arabic');
+                            }}
+                            title="Click to search this root"
+                          >
+                            {root}
+                          </span>
+                        </h5>
+                        <div className="word-cloud">
+                          {data.englishWords.map((word, index) => (
+                            <div key={index} className="word-with-arabic">
+                              <span 
+                                className="related-word"
+                                onClick={() => {
+                                  setSearchQuery(word);
+                                  setSearchMode('english');
+                                }}
+                              >
+                                {word}
+                              </span>
+                              <span className="word-arabic-hint" dir="rtl">
+                                {/* This would show the Arabic word if we had a mapping */}
+                                {root}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : results.relatedWords && results.relatedWords.length > 0 && (
                   <div className="related-words">
                     <h4>Related Words:</h4>
                     <div className="word-cloud">

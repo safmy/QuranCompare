@@ -14,7 +14,16 @@
     "tts": {
         "model": "tts-1-hd",
         "default_voice": "alloy",
-        "default_speed": 1.0
+        "default_speed": 1.0,
+        "apply_disguise_by_default": true,
+        "disguise_settings": {
+            "pitch_variation_range": [-1.5, 1.5],
+            "formant_shift_range": [0.95, 1.05],
+            "vibrato_freq_range": [4.0, 6.0],
+            "vibrato_depth_range": [0.02, 0.04],
+            "ambience_level": -55,
+            "reverb_decay": 0.15
+        }
     },
     "limits": {
         "max_file_size_mb": 25,

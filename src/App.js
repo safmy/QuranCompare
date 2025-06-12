@@ -501,4 +501,4 @@ function App() {
 }
 
 export default App;
-// Trigger Netlify deployment - Fri 13 Dec 2024 - v1.5.13 - Fix all appendix titles in search results and hamburger menu
+// Trigger Netlify deployment - Fri 13 Dec 2024 - v1.5.14 - Improve root search with grouped related words and clickable roots
