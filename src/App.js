@@ -485,4 +485,4 @@ function App() {
 }
 
 export default App;
-// Trigger Netlify deployment - Thu 12 Dec 2024 - v1.5.10 - Add Appendices to semantic search (fix validation)
+// Trigger Netlify deployment - Fri 13 Dec 2024 - v1.5.11 - Appendices search results now open local PDFs

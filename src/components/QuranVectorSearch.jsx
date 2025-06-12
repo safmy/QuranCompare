@@ -135,11 +135,9 @@ const QuranVectorSearch = ({ savedState = {} }) => {
         // For Rashad Media, include the YouTube link with timestamp
         verseText = `${result.content}\n\nWatch on YouTube: ${result.youtube_link}`;
       } else if (result.collection === 'Appendices') {
-        // For Appendices, include title and URL
+        // For Appendices, include title and content
         verseText = `${result.title}\n\n${result.content}`;
-        if (result.source_url) {
-          verseText += `\n\nRead full appendix: ${result.source_url}`;
-        }
+        // Don't include URL in clipboard text since we're using local PDFs
       } else {
         // For other collections (articles, newsletters, etc.), just copy the content
         verseText = result.content;
@@ -1144,12 +1142,36 @@ const QuranVectorSearch = ({ savedState = {} }) => {
                 <p style={{ fontSize: '13px', color: '#888', marginBottom: '5px' }}>
                   Source: {result.source_url ? (
                     <a 
-                      href={result.source_url}
+                      href={(() => {
+                        // Special handling for Appendices
+                        if (result.collection === 'Appendices' && result.title) {
+                          // Extract appendix number from title
+                          const match = result.title.match(/Appendix (\d+)/i);
+                          if (match) {
+                            const appendixNum = match[1];
+                            const paddedNum = appendixNum.padStart(2, '0');
+                            return `/appendices/appendix_${paddedNum}.pdf`;
+                          }
+                        }
+                        return result.source_url;
+                      })()}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{
                         color: '#1976d2',
                         textDecoration: 'underline'
+                      }}
+                      onClick={(e) => {
+                        // For appendices, open PDF directly
+                        if (result.collection === 'Appendices' && result.title) {
+                          const match = result.title.match(/Appendix (\d+)/i);
+                          if (match) {
+                            e.preventDefault();
+                            const appendixNum = match[1];
+                            const paddedNum = appendixNum.padStart(2, '0');
+                            window.open(`/appendices/appendix_${paddedNum}.pdf`, '_blank');
+                          }
+                        }
                       }}
                     >
                       {result.source}
