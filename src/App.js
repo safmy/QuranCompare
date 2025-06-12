@@ -402,4 +402,4 @@ function App() {
 }
 
 export default App;
-// Trigger Netlify deployment - Mon 10 Jun 2025 21:45:00 GMT - v1.4.24 - Fixed debater bot verse click, conversation persistence, and first response failure
+// Trigger Netlify deployment - Thu 12 Dec 2024 - v1.5.1 - Merged EnhancedDebaterBot with history functionality
