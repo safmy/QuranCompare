@@ -47,5 +47,9 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>QuranCompare uses your microphone for voice search to find verses using speech recognition.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>QuranCompare needs your location to calculate accurate prayer times and Qibla direction for your area.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>QuranCompare needs your location to calculate accurate prayer times and Qibla direction for your area.</string>
 </dict>
 </plist>
