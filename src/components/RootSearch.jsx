@@ -33,21 +33,30 @@ const RootSearch = () => {
   const [isResultsSummaryExpanded, setIsResultsSummaryExpanded] = useState(true);
   const [hoveredEnglishIndex, setHoveredEnglishIndex] = useState(null);
   const [hoveredArabicIndex, setHoveredArabicIndex] = useState(null);
+  const [englishToArabicWords, setEnglishToArabicWords] = useState(null);
   
   // Load root mapping data and initialize word-to-root map
   useEffect(() => {
-    const loadRootMapping = async () => {
+    const loadMappings = async () => {
       try {
-        const response = await fetch('/rootMapping.json');
-        if (response.ok) {
-          const data = await response.json();
+        // Load root mapping
+        const rootResponse = await fetch('/rootMapping.json');
+        if (rootResponse.ok) {
+          const data = await rootResponse.json();
           setRootMapping(data);
         }
+        
+        // Load English to Arabic word mapping
+        const wordResponse = await fetch('/englishToArabicWords.json');
+        if (wordResponse.ok) {
+          const wordData = await wordResponse.json();
+          setEnglishToArabicWords(wordData.englishToArabic);
+        }
       } catch (err) {
-        console.error('Failed to load root mapping:', err);
+        console.error('Failed to load mappings:', err);
       }
     };
-    loadRootMapping();
+    loadMappings();
     
     // Initialize word-to-root mapping
     initializeWordToRootMap();
@@ -729,18 +738,37 @@ const RootSearch = () => {
                           </span>
                         </h5>
                         <div className="word-cloud">
-                          {data.englishWords.map((word, index) => (
-                            <span 
-                              key={index}
-                              className="related-word"
-                              onClick={() => {
-                                setSearchQuery(word);
-                                setSearchMode('english');
-                              }}
-                            >
-                              {word}
-                            </span>
-                          ))}
+                          {data.englishWords.map((word, index) => {
+                            // Get Arabic words for this English word
+                            const arabicData = englishToArabicWords && englishToArabicWords[word] ? 
+                              Object.entries(englishToArabicWords[word]).slice(0, 2) : [];
+                            
+                            return (
+                              <div key={index} className="word-with-arabic">
+                                <span 
+                                  className="related-word"
+                                  onClick={() => {
+                                    setSearchQuery(word);
+                                    setSearchMode('english');
+                                  }}
+                                >
+                                  {word}
+                                </span>
+                                {arabicData.length > 0 && (
+                                  <div className="arabic-examples">
+                                    {arabicData.map(([arabic, info], idx) => (
+                                      <div key={idx} className="arabic-example">
+                                        <span className="arabic-word" dir="rtl">{arabic}</span>
+                                        {info.verses && info.verses[0] && (
+                                          <span className="verse-ref">({info.verses[0].ref})</span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
