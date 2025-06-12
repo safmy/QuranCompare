@@ -74,7 +74,15 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
   const [messages, setMessages] = useState(() => {
     const saved = sessionStorage.getItem('debaterMessages');
     try {
-      return saved ? JSON.parse(saved) : [];
+      if (saved) {
+        const parsedMessages = JSON.parse(saved);
+        // Ensure timestamps are Date objects
+        return parsedMessages.map(msg => ({
+          ...msg,
+          timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
+        }));
+      }
+      return [];
     } catch {
       return [];
     }
@@ -592,7 +600,13 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
   };
 
   const formatTimestamp = (date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    // Handle both Date objects and date strings
+    const dateObj = date instanceof Date ? date : new Date(date);
+    // Check if the date is valid
+    if (isNaN(dateObj.getTime())) {
+      return '';
+    }
+    return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
   
   // Format date for chat history
