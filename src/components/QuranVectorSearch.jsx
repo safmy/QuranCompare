@@ -16,14 +16,47 @@ const QuranVectorSearch = ({ savedState = {} }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [numResults, setNumResults] = useState(savedState.numResults || 10);
-  const [includeRashadMedia, setIncludeRashadMedia] = useState(
-    sessionSource === 'RashadAllMedia' ? true : (savedState.includeRashadMedia ?? false)
-  );
-  const [includeFinalTestament, setIncludeFinalTestament] = useState(
-    sessionSource === 'RashadAllMedia' ? false : (savedState.includeFinalTestament ?? true)
-  );
-  const [includeNewsletters, setIncludeNewsletters] = useState(savedState.includeNewsletters ?? false);
-  const [includeArabicVerses, setIncludeArabicVerses] = useState(savedState.includeArabicVerses ?? false);
+  // Determine initial states based on sessionSource
+  const getInitialStates = () => {
+    if (sessionSource === 'RashadAllMedia') {
+      return {
+        rashadMedia: true,
+        finalTestament: false,
+        newsletters: false,
+        arabicVerses: false
+      };
+    } else if (sessionSource === 'QuranTalkNewsletters') {
+      return {
+        rashadMedia: false,
+        finalTestament: false,
+        newsletters: true,
+        arabicVerses: false
+      };
+    } else if (sessionSource === 'QuranTalkArticles') {
+      // Articles are likely part of newsletters/qurantalk
+      return {
+        rashadMedia: false,
+        finalTestament: false,
+        newsletters: true,
+        arabicVerses: false
+      };
+    } else {
+      // Default states from saved state
+      return {
+        rashadMedia: savedState.includeRashadMedia ?? false,
+        finalTestament: savedState.includeFinalTestament ?? true,
+        newsletters: savedState.includeNewsletters ?? false,
+        arabicVerses: savedState.includeArabicVerses ?? false
+      };
+    }
+  };
+  
+  const initialStates = getInitialStates();
+  
+  const [includeRashadMedia, setIncludeRashadMedia] = useState(initialStates.rashadMedia);
+  const [includeFinalTestament, setIncludeFinalTestament] = useState(initialStates.finalTestament);
+  const [includeNewsletters, setIncludeNewsletters] = useState(initialStates.newsletters);
+  const [includeArabicVerses, setIncludeArabicVerses] = useState(initialStates.arabicVerses);
   const [useRegex, setUseRegex] = useState(savedState.useRegex ?? false);
   const [regexResults, setRegexResults] = useState(savedState.regexResults || []);
   const [quranData, setQuranData] = useState(null);
