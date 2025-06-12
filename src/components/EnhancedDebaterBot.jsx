@@ -1,401 +1,242 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { checkPremiumAccess, PREMIUM_FEATURES } from '../config/premium';
+import { supabase } from '../utils/supabase';
 import AuthModal from './AuthModal';
 import SubscriptionModal from './SubscriptionModal';
 import VoiceSearchButton from './VoiceSearchButton';
 import './EnhancedDebaterBot.css';
 import { FaPaperPlane, FaTrash, FaChevronDown, FaChevronUp, FaSearch, FaBook, FaLanguage, FaPlay, FaExternalLinkAlt } from 'react-icons/fa';
-import { supabase } from '../utils/supabase';
-import { checkPremiumStatus } from '../utils/subscriptionManager';
 
-// Import API URL from config
-const API_URL = process.env.REACT_APP_API_URL || 'https://qurancompare-api.onrender.com';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
+
+// Dearabization function
+const dearabizeText = (text) => {
+  if (!text) return text;
+  
+  // Define replacements
+  const replacements = {
+    // Primary replacements (case-insensitive)
+    'allah': 'God',
+    'muslim': 'Submitter',
+    'muslims': 'Submitters',
+    'islam': 'Submission',
+    'islamic': 'Submission',
+    'sura': 'Chapter',
+    'suras': 'Chapters',
+    'surah': 'Chapter',
+    'surahs': 'Chapters',
+    // Additional related terms
+    'muslim\'s': 'Submitter\'s',
+    'muslims\'': 'Submitters\'',
+    'islamically': 'in Submission',
+    'islamic teachings': 'Submission teachings',
+    'islamic faith': 'faith of Submission',
+    'islamic belief': 'belief in Submission',
+    'islamic practice': 'practice of Submission',
+    'islamic law': 'law of Submission',
+    'islamic tradition': 'tradition of Submission',
+    'islamic scripture': 'scripture of Submission',
+    'islamic religion': 'religion of Submission',
+    'the muslims': 'the Submitters',
+    'a muslim': 'a Submitter',
+    'as muslims': 'as Submitters',
+    'for muslims': 'for Submitters',
+    'true muslims': 'true Submitters',
+    'devout muslim': 'devout Submitter',
+    'devout muslims': 'devout Submitters',
+    'practicing muslim': 'practicing Submitter',
+    'practicing muslims': 'practicing Submitters'
+  };
+  
+  let result = text;
+  
+  // Apply replacements (case-insensitive)
+  Object.entries(replacements).forEach(([from, to]) => {
+    // Create regex for whole word matching
+    const regex = new RegExp(`\\b${from}\\b`, 'gi');
+    result = result.replace(regex, (match) => {
+      // Preserve original case
+      if (match[0] === match[0].toUpperCase()) {
+        return to[0].toUpperCase() + to.slice(1);
+      }
+      return to;
+    });
+  });
+  
+  return result;
+};
 
 const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recentSearch }) => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { language } = useLanguage();
-  const [message, setMessage] = useState('');
-  const [conversation, setConversation] = useState(() => {
-    const saved = sessionStorage.getItem('debaterConversation');
-    try {
-      return saved ? JSON.parse(saved) : [];
-    } catch (error) {
-      console.error('Error parsing saved conversation:', error);
-      return [];
-    }
-  });
+  const [messages, setMessages] = useState([]);
+  const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [conversationToDelete, setConversationToDelete] = useState(null);
-  const [savedConversations, setSavedConversations] = useState([]);
-  const [currentConversationId, setCurrentConversationId] = useState(() => {
-    return sessionStorage.getItem('debaterConversationId') || null;
-  });
+  const [error, setError] = useState(null);
+  const [debateMode, setDebateMode] = useState(false);
+  const [currentTopic, setCurrentTopic] = useState('');
+  const [showAuth, setShowAuth] = useState(false);
+  const [showSubscription, setShowSubscription] = useState(false);
+  const [chatHistoryId, setChatHistoryId] = useState(null);
+  const [previousChats, setPreviousChats] = useState([]);
+  const [showChatHistory, setShowChatHistory] = useState(false);
+  const [showTopicInput, setShowTopicInput] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [hoveredChatId, setHoveredChatId] = useState(null);
+  const [deletingChatId, setDeletingChatId] = useState(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [showRelatedContent, setShowRelatedContent] = useState(true);
-  const [relatedData, setRelatedData] = useState(() => {
-    const saved = sessionStorage.getItem('debaterRelatedData');
-    try {
-      return saved ? JSON.parse(saved) : {
-        verses: [],
-        searchResults: [],
-        rootAnalysis: [],
-        suggestedTabs: [],
-        citations: []
-      };
-    } catch (error) {
-      console.error('Error parsing saved related data:', error);
-      return {
-        verses: [],
-        searchResults: [],
-        rootAnalysis: [],
-        suggestedTabs: [],
-        citations: []
-      };
-    }
+  const [relatedData, setRelatedData] = useState({
+    verses: [],
+    searchResults: [],
+    rootAnalysis: [],
+    suggestedTabs: [],
+    citations: []
   });
   const messagesEndRef = useRef(null);
-  const conversationRef = useRef(conversation);
 
-  // Update conversation ref and save to session when conversation changes
+  // Detect mobile device
   useEffect(() => {
-    conversationRef.current = conversation;
-    if (conversation.length > 0) {
-      sessionStorage.setItem('debaterConversation', JSON.stringify(conversation));
-    }
-  }, [conversation]);
-  
-  // Save related data when it changes
-  useEffect(() => {
-    if (Object.values(relatedData).some(arr => arr.length > 0)) {
-      sessionStorage.setItem('debaterRelatedData', JSON.stringify(relatedData));
-    }
-  }, [relatedData]);
-  
-  // Save conversation ID when it changes
-  useEffect(() => {
-    if (currentConversationId) {
-      sessionStorage.setItem('debaterConversationId', currentConversationId);
-    }
-  }, [currentConversationId]);
-
-  // Check subscription status
-  useEffect(() => {
-    const checkSubscription = async () => {
-      if (user) {
-        console.log('Enhanced Debater - User data:', {
-          email: user.email,
-          subscriptionStatus: user.subscriptionStatus,
-          subscriptionExpiry: user.subscriptionExpiry
-        });
-        
-        // Check if user has active subscription from AuthContext
-        const hasActiveSubscription = user?.subscriptionStatus === 'active' && 
-                                      user?.subscriptionExpiry && 
-                                      new Date(user.subscriptionExpiry) > new Date();
-        
-        console.log('Enhanced Debater - Premium status:', hasActiveSubscription);
-        setIsPremium(hasActiveSubscription);
-      } else {
-        console.log('Enhanced Debater - No user logged in');
-        setIsPremium(false);
-      }
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
     };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-    checkSubscription();
-  }, [user]);
+  // Scroll to bottom when new messages are added
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
-  // Load saved conversations
   useEffect(() => {
-    const loadConversations = async () => {
-      if (user) {
-        try {
-          const { data, error } = await supabase
-            .from('debate_conversations')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
+    scrollToBottom();
+  }, [messages]);
 
-          if (error) throw error;
-          setSavedConversations(data || []);
-        } catch (error) {
-          console.error('Error loading conversations:', error);
-        }
-      }
-    };
-
-    loadConversations();
-  }, [user]);
-
-  // Auto-scroll to bottom
+  // Check access on component mount and when user changes
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [conversation]);
-
-  // Enhanced content parser with HTML support and clickable links
-  const parseAndLinkReferences = (text) => {
-    // First, handle verse references
-    let processedText = text.replace(/\[(\d{1,3}):(\d{1,3})(?:-(\d{1,3}))?\]/g, (match, chapter, startVerse, endVerse) => {
-      const verseRef = endVerse ? `${chapter}:${startVerse}-${endVerse}` : `${chapter}:${startVerse}`;
-      return `<verse-ref data-ref="${verseRef}">[${verseRef}]</verse-ref>`;
-    });
-
-    // Then handle Rashad media links
-    processedText = processedText.replace(/(Rashad Khalifa|Rashad's)/gi, (match) => {
-      return `<rashad-link>${match}</rashad-link>`;
-    });
-
-    // Parse HTML safely
-    const createMarkup = () => {
-      return { __html: processedText };
-    };
-
-    return (
-      <div 
-        className="message-parsed-content"
-        dangerouslySetInnerHTML={createMarkup()}
-        onClick={(e) => {
-          // Handle clicks on verse references
-          if (e.target.tagName === 'VERSE-REF') {
-            const ref = e.target.getAttribute('data-ref');
-            handleVerseClick(ref);
-          }
-          // Handle clicks on Rashad links
-          else if (e.target.tagName === 'RASHAD-LINK') {
-            onNavigateToTab('semanticSearch', { 
-              query: 'Rashad Khalifa',
-              source: 'RashadAllMedia'
-            });
-          }
-        }}
-      />
-    );
-  };
-
-  // Handle verse click navigation
-  const handleVerseClick = (verseRef) => {
-    // Save current conversation state before navigating
-    sessionStorage.setItem('debaterConversation', JSON.stringify(conversation));
-    sessionStorage.setItem('debaterConversationId', currentConversationId || '');
-    sessionStorage.setItem('debaterRelatedData', JSON.stringify(relatedData));
-    
-    // Dispatch event to open verse in lookup tab
-    window.dispatchEvent(new CustomEvent('openVerseRange', {
-      detail: { range: verseRef }
-    }));
-  };
-
-  // Handle root word click
-  const handleRootClick = (root) => {
-    onNavigateToTab('rootSearch', {
-      query: root,
-      searchType: 'root'
-    });
-  };
-
-  // Handle search result click
-  const handleSearchResultClick = (result) => {
-    if (result.collection === 'RashadAllMedia' && result.youtube_link) {
-      window.open(result.youtube_link, '_blank');
-    } else if (result.source_url) {
-      window.open(result.source_url, '_blank');
-    } else {
-      onNavigateToTab('semanticSearch', {
-        query: result.title,
-        source: result.collection
-      });
-    }
-  };
-
-  // Enhanced debate function with context
-  const sendMessage = async (isNewTopic = false, topic = null) => {
-    if (!user) {
-      setShowAuthModal(true);
-      return;
-    }
-
-    if (!isPremium) {
-      setShowSubscriptionModal(true);
-      return;
-    }
-
-    const messageToSend = topic || message.trim();
-    if (!messageToSend) return;
-
-    setIsLoading(true);
-    const userMessage = { role: 'user', content: messageToSend, timestamp: new Date().toISOString() };
-    setConversation(prev => [...prev, userMessage]);
-
-    if (!topic) {
-      setMessage('');
-    }
-
-    try {
-      // First try enhanced endpoint, fallback to regular if it fails
-      let endpoint = '/debate/enhanced';
-      let response = await fetch(`${API_URL}${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: isNewTopic ? null : messageToSend,
-          topic: isNewTopic ? messageToSend : null,
-          isNewTopic,
-          conversationHistory: conversationRef.current.slice(-10), // Last 10 messages for context
-          currentTab,
-          currentVerses: currentVerses || [],
-          searchContext: recentSearch,
-          userLanguage: language
-        }),
-      });
-
-      if (!response.ok) {
-        // If enhanced endpoint fails, try regular endpoint
-        if (endpoint === '/debate/enhanced') {
-          console.log('Enhanced endpoint failed, trying regular endpoint...');
-          endpoint = '/debate';
-          response = await fetch(`${API_URL}${endpoint}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              message: isNewTopic ? null : messageToSend,
-              topic: isNewTopic ? messageToSend : null,
-              isNewTopic,
-              conversationHistory: conversationRef.current.slice(-10)
-            }),
-          });
-          
-          if (!response.ok) {
-            throw new Error('Both endpoints failed');
-          }
-        } else {
-          throw new Error('Failed to get response');
+    // Don't show modals immediately if auth is still loading
+    if (!isAuthenticated && user === null) {
+      // User might still be loading, wait a bit
+      const timer = setTimeout(() => {
+        if (!isAuthenticated) {
+          setShowAuth(true);
         }
-      }
-
-      const data = await response.json();
-      
-      // Update related data (enhanced endpoint provides more data)
-      if (endpoint === '/debate/enhanced') {
-        setRelatedData({
-          verses: data.relatedVerses || [],
-          searchResults: data.searchResults || [],
-          rootAnalysis: data.rootAnalysis || [],
-          suggestedTabs: data.suggestedTabs || [],
-          citations: data.citations || []
-        });
-      } else {
-        // Regular endpoint doesn't provide related data
-        setRelatedData({
-          verses: [],
-          searchResults: [],
-          rootAnalysis: [],
-          suggestedTabs: [],
-          citations: []
-        });
-      }
-
-      const aiMessage = { 
-        role: 'assistant', 
-        content: data.response,
-        timestamp: new Date().toISOString(),
-        relatedContent: {
-          verses: data.relatedVerses,
-          searchResults: data.searchResults,
-          rootAnalysis: data.rootAnalysis
-        }
-      };
-      
-      setConversation(prev => [...prev, aiMessage]);
-
-      // Save conversation
-      await saveConversation([...conversationRef.current, userMessage, aiMessage]);
-
-    } catch (error) {
-      console.error('Error in debate:', error);
-      const errorMessage = { 
-        role: 'assistant', 
-        content: 'I apologize, but I encountered an error. Please try again.',
-        timestamp: new Date().toISOString() 
-      };
-      setConversation(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Save conversation to Supabase
-  const saveConversation = async (messages) => {
-    if (!user) {
-      console.log('No user, skipping save');
-      return;
+      }, 1000);
+      return () => clearTimeout(timer);
     }
     
-    if (!currentConversationId) {
-      // Create new conversation
-      try {
-        const { data, error } = await supabase
-          .from('debate_conversations')
-          .insert({
-            user_id: user.id,
-            messages: messages,
-            title: messages[0]?.content.substring(0, 50) + '...' || 'New Debate'
-          })
-          .select()
-          .single();
-
-        if (error) {
-          console.error('Error creating conversation:', error);
-          // Don't throw, just log - allow conversation to continue
-          return;
-        }
-        
-        setCurrentConversationId(data.id);
-        setSavedConversations(prev => [data, ...prev]);
-      } catch (error) {
-        console.error('Error creating conversation:', error);
-      }
-    } else {
-      // Update existing conversation
-      try {
-        const { error } = await supabase
-          .from('debate_conversations')
-          .update({
-            messages: messages,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', currentConversationId);
-
-        if (error) {
-          console.error('Error updating conversation:', error);
-          // Don't throw, just log - allow conversation to continue
-        }
-      } catch (error) {
-        console.error('Error updating conversation:', error);
+    if (isAuthenticated && user) {
+      const hasAccess = checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT);
+      if (!hasAccess) {
+        setShowSubscription(true);
+      } else {
+        // User has access, close any open modals
+        setShowAuth(false);
+        setShowSubscription(false);
+        // Load previous chats
+        loadChatHistory();
       }
     }
-  };
-
-  // Load a saved conversation
-  const loadConversation = async (conversationId) => {
+  }, [isAuthenticated, user]);
+  
+  // Load previous chat history
+  const loadChatHistory = async () => {
+    if (!user?.email) return;
+    
     try {
       const { data, error } = await supabase
-        .from('debate_conversations')
+        .from('chat_history')
         .select('*')
-        .eq('id', conversationId)
-        .single();
-
-      if (error) throw error;
+        .eq('user_email', user.email)
+        .order('updated_at', { ascending: false })
+        .limit(20);
+        
+      if (!error && data) {
+        setPreviousChats(data);
+      }
+    } catch (err) {
+      console.error('Error loading chat history:', err);
+    }
+  };
+  
+  // Save chat to history
+  const saveChatHistory = async () => {
+    if (!user?.email || messages.length === 0) return;
+    
+    try {
+      // Get last message for summary
+      const lastMessage = messages[messages.length - 1]?.content || '';
+      const summary = currentTopic || lastMessage.substring(0, 100) + (lastMessage.length > 100 ? '...' : '');
       
-      setConversation(data.messages || []);
-      setCurrentConversationId(conversationId);
+      const chatData = {
+        user_email: user.email,
+        topic: summary,
+        messages: JSON.stringify(messages), // Ensure messages are stored as JSON string
+        is_active: true,
+        updated_at: new Date().toISOString()
+      };
+      
+      if (chatHistoryId) {
+        // Update existing chat
+        const { error } = await supabase
+          .from('chat_history')
+          .update(chatData)
+          .eq('id', chatHistoryId);
+          
+        if (error) console.error('Error updating chat:', error);
+      } else {
+        // Create new chat
+        const { data, error } = await supabase
+          .from('chat_history')
+          .insert({
+            ...chatData,
+            created_at: new Date().toISOString()
+          })
+          .select();
+          
+        if (!error && data && data[0]) {
+          setChatHistoryId(data[0].id);
+        }
+      }
+    } catch (err) {
+      console.error('Error saving chat history:', err);
+    }
+  };
+  
+  // Save chat history when messages change
+  useEffect(() => {
+    if (messages.length > 0 && user?.email) {
+      const saveTimer = setTimeout(() => {
+        saveChatHistory();
+      }, 2000); // Save after 2 seconds of no changes
+      
+      return () => clearTimeout(saveTimer);
+    }
+  }, [messages]);
+  
+  // Load a previous chat
+  const loadPreviousChat = (chat) => {
+    try {
+      const parsedMessages = typeof chat.messages === 'string' 
+        ? JSON.parse(chat.messages) 
+        : chat.messages || [];
+      
+      // Convert timestamp strings back to Date objects
+      const messagesWithDates = parsedMessages.map(msg => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp)
+      }));
+      
+      setMessages(messagesWithDates);
+      setCurrentTopic(chat.topic);
+      setChatHistoryId(chat.id);
+      setDebateMode(true);
+      setShowChatHistory(false);
+      // Reset related data when loading old chat
       setRelatedData({
         verses: [],
         searchResults: [],
@@ -403,46 +244,20 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
         suggestedTabs: [],
         citations: []
       });
-    } catch (error) {
-      console.error('Error loading conversation:', error);
+    } catch (err) {
+      console.error('Error loading chat:', err);
+      setError('Failed to load chat history');
     }
   };
-
-  // Delete conversation
-  const deleteConversation = async (conversationId) => {
-    try {
-      const { error } = await supabase
-        .from('debate_conversations')
-        .delete()
-        .eq('id', conversationId);
-
-      if (error) throw error;
-      
-      setSavedConversations(prev => prev.filter(c => c.id !== conversationId));
-      
-      if (conversationId === currentConversationId) {
-        setConversation([]);
-        setCurrentConversationId(null);
-        setRelatedData({
-          verses: [],
-          searchResults: [],
-          rootAnalysis: [],
-          suggestedTabs: [],
-          citations: []
-        });
-      }
-    } catch (error) {
-      console.error('Error deleting conversation:', error);
-    }
-    
-    setShowDeleteConfirm(false);
-    setConversationToDelete(null);
-  };
-
-  // Start new conversation
-  const startNewConversation = () => {
-    setConversation([]);
-    setCurrentConversationId(null);
+  
+  // Start new chat
+  const startNewChat = () => {
+    setMessages([]);
+    setCurrentTopic('');
+    setChatHistoryId(null);
+    setDebateMode(false);
+    setShowChatHistory(false);
+    setError(null);
     setRelatedData({
       verses: [],
       searchResults: [],
@@ -450,326 +265,1229 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       suggestedTabs: [],
       citations: []
     });
-    // Clear session storage
-    sessionStorage.removeItem('debaterConversation');
-    sessionStorage.removeItem('debaterConversationId');
-    sessionStorage.removeItem('debaterRelatedData');
+  };
+  
+  // Delete chat function
+  const deleteChat = async (chatId) => {
+    const confirmDelete = window.confirm('Are you sure you want to delete this chat? This action cannot be undone.');
+    
+    if (!confirmDelete) return;
+    
+    setDeletingChatId(chatId);
+    
+    try {
+      const { error } = await supabase
+        .from('chat_history')
+        .delete()
+        .eq('id', chatId)
+        .eq('user_email', user.email); // Ensure user can only delete their own chats
+        
+      if (error) {
+        console.error('Error deleting chat:', error);
+        setError('Failed to delete chat');
+        return;
+      }
+      
+      // Remove from local state
+      setPreviousChats(prev => prev.filter(chat => chat.id !== chatId));
+      
+      // If the deleted chat was currently active, reset to new chat
+      if (chatHistoryId === chatId) {
+        startNewChat();
+      }
+      
+      // Show success message
+      setDeleteSuccess(true);
+      setTimeout(() => setDeleteSuccess(false), 2000);
+      
+    } catch (err) {
+      console.error('Error deleting chat:', err);
+      setError('Failed to delete chat');
+    } finally {
+      setDeletingChatId(null);
+    }
   };
 
-  // Handle voice search result
-  const handleVoiceResult = useCallback((transcript) => {
-    setMessage(transcript);
-  }, []);
-
-  // Render related content panel
-  const renderRelatedContent = () => {
-    if (!showRelatedContent || (!relatedData.verses.length && !relatedData.searchResults.length && !relatedData.rootAnalysis.length)) {
-      return null;
+  const startDebate = async (topic) => {
+    if (!isAuthenticated) {
+      setShowAuth(true);
+      return;
+    }
+    
+    if (!checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT)) {
+      setShowSubscription(true);
+      return;
     }
 
-    return (
-      <div className="related-content-panel">
-        <div className="related-content-header">
-          <h4>Related Content</h4>
-          <button 
-            className="toggle-related"
-            onClick={() => setShowRelatedContent(!showRelatedContent)}
-          >
-            {showRelatedContent ? <FaChevronUp /> : <FaChevronDown />}
-          </button>
-        </div>
+    setCurrentTopic(topic);
+    setDebateMode(true);
+    setError(null);
+    setIsLoading(true);
 
-        {showRelatedContent && (
-          <div className="related-content-body">
-            {/* Related Verses */}
-            {relatedData.verses.length > 0 && (
-              <div className="related-section">
-                <h5><FaBook /> Related Verses</h5>
-                {relatedData.verses.map((verse, index) => (
-                  <div key={index} className="related-verse">
-                    <button 
-                      className="verse-ref-btn"
-                      onClick={() => handleVerseClick(verse.sura_verse)}
-                    >
-                      [{verse.sura_verse}]
-                    </button>
-                    <p className="verse-english">{verse.english}</p>
-                    {verse.arabic && <p className="verse-arabic">{verse.arabic}</p>}
-                    {verse.footnote && <p className="verse-footnote">Note: {verse.footnote}</p>}
-                  </div>
-                ))}
-              </div>
-            )}
+    const userMessage = {
+      id: Date.now(),
+      role: 'user',
+      content: `Let's debate about: ${topic}`,
+      timestamp: new Date()
+    };
 
-            {/* Root Analysis */}
-            {relatedData.rootAnalysis.length > 0 && (
-              <div className="related-section">
-                <h5><FaLanguage /> Root Analysis</h5>
-                {relatedData.rootAnalysis.map((root, index) => (
-                  <div key={index} className="root-analysis">
-                    <button 
-                      className="root-btn"
-                      onClick={() => handleRootClick(root.root)}
-                    >
-                      {root.root}
-                    </button>
-                    <span className="root-meaning">{root.meaning}</span>
-                    <span className="root-frequency">({root.frequency} verses)</span>
-                  </div>
-                ))}
-              </div>
-            )}
+    setMessages([userMessage]);
 
-            {/* Search Results */}
-            {relatedData.searchResults.length > 0 && (
-              <div className="related-section">
-                <h5><FaSearch /> Relevant Media & Articles</h5>
-                {relatedData.searchResults.map((result, index) => (
-                  <div key={index} className="search-result-item">
-                    <button 
-                      className="result-title"
-                      onClick={() => handleSearchResultClick(result)}
-                    >
-                      {result.title}
-                      {result.youtube_link && <FaPlay className="play-icon" />}
-                      {result.source_url && <FaExternalLinkAlt className="link-icon" />}
-                    </button>
-                    <p className="result-content">{result.content}</p>
-                    <span className="result-source">{result.source}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+    try {
+      // Try enhanced endpoint first
+      let endpoint = '/debate/enhanced';
+      let response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          topic: topic,
+          isNewTopic: true,
+          conversationHistory: [],
+          currentTab,
+          currentVerses: currentVerses || [],
+          searchContext: recentSearch,
+          userLanguage: language
+        })
+      });
 
-            {/* Suggested Tabs */}
-            {relatedData.suggestedTabs.length > 0 && (
-              <div className="related-section suggested-tabs">
-                <h5>Explore More</h5>
-                {relatedData.suggestedTabs.map((suggestion, index) => (
-                  <button
-                    key={index}
-                    className="suggested-tab-btn"
-                    onClick={() => onNavigateToTab(suggestion.tab, suggestion.data)}
-                  >
-                    {suggestion.reason}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
+      if (!response.ok) {
+        // Fallback to regular endpoint
+        console.log('Enhanced endpoint failed, trying regular endpoint...');
+        endpoint = '/debate';
+        response = await fetch(`${API_BASE_URL}${endpoint}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            topic: topic,
+            isNewTopic: true,
+            conversationHistory: []
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to start debate: ${response.status}`);
+        }
+      }
+
+      const data = await response.json();
+      
+      // Update related data if available
+      if (endpoint === '/debate/enhanced' && data.relatedVerses) {
+        setRelatedData({
+          verses: data.relatedVerses || [],
+          searchResults: data.searchResults || [],
+          rootAnalysis: data.rootAnalysis || [],
+          suggestedTabs: data.suggestedTabs || [],
+          citations: data.citations || []
+        });
+      }
+      
+      const botMessage = {
+        id: Date.now() + 1,
+        role: 'assistant',
+        content: dearabizeText(data.response),
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+    } catch (err) {
+      console.error('Error starting debate:', err);
+      setError('Failed to start debate. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Topic suggestions with context awareness
+  const sendMessage = async () => {
+    if (!inputText.trim() || isLoading) return;
+    
+    if (!isAuthenticated) {
+      setShowAuth(true);
+      return;
+    }
+    
+    if (!checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT)) {
+      setShowSubscription(true);
+      return;
+    }
+
+    const userMessage = {
+      id: Date.now(),
+      role: 'user',
+      content: inputText,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputText('');
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Try enhanced endpoint first
+      let endpoint = '/debate/enhanced';
+      let response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: inputText,
+          topic: currentTopic,
+          conversationHistory: messages.slice(-10).map(msg => ({
+            role: msg.role,
+            content: msg.content
+          })),
+          currentTab,
+          currentVerses: currentVerses || [],
+          searchContext: recentSearch,
+          userLanguage: language
+        })
+      });
+
+      if (!response.ok) {
+        // Fallback to regular endpoint
+        console.log('Enhanced endpoint failed, trying regular endpoint...');
+        endpoint = '/debate';
+        response = await fetch(`${API_BASE_URL}${endpoint}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: inputText,
+            topic: currentTopic,
+            conversationHistory: messages.map(msg => ({
+              role: msg.role,
+              content: msg.content
+            }))
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to get response: ${response.status}`);
+        }
+      }
+
+      const data = await response.json();
+      
+      // Update related data if available
+      if (endpoint === '/debate/enhanced' && data.relatedVerses) {
+        setRelatedData({
+          verses: data.relatedVerses || [],
+          searchResults: data.searchResults || [],
+          rootAnalysis: data.rootAnalysis || [],
+          suggestedTabs: data.suggestedTabs || [],
+          citations: data.citations || []
+        });
+      }
+      
+      const botMessage = {
+        id: Date.now() + 1,
+        role: 'assistant',
+        content: dearabizeText(data.response),
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setError('Failed to get response. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetDebate = () => {
+    startNewChat();
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const formatTimestamp = (date) => {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+  
+  // Format date for chat history
+  const formatChatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = (now - date) / (1000 * 60 * 60);
+    
+    if (diffInHours < 1) {
+      return 'Just now';
+    } else if (diffInHours < 24) {
+      return `${Math.floor(diffInHours)} hours ago`;
+    } else if (diffInHours < 168) { // 7 days
+      return `${Math.floor(diffInHours / 24)} days ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
+  
+  // Parse message content and make references clickable
+  const parseMessageContent = (content) => {
+    // Regex to match verse references like "2:255" or "[2:255]"
+    const verseRegex = /\[?(\d{1,3}):(\d{1,3})\]?/g;
+    
+    // Regex to match Rashad-related terms
+    const rashadTerms = /\b(Rashad Khalifa|Dr\. Rashad|Dr Rashad|Rashad's|messenger of the covenant|God's messenger|the messenger|final testament|mathematical miracle|code 19|miracle 19)\b/gi;
+    
+    const parts = [];
+    let processedText = content;
+    
+    // First, replace verse references
+    const verseMatches = [];
+    let verseMatch;
+    while ((verseMatch = verseRegex.exec(content)) !== null) {
+      verseMatches.push({
+        start: verseMatch.index,
+        end: verseMatch.index + verseMatch[0].length,
+        type: 'verse',
+        content: verseMatch[0],
+        chapter: parseInt(verseMatch[1]),
+        verse: parseInt(verseMatch[2])
+      });
+    }
+    
+    // Then, find Rashad-related terms (only in non-verse parts)
+    const rashadMatches = [];
+    let rashadMatch;
+    while ((rashadMatch = rashadTerms.exec(content)) !== null) {
+      // Check if this overlaps with any verse reference
+      const overlapsVerse = verseMatches.some(vm => 
+        (rashadMatch.index >= vm.start && rashadMatch.index < vm.end) ||
+        (rashadMatch.index + rashadMatch[0].length > vm.start && rashadMatch.index + rashadMatch[0].length <= vm.end)
+      );
+      
+      if (!overlapsVerse) {
+        rashadMatches.push({
+          start: rashadMatch.index,
+          end: rashadMatch.index + rashadMatch[0].length,
+          type: 'rashad',
+          content: rashadMatch[0]
+        });
+      }
+    }
+    
+    // Combine and sort all matches
+    const allMatches = [...verseMatches, ...rashadMatches].sort((a, b) => a.start - b.start);
+    
+    let lastIndex = 0;
+    allMatches.forEach(match => {
+      // Add text before the match
+      if (match.start > lastIndex) {
+        parts.push({
+          type: 'text',
+          content: content.slice(lastIndex, match.start)
+        });
+      }
+      
+      // Add the match
+      parts.push(match);
+      
+      lastIndex = match.end;
+    });
+    
+    // Add remaining text
+    if (lastIndex < content.length) {
+      parts.push({
+        type: 'text',
+        content: content.slice(lastIndex)
+      });
+    }
+    
+    return parts.length > 0 ? parts : [{ type: 'text', content }];
+  };
+  
+  const handleVerseClick = (chapter, verse) => {
+    // Navigate to verse lookup tab with the selected verse
+    const verseRange = `${chapter}:${verse}`;
+    
+    // Dispatch event for the main app to handle
+    window.dispatchEvent(new CustomEvent('openVerseRange', {
+      detail: { range: verseRange }
+    }));
+  };
+  
+  const handleRashadMediaClick = (searchTerm) => {
+    // Dispatch event for the main app to handle
+    window.dispatchEvent(new CustomEvent('openSemanticSearch', {
+      detail: { 
+        query: searchTerm,
+        source: 'RashadAllMedia'
+      }
+    }));
+  };
+
+  // Quick topic suggestions
   const topicSuggestions = [
-    { text: "Is Rashad Khalifa a messenger?", icon: "🎯" },
-    { text: "Explain the mathematical miracle", icon: "🔢" },
-    { text: "What is Submission?", icon: "📖" },
-    { text: "Are hadiths authorized?", icon: "❓" },
-    { text: "Explain 19-based miracle", icon: "💫" },
-    { text: "Who are the messengers after Muhammad?", icon: "👥" }
+    "The existence of God",
+    "Free will vs determinism", 
+    "The purpose of life",
+    "Science and religion",
+    "Morality without religion",
+    "The afterlife",
+    "Evolution vs creation",
+    "The problem of evil",
+    "Is Rashad Khalifa a messenger?",
+    "Explain the mathematical miracle",
+    "What is Submission?",
+    "Are hadiths authorized?"
   ];
 
-  if (authLoading) {
-    return <div className="debater-bot-loading">Loading...</div>;
+  // Show auth modal if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <>
+        {showAuth && (
+          <AuthModal 
+            onClose={() => setShowAuth(false)}
+            onSuccess={() => {
+              setShowAuth(false);
+              // User will be redirected after OAuth or receive email link
+            }}
+          />
+        )}
+        <div style={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f5f5f5'
+        }}>
+          <div style={{ textAlign: 'center', color: '#666' }}>
+            <h2>Please sign in to access the AI Debater Bot</h2>
+            <p>Premium subscription required for unlimited debates.</p>
+            <button
+              onClick={() => setShowAuth(true)}
+              style={{
+                marginTop: '20px',
+                padding: '12px 24px',
+                backgroundColor: '#2196F3',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 'bold'
+              }}
+            >
+              Sign In / Sign Up
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Show subscription modal if authenticated but no premium access
+  if (showSubscription && !checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT)) {
+    return (
+      <>
+        <SubscriptionModal
+          user={user}
+          onClose={() => setShowSubscription(false)}
+          onSuccess={() => {
+            setShowSubscription(false);
+            // Refresh the page or update state after successful subscription
+          }}
+        />
+        <div style={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f5f5f5'
+        }}>
+          <div style={{ textAlign: 'center', color: '#666' }}>
+            <h2>Premium Subscription Required</h2>
+            <p>The AI Debater Bot requires a premium subscription.</p>
+          </div>
+        </div>
+      </>
+    );
   }
 
   return (
-    <div className={`debater-bot-container ${isExpanded ? 'expanded' : 'collapsed'}`}>
-      <div className="debater-header">
-        <div className="header-content">
-          <h3>AI Debater - Enhanced</h3>
-          {!isExpanded && conversation.length > 0 && (
-            <span className="message-count">{conversation.length} messages</span>
-          )}
-        </div>
-        <button 
-          className="expand-toggle"
-          onClick={() => setIsExpanded(!isExpanded)}
-          aria-label={isExpanded ? "Collapse" : "Expand"}
-        >
-          {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
-        </button>
-      </div>
-
-      {isExpanded && (
-        <div className="debater-content">
-          <div className="main-chat-area">
-            {/* Saved Conversations Sidebar */}
-            {user && savedConversations.length > 0 && (
-              <div className="conversations-sidebar">
-                <div className="sidebar-header">
-                  <h4>Previous Debates</h4>
-                  <button className="new-chat-btn" onClick={startNewConversation}>
-                    New Chat
-                  </button>
-                </div>
-                <div className="conversations-list">
-                  {savedConversations.map((conv) => (
-                    <div 
-                      key={conv.id}
-                      className={`conversation-item ${conv.id === currentConversationId ? 'active' : ''}`}
-                    >
-                      <button
-                        className="conversation-btn"
-                        onClick={() => loadConversation(conv.id)}
-                      >
-                        <span className="conv-title">{conv.title}</span>
-                        <span className="conv-date">
-                          {new Date(conv.created_at).toLocaleDateString()}
-                        </span>
-                      </button>
-                      <button
-                        className="delete-conv-btn"
-                        onClick={() => {
-                          setConversationToDelete(conv.id);
-                          setShowDeleteConfirm(true);
-                        }}
-                        aria-label="Delete conversation"
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Chat Messages */}
-            <div className="messages-container">
-              {conversation.length === 0 ? (
-                <div className="welcome-message">
-                  <h4>Welcome to the Enhanced AI Debater!</h4>
-                  <p>I can help you explore Islamic topics with integrated verse lookup, media search, and root analysis.</p>
-                  <p>I have access to:</p>
-                  <ul>
-                    <li>The complete Quran with all translations</li>
-                    <li>Rashad Khalifa's videos and lectures</li>
-                    <li>QuranTalk articles and newsletters</li>
-                    <li>Arabic root word analysis</li>
-                  </ul>
-                  <p>Choose a topic below or ask your own question:</p>
-                  <div className="topic-grid">
-                    {topicSuggestions.map((topic, index) => (
-                      <button
-                        key={index}
-                        className="topic-suggestion enhanced"
-                        onClick={() => sendMessage(true, topic.text)}
-                      >
-                        <span className="topic-icon">{topic.icon}</span>
-                        <span className="topic-text">{topic.text}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {conversation.map((msg, index) => (
-                    <div key={index} className={`message ${msg.role}`}>
-                      <div className="message-content">
-                        {msg.role === 'assistant' ? parseAndLinkReferences(msg.content) : msg.content}
-                      </div>
-                      <div className="message-timestamp">
-                        {new Date(msg.timestamp).toLocaleTimeString()}
-                      </div>
-                    </div>
-                  ))}
-                  {isLoading && (
-                    <div className="message assistant typing">
-                      <div className="typing-indicator">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                      </div>
-                    </div>
-                  )}
-                  <div ref={messagesEndRef} />
-                </>
+    <div style={{
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      backgroundColor: '#f5f5f5',
+      position: 'relative'
+    }}>
+      {/* Header */}
+      <div style={{
+        backgroundColor: '#1976d2',
+        color: 'white',
+        padding: isMobile ? '10px 15px' : '15px 20px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        position: 'relative',
+        zIndex: 10
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+            <button
+              onClick={() => setShowChatHistory(!showChatHistory)}
+              style={{
+                padding: '8px',
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '36px'
+              }}
+              title="Chat History"
+            >
+              ☰
+            </button>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h1 style={{ margin: 0, fontSize: isMobile ? '18px' : '24px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                🤖 AI Debater Bot Enhanced
+              </h1>
+              {currentTopic && (
+                <p style={{ margin: '2px 0 0 0', fontSize: '12px', opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {currentTopic}
+                </p>
               )}
             </div>
           </div>
-
-          {/* Related Content Panel */}
-          {renderRelatedContent()}
-
-          {/* Input Area */}
-          <div className="input-area enhanced">
-            <input
-              type="text"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-              placeholder={user ? "Ask a question or challenge a belief..." : "Sign in to start debating"}
-              disabled={!user || isLoading}
-              className="message-input"
-            />
-            <VoiceSearchButton 
-              onResult={handleVoiceResult}
-              disabled={!user || isLoading}
-              className="voice-input-btn"
-            />
+          <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
             <button
-              onClick={() => sendMessage()}
-              disabled={!user || isLoading || !message.trim()}
-              className="send-button"
-              aria-label="Send message"
+              onClick={startNewChat}
+              style={{
+                padding: isMobile ? '6px 10px' : '8px 16px',
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: isMobile ? '12px' : '14px',
+                whiteSpace: 'nowrap'
+              }}
+              title="Start New Chat"
             >
-              <FaPaperPlane />
+              {isMobile ? '➕' : '➕ New'}
             </button>
-          </div>
-
-          {/* User Status */}
-          <div className="user-status">
-            {user ? (
-              <span className="status-text">
-                {isPremium ? '✓ Premium Active' : 'Premium Required'}
-              </span>
-            ) : (
-              <button onClick={() => setShowAuthModal(true)} className="sign-in-prompt">
-                Sign in to debate
-              </button>
+            {!isMobile && user?.email && (
+              <div style={{
+                fontSize: '12px',
+                padding: '8px 12px',
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}>
+                <span>👤 {user.email.split('@')[0]}</span>
+                {checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT) ? <span>✅</span> : <span>🔓</span>}
+              </div>
             )}
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
-            <h4>Delete Conversation?</h4>
-            <p>This action cannot be undone.</p>
-            <div className="modal-actions">
-              <button 
-                className="cancel-btn"
-                onClick={() => setShowDeleteConfirm(false)}
-              >
-                Cancel
-              </button>
-              <button 
-                className="delete-btn"
-                onClick={() => deleteConversation(conversationToDelete)}
-              >
-                Delete
-              </button>
-            </div>
+      {/* Chat History Sidebar */}
+      {showChatHistory && (
+        <div style={{
+          position: 'absolute',
+          top: isMobile ? '50px' : '70px',
+          left: 0,
+          width: isMobile ? '100%' : '300px',
+          height: `calc(100% - ${isMobile ? '50px' : '70px'})`,
+          backgroundColor: 'white',
+          boxShadow: '2px 0 5px rgba(0,0,0,0.1)',
+          zIndex: 5,
+          display: 'flex',
+          flexDirection: 'column',
+          borderRight: '1px solid #e0e0e0'
+        }}>
+          <div style={{
+            padding: '15px',
+            borderBottom: '1px solid #e0e0e0',
+            backgroundColor: '#f5f5f5'
+          }}>
+            <h3 style={{ margin: 0, fontSize: '16px', color: '#333' }}>Chat History</h3>
+            {deleteSuccess && (
+              <div style={{
+                marginTop: '8px',
+                padding: '6px 10px',
+                backgroundColor: '#4caf50',
+                color: 'white',
+                borderRadius: '4px',
+                fontSize: '12px',
+                textAlign: 'center'
+              }}>
+                Chat deleted successfully
+              </div>
+            )}
           </div>
+          <div style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '10px'
+          }}>
+            {previousChats.length === 0 ? (
+              <p style={{ textAlign: 'center', color: '#666', fontSize: '14px', marginTop: '20px' }}>
+                No previous chats
+              </p>
+            ) : (
+              previousChats.map((chat) => (
+                <div
+                  key={chat.id}
+                  style={{
+                    padding: '12px',
+                    marginBottom: '8px',
+                    backgroundColor: chatHistoryId === chat.id ? '#e3f2fd' : '#f9f9f9',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s',
+                    border: '1px solid #e0e0e0',
+                    position: 'relative'
+                  }}
+                  onMouseEnter={(e) => {
+                    setHoveredChatId(chat.id);
+                    if (chatHistoryId !== chat.id) {
+                      e.currentTarget.style.backgroundColor = '#f0f0f0';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    setHoveredChatId(null);
+                    if (chatHistoryId !== chat.id) {
+                      e.currentTarget.style.backgroundColor = '#f9f9f9';
+                    }
+                  }}
+                >
+                  <div
+                    onClick={() => loadPreviousChat(chat)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#333', marginBottom: '4px', paddingRight: '30px' }}>
+                      {chat.topic || 'Untitled Chat'}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#666' }}>
+                      {formatChatDate(chat.updated_at || chat.created_at)}
+                    </div>
+                  </div>
+                  
+                  {/* Delete button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteChat(chat.id);
+                    }}
+                    disabled={deletingChatId === chat.id}
+                    style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '10px',
+                      padding: '4px 8px',
+                      backgroundColor: deletingChatId === chat.id ? '#ccc' : '#ff4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: deletingChatId === chat.id ? 'not-allowed' : 'pointer',
+                      fontSize: '12px',
+                      opacity: (isMobile || hoveredChatId === chat.id) ? 1 : 0,
+                      transition: 'all 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minWidth: '24px',
+                      height: '24px',
+                      boxShadow: (isMobile || hoveredChatId === chat.id) ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!deletingChatId) {
+                        e.currentTarget.style.backgroundColor = '#ff6666';
+                        e.currentTarget.style.transform = 'scale(1.1)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!deletingChatId) {
+                        e.currentTarget.style.backgroundColor = '#ff4444';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }
+                    }}
+                    title="Delete chat"
+                  >
+                    {deletingChatId === chat.id ? '...' : '🗑️'}
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+          {isMobile && (
+            <button
+              onClick={() => setShowChatHistory(false)}
+              style={{
+                padding: '12px',
+                backgroundColor: '#f5f5f5',
+                border: 'none',
+                borderTop: '1px solid #e0e0e0',
+                cursor: 'pointer',
+                fontSize: '14px',
+                color: '#666'
+              }}
+            >
+              Close
+            </button>
+          )}
         </div>
       )}
 
+      {/* Main Content with flex layout */}
+      <div style={{ 
+        flex: 1, 
+        display: 'flex', 
+        overflow: 'hidden',
+        marginLeft: (!isMobile && showChatHistory) ? '300px' : '0',
+        transition: 'margin-left 0.3s ease'
+      }}>
+        {/* Main Chat Area */}
+        <div style={{ 
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          overflow: 'hidden'
+        }}>
+          {!debateMode ? (
+            /* Topic Selection */
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: isMobile ? '20px' : '40px',
+              backgroundColor: 'white'
+            }}>
+              <h2 style={{ marginBottom: '20px', color: '#333', fontSize: isMobile ? '20px' : '24px', textAlign: 'center' }}>
+                Start a New Debate
+              </h2>
+              
+              <p style={{ marginBottom: '20px', color: '#666', textAlign: 'center', maxWidth: '600px' }}>
+                I can help you explore Islamic topics with integrated verse lookup, media search, and root analysis.
+                I have access to all Quran translations, Rashad Khalifa's videos, articles, and newsletters.
+              </p>
+              
+              {/* Custom Topic Input - Always visible on mobile */}
+              <div style={{ 
+                width: '100%', 
+                maxWidth: isMobile ? '100%' : '500px',
+                marginBottom: '30px'
+              }}>
+                <div style={{ display: 'flex', gap: '10px', flexDirection: isMobile ? 'column' : 'row' }}>
+                  <input
+                    type="text"
+                    placeholder="Enter your debate topic..."
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && inputText.trim() && startDebate(inputText.trim())}
+                    style={{
+                      flex: 1,
+                      padding: '12px 16px',
+                      border: '2px solid #e0e0e0',
+                      borderRadius: '8px',
+                      fontSize: '16px',
+                      backgroundColor: '#f9f9f9'
+                    }}
+                  />
+                  <button
+                    onClick={() => inputText.trim() && startDebate(inputText.trim())}
+                    disabled={!inputText.trim()}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: '#2196F3',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: inputText.trim() ? 'pointer' : 'not-allowed',
+                      fontSize: '16px',
+                      fontWeight: '500',
+                      opacity: inputText.trim() ? 1 : 0.5,
+                      minWidth: isMobile ? '100%' : 'auto'
+                    }}
+                  >
+                    Start Debate
+                  </button>
+                </div>
+              </div>
+
+              {/* Suggested Topics - Collapsible on mobile */}
+              <div style={{ width: '100%', maxWidth: '800px' }}>
+                <button
+                  onClick={() => setShowTopicInput(!showTopicInput)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    backgroundColor: '#f5f5f5',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    color: '#666',
+                    display: isMobile ? 'flex' : 'none',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '10px'
+                  }}
+                >
+                  <span>Suggested Topics</span>
+                  <span>{showTopicInput ? '▼' : '▶'}</span>
+                </button>
+                
+                {(!isMobile || showTopicInput) && (
+                  <>
+                    {!isMobile && (
+                      <p style={{ marginBottom: '15px', color: '#666', textAlign: 'center' }}>
+                        Or choose from these suggested topics:
+                      </p>
+                    )}
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))',
+                      gap: isMobile ? '8px' : '12px',
+                      width: '100%'
+                    }}>
+                      {topicSuggestions.map((topic, index) => (
+                        <button
+                          key={index}
+                          onClick={() => startDebate(topic)}
+                          style={{
+                            padding: isMobile ? '12px' : '15px',
+                            backgroundColor: 'white',
+                            border: '2px solid #e0e0e0',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: isMobile ? '14px' : '15px',
+                            textAlign: 'left',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.borderColor = '#2196F3';
+                            e.target.style.backgroundColor = '#f0f8ff';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.borderColor = '#e0e0e0';
+                            e.target.style.backgroundColor = 'white';
+                          }}
+                        >
+                          {topic}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* Chat Interface */
+            <>
+              {/* Messages */}
+              <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '20px',
+                backgroundColor: 'white'
+              }}>
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    style={{
+                      display: 'flex',
+                      marginBottom: '20px',
+                      justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start'
+                    }}
+                  >
+                    <div style={{
+                      maxWidth: '70%',
+                      padding: '12px 16px',
+                      borderRadius: '18px',
+                      backgroundColor: message.role === 'user' ? '#2196F3' : '#f0f0f0',
+                      color: message.role === 'user' ? 'white' : '#333'
+                    }}>
+                      <div style={{ fontSize: '14px', lineHeight: '1.4' }}>
+                        {parseMessageContent(message.content).map((part, index) => {
+                          if (part.type === 'verse') {
+                            return (
+                              <span
+                                key={index}
+                                style={{
+                                  color: message.role === 'user' ? '#bbdefb' : '#1976d2',
+                                  textDecoration: 'underline',
+                                  cursor: 'pointer',
+                                  fontWeight: 'bold'
+                                }}
+                                onClick={() => handleVerseClick(part.chapter, part.verse)}
+                                title={`Click to view verse ${part.chapter}:${part.verse}`}
+                              >
+                                {part.content}
+                              </span>
+                            );
+                          } else if (part.type === 'rashad') {
+                            return (
+                              <span
+                                key={index}
+                                style={{
+                                  color: message.role === 'user' ? '#ffeb3b' : '#ff9800',
+                                  textDecoration: 'underline',
+                                  cursor: 'pointer',
+                                  fontWeight: 'bold'
+                                }}
+                                onClick={() => {
+                                  const searchTerm = part.content.toLowerCase().includes('code 19') || part.content.toLowerCase().includes('miracle 19') 
+                                    ? 'mathematical miracle code 19' 
+                                    : part.content;
+                                  handleRashadMediaClick(searchTerm);
+                                }}
+                                title={`Click to search for "${part.content}" in Rashad Khalifa Media`}
+                              >
+                                {part.content} 🔗
+                              </span>
+                            );
+                          }
+                          return <span key={index}>{part.content}</span>;
+                        })}
+                      </div>
+                      <div style={{
+                        fontSize: '11px',
+                        marginTop: '5px',
+                        opacity: 0.7
+                      }}>
+                        {formatTimestamp(message.timestamp)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {isLoading && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'flex-start',
+                    marginBottom: '20px'
+                  }}>
+                    <div style={{
+                      padding: '12px 16px',
+                      borderRadius: '18px',
+                      backgroundColor: '#f0f0f0',
+                      color: '#666'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ fontSize: '14px' }}>AI is thinking...</div>
+                        <div style={{
+                          width: '16px',
+                          height: '16px',
+                          border: '2px solid #ddd',
+                          borderTop: '2px solid #666',
+                          borderRadius: '50%',
+                          animation: 'spin 1s linear infinite'
+                        }}></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input */}
+              <div style={{
+                padding: isMobile ? '12px' : '20px',
+                backgroundColor: 'white',
+                borderTop: '1px solid #e0e0e0'
+              }}>
+                {error && (
+                  <div style={{
+                    padding: '8px 12px',
+                    backgroundColor: '#ffebee',
+                    color: '#d32f2f',
+                    borderRadius: '4px',
+                    marginBottom: '10px',
+                    fontSize: '13px'
+                  }}>
+                    {error}
+                  </div>
+                )}
+                
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                  <textarea
+                    placeholder="Type your response..."
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    disabled={isLoading}
+                    style={{
+                      flex: 1,
+                      padding: isMobile ? '10px' : '12px',
+                      border: '2px solid #e0e0e0',
+                      borderRadius: '8px',
+                      fontSize: isMobile ? '16px' : '14px',
+                      resize: 'none',
+                      minHeight: '44px',
+                      maxHeight: '120px',
+                      lineHeight: '1.4',
+                      backgroundColor: '#f9f9f9'
+                    }}
+                    rows={1}
+                  />
+                  <button
+                    onClick={sendMessage}
+                    disabled={!inputText.trim() || isLoading}
+                    style={{
+                      padding: isMobile ? '10px 16px' : '12px 20px',
+                      backgroundColor: '#2196F3',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: (!inputText.trim() || isLoading) ? 'not-allowed' : 'pointer',
+                      fontSize: isMobile ? '16px' : '14px',
+                      fontWeight: '500',
+                      opacity: (!inputText.trim() || isLoading) ? 0.5 : 1,
+                      minWidth: isMobile ? '70px' : '80px',
+                      height: '44px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {isLoading ? '•••' : 'Send'}
+                  </button>
+                </div>
+                
+                {!isMobile && (
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#666',
+                    marginTop: '8px',
+                    textAlign: 'center'
+                  }}>
+                    Press Enter to send, Shift+Enter for new line
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Related Content Panel - Only visible in debate mode and not on mobile */}
+        {debateMode && !isMobile && showRelatedContent && (relatedData.verses.length > 0 || relatedData.searchResults.length > 0 || relatedData.rootAnalysis.length > 0) && (
+          <div style={{
+            width: '350px',
+            backgroundColor: '#f9f9f9',
+            borderLeft: '1px solid #e0e0e0',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              padding: '15px',
+              borderBottom: '1px solid #e0e0e0',
+              backgroundColor: '#fff',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '16px', color: '#333' }}>Related Content</h3>
+              <button
+                onClick={() => setShowRelatedContent(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  color: '#666'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '15px'
+            }}>
+              {/* Related Verses */}
+              {relatedData.verses.length > 0 && (
+                <div style={{ marginBottom: '20px' }}>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#555' }}>
+                    <FaBook style={{ marginRight: '5px' }} />
+                    Related Verses
+                  </h4>
+                  {relatedData.verses.map((verse, index) => (
+                    <div key={index} style={{
+                      padding: '10px',
+                      backgroundColor: 'white',
+                      borderRadius: '6px',
+                      marginBottom: '8px',
+                      border: '1px solid #e0e0e0'
+                    }}>
+                      <button
+                        onClick={() => handleVerseClick(verse.sura_verse.split(':')[0], verse.sura_verse.split(':')[1])}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#1976d2',
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                          padding: 0,
+                          marginBottom: '5px'
+                        }}
+                      >
+                        [{verse.sura_verse}]
+                      </button>
+                      <p style={{ margin: '5px 0', fontSize: '13px', color: '#333' }}>{verse.english}</p>
+                      {verse.arabic && <p style={{ margin: '5px 0', fontSize: '13px', color: '#666', textAlign: 'right' }}>{verse.arabic}</p>}
+                      {verse.footnote && <p style={{ margin: '5px 0', fontSize: '11px', color: '#888', fontStyle: 'italic' }}>Note: {verse.footnote}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Root Analysis */}
+              {relatedData.rootAnalysis.length > 0 && (
+                <div style={{ marginBottom: '20px' }}>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#555' }}>
+                    <FaLanguage style={{ marginRight: '5px' }} />
+                    Root Analysis
+                  </h4>
+                  {relatedData.rootAnalysis.map((root, index) => (
+                    <div key={index} style={{
+                      padding: '8px',
+                      backgroundColor: 'white',
+                      borderRadius: '6px',
+                      marginBottom: '6px',
+                      border: '1px solid #e0e0e0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px'
+                    }}>
+                      <button
+                        onClick={() => {
+                          window.dispatchEvent(new CustomEvent('openRootSearch', {
+                            detail: { query: root.root, mode: 'root' }
+                          }));
+                        }}
+                        style={{
+                          background: '#e3f2fd',
+                          border: 'none',
+                          color: '#1976d2',
+                          cursor: 'pointer',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        {root.root}
+                      </button>
+                      <span style={{ fontSize: '12px', color: '#666' }}>{root.meaning}</span>
+                      <span style={{ fontSize: '11px', color: '#999', marginLeft: 'auto' }}>({root.frequency} verses)</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Search Results */}
+              {relatedData.searchResults.length > 0 && (
+                <div style={{ marginBottom: '20px' }}>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#555' }}>
+                    <FaSearch style={{ marginRight: '5px' }} />
+                    Relevant Media & Articles
+                  </h4>
+                  {relatedData.searchResults.map((result, index) => (
+                    <div key={index} style={{
+                      padding: '10px',
+                      backgroundColor: 'white',
+                      borderRadius: '6px',
+                      marginBottom: '8px',
+                      border: '1px solid #e0e0e0'
+                    }}>
+                      <button
+                        onClick={() => {
+                          if (result.collection === 'RashadAllMedia' && result.youtube_link) {
+                            window.open(result.youtube_link, '_blank');
+                          } else if (result.source_url) {
+                            window.open(result.source_url, '_blank');
+                          }
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#1976d2',
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                          padding: 0,
+                          marginBottom: '5px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}
+                      >
+                        {result.title}
+                        {result.youtube_link && <FaPlay style={{ fontSize: '10px' }} />}
+                        {result.source_url && <FaExternalLinkAlt style={{ fontSize: '10px' }} />}
+                      </button>
+                      <p style={{ margin: '5px 0', fontSize: '12px', color: '#666' }}>
+                        {result.content.substring(0, 150)}...
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* CSS for spinner animation */}
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+
       {/* Auth Modal */}
-      {showAuthModal && (
-        <AuthModal onClose={() => setShowAuthModal(false)} />
+      {showAuth && (
+        <AuthModal 
+          onClose={() => setShowAuth(false)}
+          onSuccess={() => {
+            setShowAuth(false);
+            // Check if user now has subscription
+            const hasAccess = checkPremiumAccess(PREMIUM_FEATURES.DEBATER_BOT);
+            if (!hasAccess) {
+              setShowSubscription(true);
+            }
+          }}
+        />
       )}
 
       {/* Subscription Modal */}
-      {showSubscriptionModal && (
-        <SubscriptionModal 
+      {showSubscription && user && (
+        <SubscriptionModal
           user={user}
-          onClose={() => setShowSubscriptionModal(false)}
-          feature="AI Debater"
+          onClose={() => setShowSubscription(false)}
+          onSuccess={() => {
+            setShowSubscription(false);
+            // Refresh auth context to get updated subscription status
+            window.location.reload();
+          }}
         />
       )}
     </div>

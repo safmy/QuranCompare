@@ -4,7 +4,7 @@ import QuranSearch from './components/QuranSearch';
 import QuranVectorSearch from './components/QuranVectorSearch';
 import QuranVerseLookup from './components/QuranVerseLookup';
 import QuranCompare from './components/QuranCompare';
-import DebaterBot from './components/DebaterBot';
+import EnhancedDebaterBot from './components/EnhancedDebaterBot';
 import RootSearch from './components/RootSearch';
 import AuthCallback from './components/AuthCallback';
 import PaymentSuccess from './components/PaymentSuccess';
@@ -169,7 +169,20 @@ function AppContent() {
     { 
       id: 'debater', 
       label: '🤖 AI Debater', 
-      component: <DebaterBot /> 
+      component: <EnhancedDebaterBot 
+        onNavigateToTab={(tabId, data) => {
+          if (data && data.query) {
+            sessionStorage.setItem(tabId === 'semanticSearch' ? 'vectorSearchQuery' : 'rootSearchQuery', data.query);
+            if (data.source) {
+              sessionStorage.setItem('vectorSearchSource', data.source);
+            }
+          }
+          setActiveTab(tabId);
+        }}
+        currentTab={activeTab}
+        currentVerses={lookupState.verses || []}
+        recentSearch={vectorSearchState.lastQuery || ''}
+      /> 
     },
     {
       id: 'discord',
