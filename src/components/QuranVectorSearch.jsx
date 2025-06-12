@@ -479,7 +479,7 @@ const QuranVectorSearch = ({ savedState = {} }) => {
     }
 
     // Check if any collections are selected
-    const hasSelections = includeRashadMedia || includeFinalTestament || includeNewsletters || includeArabicVerses;
+    const hasSelections = includeRashadMedia || includeFinalTestament || includeNewsletters || includeArabicVerses || includeAppendices;
     if (!hasSelections && !useRegex) {
       setError('Please select at least one source to search');
       return;
