@@ -1580,11 +1580,10 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                             
                             if (result.collection === 'RashadAllMedia') {
                               // For Rashad media, always use part of the transcript content
-                              // since titles are generic like "Item 37"
+                              // Keep timestamps as they're crucial for finding exact content
                               searchQuery = result.content
-                                .substring(0, 80)  // Take first 80 chars for better context
+                                .substring(0, 100)  // Take first 100 chars for better context with timestamps
                                 .replace(/\s+/g, ' ')
-                                .replace(/[()]/g, '')  // Remove parentheses like (17:26)
                                 .trim();
                             } else {
                               // For other content, use title or content excerpt
@@ -1618,11 +1617,11 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                             {(() => {
                               let displayTitle = result.title;
                               
-                              // For RashadAllMedia items with generic titles, show content excerpt
-                              if (result.collection === 'RashadAllMedia' && result.title && result.title.includes('Item')) {
+                              // For RashadAllMedia items, the backend should have already mapped to proper YouTube title
+                              // Only show content excerpt if we truly don't have a proper title
+                              if (result.collection === 'RashadAllMedia' && (!result.title || result.title.includes('Item'))) {
                                 displayTitle = 'Search for: "' + result.content
-                                  .replace(/\(\d+:\d+\)/g, '') // Remove timestamps
-                                  .substring(0, 50)
+                                  .substring(0, 60)  // Keep timestamps in display
                                   .trim() + '..."';
                               }
                               

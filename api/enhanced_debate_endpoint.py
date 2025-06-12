@@ -273,11 +273,14 @@ class DebateContextManager:
             if mapped_title:
                 title = mapped_title
                 youtube_link = mapped_link
+                logger.info(f"Found YouTube mapping: {title[:50]}... for content: {content[:50]}...")
             else:
                 # Fallback to metadata title or content excerpt
                 title = metadata.get("title", "")
                 if not title or "Item" in title:
-                    title = content[:50] + "..."
+                    # Show more content with timestamp for search
+                    title = content[:100] + "..."
+                logger.info(f"No YouTube mapping found for content: {content[:50]}...")
                 
                 # Try to extract YouTube link from content if not mapped
                 youtube_link = None
