@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import QiblaDirection from './QiblaDirection';
-import PrayerTimesWithAlarms from './PrayerTimesWithAlarms';
+// import QiblaDirection from './QiblaDirection'; // Removed for iOS
+import QiblaDirectionIOS from './QiblaDirectionIOS'; // iOS fixed version
+// import PrayerTimesWithAlarms from './PrayerTimesWithAlarms'; // Removed for iOS
+import PrayerTimesWithAlarmsIOSFixed from './PrayerTimesWithAlarmsIOSFixed'; // iOS fixed version
 import Appendices from './Appendices';
 import './SidebarMenu.css';
 
@@ -65,7 +67,7 @@ const SidebarMenu = () => {
             </div>
             {activeSection === 'qibla' && (
               <div className="sidebar-section-content">
-                <QiblaDirection />
+                <QiblaDirectionIOS />
               </div>
             )}
           </div>
@@ -82,7 +84,7 @@ const SidebarMenu = () => {
             </div>
             {activeSection === 'prayer' && (
               <div className="sidebar-section-content">
-                <PrayerTimesWithAlarms />
+                <PrayerTimesWithAlarmsIOSFixed />
               </div>
             )}
           </div>
