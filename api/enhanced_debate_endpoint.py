@@ -266,7 +266,7 @@ class DebateContextManager:
         if collection_name == "RashadAllMedia":
             content = metadata.get("content", "")
             
-            # Use the same content-based mapping approach as the regular search endpoint
+            # Use the FULL content for YouTube mapping (don't truncate before mapping)
             mapped_title, mapped_link, is_exact_match = self.youtube_mapper.find_title_for_content_simple(content)
             
             # Use mapped title if found, otherwise fallback to metadata or content excerpt
@@ -289,10 +289,13 @@ class DebateContextManager:
                     if url_match:
                         youtube_link = url_match.group(1)
             
+            # Truncate content AFTER mapping for display purposes
+            truncated_content = content[:200] + "..." if len(content) > 200 else content
+            
             return VectorSearchResult(
                 collection=collection_name,
                 title=title,
-                content=content[:200] + "...",
+                content=truncated_content,
                 similarity_score=similarity,
                 source="Rashad Khalifa Media",
                 youtube_link=youtube_link

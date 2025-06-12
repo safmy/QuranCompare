@@ -1621,8 +1621,12 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                               
                               // For RashadAllMedia items, check if we have a proper YouTube title
                               if (result.collection === 'RashadAllMedia') {
-                                // If title looks like transcript content (starts with timestamp), show it differently
-                                if (displayTitle && displayTitle.startsWith('(')) {
+                                // If title contains pipe character, it's likely a proper YouTube title
+                                if (displayTitle && displayTitle.includes('|') && !displayTitle.startsWith('(')) {
+                                  // It's a proper YouTube title, display as is
+                                  return displayTitle;
+                                } else if (displayTitle && displayTitle.startsWith('(')) {
+                                  // Title looks like transcript content (starts with timestamp)
                                   displayTitle = 'Search for: "' + displayTitle.substring(0, 80) + '..."';
                                 } else if (!displayTitle || displayTitle.includes('Item')) {
                                   // Fallback to content if no proper title
