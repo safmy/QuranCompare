@@ -71,12 +71,41 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #333;
 }
 
 .domain-header h1 {
   color: #00ff41;
   font-size: 2.5em;
   margin: 0;
+}
+
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.close-btn {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: rgba(255, 0, 0, 0.2);
+  border-color: rgba(255, 0, 0, 0.4);
+  transform: scale(1.1);
 }
 
 .logout-btn {
@@ -86,10 +115,19 @@
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
 }
 
 .logout-btn:hover {
   background: #555;
+  transform: translateY(-1px);
+}
+
+.logout-icon {
+  font-size: 1.1em;
 }
 
 .domain-content {
@@ -310,10 +348,45 @@
   border: none;
 }
 
+/* Instructions Section */
+.instructions {
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.instructions h3 {
+  color: #00ff41;
+  margin-bottom: 15px;
+}
+
+.instructions ol {
+  margin: 0;
+  padding-left: 25px;
+  color: #ccc;
+}
+
+.instructions li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
+  .domain-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
   .domain-header h1 {
     font-size: 1.8em;
+  }
+  
+  .header-buttons {
+    width: 100%;
+    justify-content: center;
   }
   
   .control-buttons {
@@ -321,7 +394,7 @@
     align-items: center;
   }
   
-  .main-button, .test-button {
+  .main-button, .test-button, .play-button {
     width: 200px;
   }
   

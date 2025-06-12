@@ -455,14 +455,30 @@ function AppContent() {
               style={{
                 position: 'absolute',
                 top: '20px',
-                right: '20px',
-                background: 'transparent',
-                border: 'none',
+                left: '20px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
                 color: 'white',
-                fontSize: '30px',
+                fontSize: '24px',
                 cursor: 'pointer',
-                zIndex: 10000
+                zIndex: 10000,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease'
               }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                e.target.style.transform = 'scale(1.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                e.target.style.transform = 'scale(1)';
+              }}
+              title="Close"
             >
               ×
             </button>

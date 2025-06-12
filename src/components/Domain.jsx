@@ -350,7 +350,15 @@ const Domain = ({ onClose }) => {
     <div className="domain-container">
       <div className="domain-header">
         <h1>Domain Control Panel</h1>
-        <button className="logout-btn" onClick={handleLogout}>Logout</button>
+        <div className="header-buttons">
+          <button className="close-btn" onClick={onClose} title="Close Panel">
+            ×
+          </button>
+          <button className="logout-btn" onClick={handleLogout}>
+            <span className="logout-icon">🚪</span>
+            Logout
+          </button>
+        </div>
       </div>
       
       <div className="domain-content">
