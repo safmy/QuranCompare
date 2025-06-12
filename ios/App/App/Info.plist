@@ -51,5 +51,13 @@
 	<string>QuranCompare needs your location to calculate accurate prayer times and Qibla direction for your area.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>QuranCompare needs your location to calculate accurate prayer times and Qibla direction for your area.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<key>NSUserNotificationUsageDescription</key>
+	<string>QuranCompare needs notification permissions to alert you for prayer times with sound alarms.</string>
 </dict>
 </plist>
