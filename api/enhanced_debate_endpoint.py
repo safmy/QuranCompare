@@ -170,6 +170,8 @@ class DebateContextManager:
         """Enhanced search across collections based on topics"""
         results = []
         
+        logger.info(f"🔍 Starting search_related_content: query='{query[:50]}...', topics={topics}")
+        
         # Determine which collections to search based on topics
         collections_to_search = []
         if any(topic in ['messenger', 'miracle', 'hadith'] for topic in topics):
@@ -184,16 +186,20 @@ class DebateContextManager:
             collections_to_search = ['RashadAllMedia', 'FinalTestament', 'QuranTalkArticles']
         
         collections_to_search = list(set(collections_to_search))
+        logger.info(f"📚 Collections to search: {collections_to_search}")
         
         try:
             embedding = self._create_embedding(query)
             
             for collection_name in collections_to_search:
                 if collection_name not in self.vector_collections:
+                    logger.warning(f"⚠️ Collection {collection_name} not found in vector_collections")
                     continue
                     
                 collection = self.vector_collections[collection_name]
                 distances, indices = collection["index"].search(embedding.reshape(1, -1), num_results)
+                
+                logger.info(f"🔎 Searched {collection_name}: found {len(indices[0])} results")
                 
                 for dist, idx in zip(distances[0], indices[0]):
                     if idx < 0 or idx >= len(collection["metadata"]):
@@ -207,11 +213,17 @@ class DebateContextManager:
                         results.append(result)
         
         except Exception as e:
-            logger.error(f"Error in vector search: {e}")
+            logger.error(f"❌ Error in vector search: {e}")
         
         # Sort by relevance and return top results
         results.sort(key=lambda x: x.similarity_score, reverse=True)
-        return results[:num_results * len(collections_to_search)]
+        final_results = results[:num_results * len(collections_to_search)]
+        
+        logger.info(f"✅ Returning {len(final_results)} search results")
+        for i, result in enumerate(final_results):
+            logger.info(f"  Result {i+1}: collection={result.collection}, title='{result.title[:50]}...'")
+        
+        return final_results
     
     def analyze_roots(self, text: str, arabic_terms: List[str]) -> List[RootInfo]:
         """Enhanced root analysis"""
@@ -265,6 +277,9 @@ class DebateContextManager:
         if collection_name == "RashadAllMedia":
             content = metadata.get("content", "")
             
+            # Log the incoming metadata
+            logger.info(f"RashadAllMedia metadata: title='{metadata.get('title', 'NO_TITLE')}', content_start='{content[:100]}...'")
+            
             # Use the FULL content for YouTube mapping (don't truncate before mapping)
             mapped_title, mapped_link, is_exact_match = self.youtube_mapper.find_title_for_content_simple(content)
             
@@ -272,14 +287,14 @@ class DebateContextManager:
             if mapped_title:
                 title = mapped_title
                 youtube_link = mapped_link
-                logger.info(f"Found YouTube mapping: {title[:50]}... for content: {content[:50]}...")
+                logger.info(f"✅ YouTube mapping SUCCESS: title='{title}', link='{youtube_link}', exact_match={is_exact_match}")
             else:
                 # Fallback to metadata title or content excerpt
                 title = metadata.get("title", "")
                 if not title or "Item" in title:
                     # Show more content with timestamp for search
                     title = content[:100] + "..."
-                logger.info(f"No YouTube mapping found for content: {content[:50]}...")
+                logger.info(f"❌ YouTube mapping FAILED: using fallback title='{title[:100]}...'")
                 
                 # Try to extract YouTube link from content if not mapped
                 youtube_link = None
@@ -290,6 +305,9 @@ class DebateContextManager:
             
             # Truncate content AFTER mapping for display purposes
             truncated_content = content[:200] + "..." if len(content) > 200 else content
+            
+            # Log the final result being returned
+            logger.info(f"🔄 Returning VectorSearchResult: title='{title}', youtube_link='{youtube_link}'")
             
             return VectorSearchResult(
                 collection=collection_name,
@@ -513,7 +531,8 @@ USE THIS DATA IN YOUR RESPONSE WHEN RELEVANT."""
                     "data": {"query": full_context[:100]}
                 })
             
-            return EnhancedDebateResponse(
+            # Log the response data before returning
+            response_data = EnhancedDebateResponse(
                 response=ai_response,
                 relatedVerses=related_verses[:5],
                 searchResults=search_results[:5],
@@ -521,6 +540,13 @@ USE THIS DATA IN YOUR RESPONSE WHEN RELEVANT."""
                 suggestedTabs=suggested_tabs[:3],
                 citations=citations[:5]
             )
+            
+            # Log RashadAllMedia results specifically
+            for i, result in enumerate(response_data.searchResults):
+                if result.collection == "RashadAllMedia":
+                    logger.info(f"📤 Sending RashadAllMedia result {i+1}: title='{result.title}', youtube_link='{result.youtube_link}'")
+            
+            return response_data
             
         except Exception as e:
             logger.error(f"Error in enhanced debate endpoint: {e}")

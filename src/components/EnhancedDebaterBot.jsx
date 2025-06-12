@@ -471,6 +471,19 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       // Update related data if available
       if (endpoint === '/debate/enhanced' && data.relatedVerses) {
         console.log('Enhanced debate search results:', data.searchResults);
+        // Log detailed info about RashadAllMedia results
+        if (data.searchResults) {
+          data.searchResults.forEach((result, index) => {
+            if (result.collection === 'RashadAllMedia') {
+              console.log(`RashadAllMedia result ${index + 1}:`, {
+                title: result.title,
+                content: result.content?.substring(0, 100),
+                youtube_link: result.youtube_link,
+                collection: result.collection
+              });
+            }
+          });
+        }
         setRelatedData({
           verses: data.relatedVerses || [],
           searchResults: data.searchResults || [],
@@ -572,6 +585,19 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       // Update related data if available
       if (endpoint === '/debate/enhanced' && data.relatedVerses) {
         console.log('Enhanced debate search results:', data.searchResults);
+        // Log detailed info about RashadAllMedia results
+        if (data.searchResults) {
+          data.searchResults.forEach((result, index) => {
+            if (result.collection === 'RashadAllMedia') {
+              console.log(`RashadAllMedia result ${index + 1}:`, {
+                title: result.title,
+                content: result.content?.substring(0, 100),
+                youtube_link: result.youtube_link,
+                collection: result.collection
+              });
+            }
+          });
+        }
         setRelatedData({
           verses: data.relatedVerses || [],
           searchResults: data.searchResults || [],
@@ -1624,25 +1650,13 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                                 console.log('RashadAllMedia result:', {
                                   title: result.title,
                                   content: result.content?.substring(0, 100),
-                                  collection: result.collection
+                                  collection: result.collection,
+                                  youtube_link: result.youtube_link
                                 });
-                                
-                                // If title contains pipe character, it's likely a proper YouTube title
-                                if (displayTitle && displayTitle.includes('|') && !displayTitle.startsWith('(')) {
-                                  // It's a proper YouTube title, display as is
-                                  return displayTitle;
-                                } else if (displayTitle && displayTitle.startsWith('(')) {
-                                  // Title looks like transcript content (starts with timestamp)
-                                  displayTitle = 'Search for: "' + displayTitle.substring(0, 80) + '..."';
-                                } else if (!displayTitle || displayTitle.includes('Item')) {
-                                  // Fallback to content if no proper title
-                                  displayTitle = 'Search for: "' + result.content
-                                    .substring(0, 80)  // Keep timestamps in display
-                                    .trim() + '..."';
-                                }
                               }
                               
-                              return displayTitle;
+                              // Simply display the title as-is - the backend has already done the mapping
+                              return displayTitle || 'Untitled';
                             })()}
                           </span>
                           <FaSearch style={{ fontSize: '12px', color: '#666' }} />
@@ -1650,11 +1664,25 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                         <p style={{ margin: '5px 0', fontSize: '12px', color: '#666' }}>
                           {result.content.substring(0, 150)}...
                         </p>
-                        {result.collection && (
-                          <p style={{ margin: '5px 0', fontSize: '11px', color: '#999' }}>
-                            Source: {result.collection}
-                          </p>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                          {result.collection && (
+                            <p style={{ margin: '5px 0', fontSize: '11px', color: '#999' }}>
+                              Source: {result.collection}
+                            </p>
+                          )}
+                          {result.youtube_link && !result.youtube_link.includes('search_query') && (
+                            <span style={{ 
+                              fontSize: '11px', 
+                              color: '#ff0000',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}>
+                              <FaPlay style={{ fontSize: '10px' }} />
+                              YouTube Video Available
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
