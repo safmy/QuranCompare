@@ -4,7 +4,7 @@ import QuranSearch from './components/QuranSearch';
 import QuranVectorSearch from './components/QuranVectorSearch';
 import QuranVerseLookup from './components/QuranVerseLookup';
 import QuranCompare from './components/QuranCompare';
-import EnhancedDebaterBot from './components/EnhancedDebaterBot';
+import DebaterBot from './components/DebaterBot';
 import RootSearch from './components/RootSearch';
 import AuthCallback from './components/AuthCallback';
 import PaymentSuccess from './components/PaymentSuccess';
@@ -111,6 +111,17 @@ function AppContent() {
       setActiveTab('roots');
     };
     
+    // Listen for semantic search events
+    const handleOpenSemanticSearch = (event) => {
+      const { query, source } = event.detail;
+      // Store the query and source in session storage for the vector search component
+      sessionStorage.setItem('vectorSearchQuery', query);
+      if (source) {
+        sessionStorage.setItem('vectorSearchSource', source);
+      }
+      setActiveTab('vectorsearch');
+    };
+    
     // Listen for state updates from child components
     const handleStateUpdate = (event) => {
       const { component, state } = event.detail;
@@ -124,12 +135,14 @@ function AppContent() {
     window.addEventListener('openVerseRange', handleOpenVerseRange);
     window.addEventListener('navigateToCompare', handleNavigateToCompare);
     window.addEventListener('openRootSearch', handleOpenRootSearch);
+    window.addEventListener('openSemanticSearch', handleOpenSemanticSearch);
     window.addEventListener('updateComponentState', handleStateUpdate);
     
     return () => {
       window.removeEventListener('openVerseRange', handleOpenVerseRange);
       window.removeEventListener('navigateToCompare', handleNavigateToCompare);
       window.removeEventListener('openRootSearch', handleOpenRootSearch);
+      window.removeEventListener('openSemanticSearch', handleOpenSemanticSearch);
       window.removeEventListener('updateComponentState', handleStateUpdate);
     };
   }, []);
@@ -156,20 +169,7 @@ function AppContent() {
     { 
       id: 'debater', 
       label: '🤖 AI Debater', 
-      component: <EnhancedDebaterBot 
-        onNavigateToTab={(tabId, data) => {
-          if (data && data.query) {
-            sessionStorage.setItem(tabId === 'semanticSearch' ? 'vectorSearchQuery' : 'rootSearchQuery', data.query);
-            if (data.source) {
-              sessionStorage.setItem('vectorSearchSource', data.source);
-            }
-          }
-          setActiveTab(tabId);
-        }}
-        currentTab={activeTab}
-        currentVerses={lookupState.verses || []}
-        recentSearch={vectorSearchState.lastQuery || ''}
-      /> 
+      component: <DebaterBot /> 
     },
     {
       id: 'discord',

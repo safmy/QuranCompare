@@ -6,18 +6,39 @@ import { Clipboard } from '@capacitor/clipboard';
 const API_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
 
 const QuranVectorSearch = ({ savedState = {} }) => {
+  // Check for query and source from sessionStorage (e.g., from DebaterBot)
+  const sessionQuery = sessionStorage.getItem('vectorSearchQuery');
+  const sessionSource = sessionStorage.getItem('vectorSearchSource');
+  
+  // Initialize state with session values if available
   const [searchResults, setSearchResults] = useState(savedState.searchResults || []);
-  const [searchTerm, setSearchTerm] = useState(savedState.searchTerm || '');
+  const [searchTerm, setSearchTerm] = useState(sessionQuery || savedState.searchTerm || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [numResults, setNumResults] = useState(savedState.numResults || 10);
-  const [includeRashadMedia, setIncludeRashadMedia] = useState(savedState.includeRashadMedia ?? false);
-  const [includeFinalTestament, setIncludeFinalTestament] = useState(savedState.includeFinalTestament ?? true);
+  const [includeRashadMedia, setIncludeRashadMedia] = useState(
+    sessionSource === 'RashadAllMedia' ? true : (savedState.includeRashadMedia ?? false)
+  );
+  const [includeFinalTestament, setIncludeFinalTestament] = useState(
+    sessionSource === 'RashadAllMedia' ? false : (savedState.includeFinalTestament ?? true)
+  );
   const [includeNewsletters, setIncludeNewsletters] = useState(savedState.includeNewsletters ?? false);
   const [includeArabicVerses, setIncludeArabicVerses] = useState(savedState.includeArabicVerses ?? false);
   const [useRegex, setUseRegex] = useState(savedState.useRegex ?? false);
   const [regexResults, setRegexResults] = useState(savedState.regexResults || []);
   const [quranData, setQuranData] = useState(null);
+  
+  // Clear session storage after reading
+  React.useEffect(() => {
+    if (sessionQuery) {
+      sessionStorage.removeItem('vectorSearchQuery');
+      sessionStorage.removeItem('vectorSearchSource');
+      // Trigger search automatically if we have a query from session
+      setTimeout(() => {
+        handleSearch();
+      }, 500);
+    }
+  }, []);
   
   // Long press functionality
   const [longPressTimer, setLongPressTimer] = useState(null);

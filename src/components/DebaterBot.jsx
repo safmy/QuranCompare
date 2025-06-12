@@ -1035,7 +1035,13 @@ const DebaterBot = () => {
                                 const searchTerm = part.content.toLowerCase().includes('code 19') || part.content.toLowerCase().includes('miracle 19') 
                                   ? 'mathematical miracle code 19' 
                                   : part.content;
-                                window.open(`#vectorsearch?q=${encodeURIComponent(searchTerm)}&source=RashadAllMedia`, '_blank');
+                                // Dispatch event for the main app to handle
+                                window.dispatchEvent(new CustomEvent('openSemanticSearch', {
+                                  detail: { 
+                                    query: searchTerm,
+                                    source: 'RashadAllMedia'
+                                  }
+                                }));
                               }}
                               title={`Click to search for "${part.content}" in Rashad Khalifa Media`}
                             >
