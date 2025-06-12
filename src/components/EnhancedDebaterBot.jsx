@@ -470,6 +470,7 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       
       // Update related data if available
       if (endpoint === '/debate/enhanced' && data.relatedVerses) {
+        console.log('Enhanced debate search results:', data.searchResults);
         setRelatedData({
           verses: data.relatedVerses || [],
           searchResults: data.searchResults || [],
@@ -570,6 +571,7 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       
       // Update related data if available
       if (endpoint === '/debate/enhanced' && data.relatedVerses) {
+        console.log('Enhanced debate search results:', data.searchResults);
         setRelatedData({
           verses: data.relatedVerses || [],
           searchResults: data.searchResults || [],
@@ -1582,7 +1584,7 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                               // For Rashad media, always use part of the transcript content
                               // Keep timestamps as they're crucial for finding exact content
                               searchQuery = result.content
-                                .substring(0, 100)  // Take first 100 chars for better context with timestamps
+                                .substring(0, 200)  // Take more content to ensure complete sentences with timestamps
                                 .replace(/\s+/g, ' ')
                                 .trim();
                             } else {
@@ -1617,12 +1619,17 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                             {(() => {
                               let displayTitle = result.title;
                               
-                              // For RashadAllMedia items, the backend should have already mapped to proper YouTube title
-                              // Only show content excerpt if we truly don't have a proper title
-                              if (result.collection === 'RashadAllMedia' && (!result.title || result.title.includes('Item'))) {
-                                displayTitle = 'Search for: "' + result.content
-                                  .substring(0, 60)  // Keep timestamps in display
-                                  .trim() + '..."';
+                              // For RashadAllMedia items, check if we have a proper YouTube title
+                              if (result.collection === 'RashadAllMedia') {
+                                // If title looks like transcript content (starts with timestamp), show it differently
+                                if (displayTitle && displayTitle.startsWith('(')) {
+                                  displayTitle = 'Search for: "' + displayTitle.substring(0, 80) + '..."';
+                                } else if (!displayTitle || displayTitle.includes('Item')) {
+                                  // Fallback to content if no proper title
+                                  displayTitle = 'Search for: "' + result.content
+                                    .substring(0, 80)  // Keep timestamps in display
+                                    .trim() + '..."';
+                                }
                               }
                               
                               return displayTitle;
