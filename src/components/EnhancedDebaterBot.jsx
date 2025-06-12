@@ -71,15 +71,29 @@ const dearabizeText = (text) => {
 const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recentSearch }) => {
   const { user, isAuthenticated } = useAuth();
   const { language } = useLanguage();
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => {
+    const saved = sessionStorage.getItem('debaterMessages');
+    try {
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [debateMode, setDebateMode] = useState(false);
-  const [currentTopic, setCurrentTopic] = useState('');
+  const [debateMode, setDebateMode] = useState(() => {
+    const savedMessages = sessionStorage.getItem('debaterMessages');
+    return savedMessages && JSON.parse(savedMessages).length > 0;
+  });
+  const [currentTopic, setCurrentTopic] = useState(() => {
+    return sessionStorage.getItem('debaterTopic') || '';
+  });
   const [showAuth, setShowAuth] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
-  const [chatHistoryId, setChatHistoryId] = useState(null);
+  const [chatHistoryId, setChatHistoryId] = useState(() => {
+    return sessionStorage.getItem('debaterChatHistoryId') || null;
+  });
   const [previousChats, setPreviousChats] = useState([]);
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [showTopicInput, setShowTopicInput] = useState(false);
@@ -88,14 +102,52 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
   const [deletingChatId, setDeletingChatId] = useState(null);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [showRelatedContent, setShowRelatedContent] = useState(true);
-  const [relatedData, setRelatedData] = useState({
-    verses: [],
-    searchResults: [],
-    rootAnalysis: [],
-    suggestedTabs: [],
-    citations: []
+  const [relatedData, setRelatedData] = useState(() => {
+    const saved = sessionStorage.getItem('debaterRelatedData');
+    try {
+      return saved ? JSON.parse(saved) : {
+        verses: [],
+        searchResults: [],
+        rootAnalysis: [],
+        suggestedTabs: [],
+        citations: []
+      };
+    } catch {
+      return {
+        verses: [],
+        searchResults: [],
+        rootAnalysis: [],
+        suggestedTabs: [],
+        citations: []
+      };
+    }
   });
   const messagesEndRef = useRef(null);
+
+  // Save state to sessionStorage
+  useEffect(() => {
+    if (messages.length > 0) {
+      sessionStorage.setItem('debaterMessages', JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (currentTopic) {
+      sessionStorage.setItem('debaterTopic', currentTopic);
+    }
+  }, [currentTopic]);
+
+  useEffect(() => {
+    if (chatHistoryId) {
+      sessionStorage.setItem('debaterChatHistoryId', chatHistoryId);
+    }
+  }, [chatHistoryId]);
+
+  useEffect(() => {
+    if (Object.values(relatedData).some(arr => arr.length > 0)) {
+      sessionStorage.setItem('debaterRelatedData', JSON.stringify(relatedData));
+    }
+  }, [relatedData]);
 
   // Detect mobile device
   useEffect(() => {
@@ -172,10 +224,19 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       const lastMessage = messages[messages.length - 1]?.content || '';
       const summary = currentTopic || lastMessage.substring(0, 100) + (lastMessage.length > 100 ? '...' : '');
       
+      // Create an enhanced messages array that includes related data
+      const enhancedMessages = messages.map((msg, index) => {
+        if (msg.role === 'assistant' && index === messages.length - 1) {
+          // Attach relatedData to the last assistant message
+          return { ...msg, relatedData };
+        }
+        return msg;
+      });
+      
       const chatData = {
         user_email: user.email,
         topic: summary,
-        messages: JSON.stringify(messages), // Ensure messages are stored as JSON string
+        messages: JSON.stringify(enhancedMessages), // Store with related data
         is_active: true,
         updated_at: new Date().toISOString()
       };
@@ -225,25 +286,37 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
         ? JSON.parse(chat.messages) 
         : chat.messages || [];
       
-      // Convert timestamp strings back to Date objects
-      const messagesWithDates = parsedMessages.map(msg => ({
-        ...msg,
-        timestamp: new Date(msg.timestamp)
-      }));
+      // Extract relatedData from messages if present
+      let extractedRelatedData = {
+        verses: [],
+        searchResults: [],
+        rootAnalysis: [],
+        suggestedTabs: [],
+        citations: []
+      };
+      
+      // Look for relatedData in assistant messages
+      const lastAssistantMsg = [...parsedMessages].reverse().find(msg => msg.role === 'assistant' && msg.relatedData);
+      if (lastAssistantMsg && lastAssistantMsg.relatedData) {
+        extractedRelatedData = lastAssistantMsg.relatedData;
+      }
+      
+      // Convert timestamp strings back to Date objects and clean messages
+      const messagesWithDates = parsedMessages.map(msg => {
+        const cleanMsg = { ...msg };
+        delete cleanMsg.relatedData; // Remove relatedData from individual messages
+        return {
+          ...cleanMsg,
+          timestamp: new Date(msg.timestamp)
+        };
+      });
       
       setMessages(messagesWithDates);
       setCurrentTopic(chat.topic);
       setChatHistoryId(chat.id);
       setDebateMode(true);
       setShowChatHistory(false);
-      // Reset related data when loading old chat
-      setRelatedData({
-        verses: [],
-        searchResults: [],
-        rootAnalysis: [],
-        suggestedTabs: [],
-        citations: []
-      });
+      setRelatedData(extractedRelatedData);
     } catch (err) {
       console.error('Error loading chat:', err);
       setError('Failed to load chat history');
@@ -265,6 +338,11 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       suggestedTabs: [],
       citations: []
     });
+    // Clear sessionStorage
+    sessionStorage.removeItem('debaterMessages');
+    sessionStorage.removeItem('debaterTopic');
+    sessionStorage.removeItem('debaterChatHistoryId');
+    sessionStorage.removeItem('debaterRelatedData');
   };
   
   // Delete chat function
@@ -1286,7 +1364,35 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
         </div>
 
         {/* Related Content Panel - Only visible in debate mode and not on mobile */}
-        {debateMode && !isMobile && showRelatedContent && (relatedData.verses.length > 0 || relatedData.searchResults.length > 0 || relatedData.rootAnalysis.length > 0) && (
+        {debateMode && !isMobile && (relatedData.verses.length > 0 || relatedData.searchResults.length > 0 || relatedData.rootAnalysis.length > 0) && (
+          <>
+            {/* Toggle button when collapsed */}
+            {!showRelatedContent && (
+              <button
+                onClick={() => setShowRelatedContent(true)}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  backgroundColor: '#2196F3',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px 0 0 4px',
+                  padding: '10px 5px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  writingMode: 'vertical-rl',
+                  textOrientation: 'mixed',
+                  boxShadow: '-2px 0 5px rgba(0,0,0,0.1)',
+                  zIndex: 10
+                }}
+                title="Show Related Content"
+              >
+                Related Content
+              </button>
+            )}
+        {showRelatedContent && (
           <div style={{
             width: '350px',
             backgroundColor: '#f9f9f9',
@@ -1452,6 +1558,8 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
               )}
             </div>
           </div>
+        )}
+          </>
         )}
       </div>
 

@@ -15,6 +15,7 @@ import SidebarMenu from './components/SidebarMenu';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { checkPremiumAccess, PREMIUM_FEATURES } from './config/premium';
+import { appConfig } from './config/app';
 
 function AppContent() {
   const { currentLanguage, changeLanguage } = useLanguage();
@@ -385,7 +386,7 @@ function AppContent() {
         {tabs.find(tab => tab.id === activeTab)?.component}
       </main>
       <footer style={{padding: "20px", backgroundColor: "#6b46c1", color: "white", textAlign: "center"}}>
-        <p>© 2025 Quran Analysis & Comparison Tool</p>
+        <p>© 2025 Quran Analysis & Comparison Tool - v{appConfig.version}</p>
       </footer>
     </div>
   );
