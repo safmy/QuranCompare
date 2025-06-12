@@ -75,6 +75,10 @@ def get_vector_urls():
         "FootnotesSubtitles": {
             "faiss": os.getenv("FOOTNOTES_FAISS_URL", VECTOR_URLS["FootnotesSubtitles"]["faiss"]),
             "json": os.getenv("FOOTNOTES_JSON_URL", VECTOR_URLS["FootnotesSubtitles"]["json"])
+        },
+        "Appendices": {
+            "faiss": os.getenv("APPENDICES_FAISS_URL", VECTOR_URLS["Appendices"]["faiss"]),
+            "json": os.getenv("APPENDICES_JSON_URL", VECTOR_URLS["Appendices"]["json"])
         }
     }
 
