@@ -1579,17 +1579,13 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                             let searchQuery = '';
                             
                             if (result.collection === 'RashadAllMedia') {
-                              // For Rashad media, use part of the transcript content
-                              // Get first 100 chars of content, clean it up
+                              // For Rashad media, always use part of the transcript content
+                              // since titles are generic like "Item 37"
                               searchQuery = result.content
-                                .substring(0, 100)
+                                .substring(0, 80)  // Take first 80 chars for better context
                                 .replace(/\s+/g, ' ')
+                                .replace(/[()]/g, '')  // Remove parentheses like (17:26)
                                 .trim();
-                              
-                              // If there's a meaningful title, use it as part of the query
-                              if (result.title && !result.title.includes('Item #')) {
-                                searchQuery = result.title;
-                              }
                             } else {
                               // For other content, use title or content excerpt
                               searchQuery = result.title || result.content.substring(0, 50);
