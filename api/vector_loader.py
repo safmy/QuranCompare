@@ -41,6 +41,10 @@ VECTOR_URLS = {
     "FootnotesSubtitles": {
         "faiss": f"{GITHUB_RELEASE_BASE}/footnotes_subtitles.faiss",
         "json": f"{GITHUB_RELEASE_BASE}/footnotes_subtitles.json"
+    },
+    "Appendices": {
+        "faiss": f"{GITHUB_RELEASE_BASE}/Appendices.faiss",
+        "json": f"{GITHUB_RELEASE_BASE}/Appendices.json"
     }
 }
 

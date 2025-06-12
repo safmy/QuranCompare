@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Domain.css';
 
-const Domain = () => {
+const Domain = ({ onClose }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
@@ -13,11 +13,15 @@ const Domain = () => {
   const [outputLevel, setOutputLevel] = useState(0);
   const [volume, setVolume] = useState(70);
   const [status, setStatus] = useState('Ready');
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedAudio, setRecordedAudio] = useState(null);
   
   const audioContextRef = useRef(null);
   const streamRef = useRef(null);
-  const sourceRef = useRef(null);
-  const processorRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
+  const analyserRef = useRef(null);
+  const animationRef = useRef(null);
 
   // Check stored auth on mount
   useEffect(() => {
@@ -42,17 +46,19 @@ const Domain = () => {
   const handleLogout = () => {
     setIsAuthenticated(false);
     sessionStorage.removeItem('domainAuth');
-    stopVoiceChanger();
+    stopRecording();
+    if (onClose) onClose();
   };
 
-  const initializeAudio = async () => {
+  const startRecording = async () => {
     try {
       // Get user media
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: false,
           noiseSuppression: false,
-          autoGainControl: false
+          autoGainControl: false,
+          sampleRate: 44100
         } 
       });
       streamRef.current = stream;
@@ -61,117 +67,237 @@ const Domain = () => {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       audioContextRef.current = new AudioContext();
       
-      // Create source from stream
-      sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
+      // Create analyser for visualization
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      analyserRef.current.fftSize = 256;
       
-      // Create script processor for real-time processing
-      processorRef.current = audioContextRef.current.createScriptProcessor(4096, 1, 1);
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      source.connect(analyserRef.current);
       
-      // Process audio
-      processorRef.current.onaudioprocess = (e) => {
-        const inputData = e.inputBuffer.getChannelData(0);
-        const outputData = e.outputBuffer.getChannelData(0);
-        
-        // Calculate input level
-        let sum = 0;
-        for (let i = 0; i < inputData.length; i++) {
-          sum += inputData[i] * inputData[i];
-        }
-        const rms = Math.sqrt(sum / inputData.length);
-        setInputLevel(Math.min(rms * 500, 100));
-        
-        // Apply effect
-        for (let i = 0; i < inputData.length; i++) {
-          let sample = inputData[i];
-          
-          switch (currentEffect) {
-            case 'deep':
-              // Deep voice - simple pitch down
-              outputData[i] = sample * 0.8;
-              if (i > 0) outputData[i] = (outputData[i] + inputData[i-1]) * 0.5;
-              break;
-              
-            case 'high':
-              // High voice - simple pitch up
-              outputData[i] = sample * 1.2;
-              if (i % 2 === 0 && i < inputData.length - 1) {
-                outputData[i] = (sample + inputData[i+1]) * 0.5;
-              }
-              break;
-              
-            case 'robot':
-              // Robot voice - ring modulation
-              const carrier = Math.sin(2 * Math.PI * 200 * i / audioContextRef.current.sampleRate);
-              outputData[i] = sample * carrier * 0.8;
-              break;
-              
-            case 'echo':
-              // Simple echo
-              outputData[i] = sample;
-              if (i > 8000) outputData[i] += inputData[i - 8000] * 0.3;
-              break;
-              
-            case 'alien':
-              // Alien effect
-              const mod = Math.sin(2 * Math.PI * 10 * i / audioContextRef.current.sampleRate);
-              outputData[i] = sample * (0.5 + 0.5 * mod);
-              break;
-              
-            default:
-              outputData[i] = sample;
-          }
-        }
-        
-        // Calculate output level
-        sum = 0;
-        for (let i = 0; i < outputData.length; i++) {
-          sum += outputData[i] * outputData[i];
-        }
-        const outputRms = Math.sqrt(sum / outputData.length);
-        setOutputLevel(Math.min(outputRms * 500, 100));
+      // Start media recorder
+      const options = {
+        mimeType: 'audio/webm;codecs=opus'
       };
       
-      // Connect nodes
-      sourceRef.current.connect(processorRef.current);
-      processorRef.current.connect(audioContextRef.current.destination);
+      mediaRecorderRef.current = new MediaRecorder(stream, options);
+      chunksRef.current = [];
       
-      setStatus('Active - Speak into your microphone!');
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorderRef.current.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const processedBlob = await processAudioBlob(blob);
+        setRecordedAudio(processedBlob);
+        setStatus('Recording complete - Click play to hear transformed voice');
+      };
+      
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      setStatus('Recording... Speak now!');
+      
+      // Start visualization
+      visualize();
       
     } catch (err) {
-      console.error('Audio initialization error:', err);
+      console.error('Recording error:', err);
       setStatus('Error: ' + err.message);
     }
   };
 
-  const startVoiceChanger = async () => {
-    setIsActive(true);
-    await initializeAudio();
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    }
   };
 
-  const stopVoiceChanger = () => {
-    setIsActive(false);
-    setStatus('Stopped');
+  const visualize = () => {
+    if (!analyserRef.current) return;
     
-    // Cleanup
-    if (processorRef.current) {
-      processorRef.current.disconnect();
-      processorRef.current = null;
-    }
-    if (sourceRef.current) {
-      sourceRef.current.disconnect();
-      sourceRef.current = null;
-    }
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
+    const bufferLength = analyserRef.current.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    
+    const draw = () => {
+      animationRef.current = requestAnimationFrame(draw);
+      analyserRef.current.getByteFrequencyData(dataArray);
+      
+      let sum = 0;
+      for (let i = 0; i < bufferLength; i++) {
+        sum += dataArray[i];
+      }
+      const average = sum / bufferLength;
+      setInputLevel(Math.min((average / 255) * 100, 100));
+    };
+    
+    draw();
+  };
+
+  const processAudioBlob = async (blob) => {
+    // Convert blob to array buffer
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    
+    // Get audio data
+    const channelData = audioBuffer.getChannelData(0);
+    const sampleRate = audioBuffer.sampleRate;
+    
+    // Process based on effect
+    let processedData = new Float32Array(channelData.length);
+    
+    switch (currentEffect) {
+      case 'deep':
+        // Deep voice - pitch down by stretching
+        for (let i = 0; i < channelData.length; i++) {
+          const sourceIndex = Math.floor(i * 0.7);
+          processedData[i] = sourceIndex < channelData.length ? channelData[sourceIndex] : 0;
+        }
+        break;
+        
+      case 'high':
+        // High voice - pitch up by compressing
+        for (let i = 0; i < channelData.length; i++) {
+          const sourceIndex = Math.floor(i * 1.5);
+          processedData[i] = sourceIndex < channelData.length ? channelData[sourceIndex] : 0;
+        }
+        break;
+        
+      case 'robot':
+        // Robot voice - ring modulation
+        for (let i = 0; i < channelData.length; i++) {
+          const carrier = Math.sin(2 * Math.PI * 200 * i / sampleRate);
+          processedData[i] = channelData[i] * carrier * 0.8;
+        }
+        break;
+        
+      case 'echo':
+        // Echo effect
+        const delayFrames = Math.floor(sampleRate * 0.3);
+        for (let i = 0; i < channelData.length; i++) {
+          processedData[i] = channelData[i];
+          if (i >= delayFrames) {
+            processedData[i] += channelData[i - delayFrames] * 0.4;
+          }
+        }
+        break;
+        
+      case 'alien':
+        // Alien effect - modulation
+        for (let i = 0; i < channelData.length; i++) {
+          const mod = Math.sin(2 * Math.PI * 10 * i / sampleRate);
+          processedData[i] = channelData[i] * (0.5 + 0.5 * mod);
+        }
+        break;
+        
+      default:
+        processedData = channelData;
     }
     
-    setInputLevel(0);
-    setOutputLevel(0);
+    // Create new audio buffer with processed data
+    const processedBuffer = audioContext.createBuffer(1, processedData.length, sampleRate);
+    processedBuffer.copyToChannel(processedData, 0);
+    
+    // Convert back to blob
+    const offlineContext = new OfflineAudioContext(1, processedBuffer.length, sampleRate);
+    const source = offlineContext.createBufferSource();
+    source.buffer = processedBuffer;
+    source.connect(offlineContext.destination);
+    source.start();
+    
+    const renderedBuffer = await offlineContext.startRendering();
+    const wav = audioBufferToWav(renderedBuffer);
+    return new Blob([wav], { type: 'audio/wav' });
+  };
+
+  const audioBufferToWav = (buffer) => {
+    const length = buffer.length * buffer.numberOfChannels * 2 + 44;
+    const arrayBuffer = new ArrayBuffer(length);
+    const view = new DataView(arrayBuffer);
+    const channels = [];
+    let offset = 0;
+    let pos = 0;
+
+    // Write WAVE header
+    const setUint16 = (data) => {
+      view.setUint16(pos, data, true);
+      pos += 2;
+    };
+    const setUint32 = (data) => {
+      view.setUint32(pos, data, true);
+      pos += 4;
+    };
+
+    // RIFF identifier
+    setUint32(0x46464952);
+    // file length
+    setUint32(length - 8);
+    // RIFF type
+    setUint32(0x45564157);
+    // format chunk identifier
+    setUint32(0x20746d66);
+    // format chunk length
+    setUint32(16);
+    // sample format (raw)
+    setUint16(1);
+    // channel count
+    setUint16(buffer.numberOfChannels);
+    // sample rate
+    setUint32(buffer.sampleRate);
+    // byte rate (sample rate * block align)
+    setUint32(buffer.sampleRate * 4);
+    // block align (channel count * bytes per sample)
+    setUint16(buffer.numberOfChannels * 2);
+    // bits per sample
+    setUint16(16);
+    // data chunk identifier
+    setUint32(0x61746164);
+    // data chunk length
+    setUint32(length - pos - 4);
+
+    // Write interleaved data
+    for (let i = 0; i < buffer.numberOfChannels; i++) {
+      channels.push(buffer.getChannelData(i));
+    }
+
+    while (pos < length) {
+      for (let i = 0; i < buffer.numberOfChannels; i++) {
+        let sample = Math.max(-1, Math.min(1, channels[i][offset]));
+        sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+        view.setInt16(pos, sample, true);
+        pos += 2;
+      }
+      offset++;
+    }
+
+    return arrayBuffer;
+  };
+
+  const playRecording = () => {
+    if (recordedAudio) {
+      const audio = new Audio(URL.createObjectURL(recordedAudio));
+      audio.volume = volume / 100;
+      audio.play();
+      
+      audio.addEventListener('playing', () => {
+        setStatus('Playing transformed voice...');
+      });
+      
+      audio.addEventListener('ended', () => {
+        setStatus('Playback complete');
+      });
+    }
   };
 
   const testSpeakers = () => {
@@ -189,7 +315,7 @@ const Domain = () => {
     oscillator.stop(audioContext.currentTime + 0.5);
     
     setStatus('Playing test tone...');
-    setTimeout(() => setStatus(isActive ? 'Active' : 'Ready'), 1000);
+    setTimeout(() => setStatus('Test complete'), 1000);
   };
 
   if (!isAuthenticated) {
@@ -229,18 +355,24 @@ const Domain = () => {
       
       <div className="domain-content">
         <div className="status-panel">
-          <div className={`status-indicator ${isActive ? 'active' : ''}`}>
-            {isActive ? '🔴' : '⚫'} {status}
+          <div className={`status-indicator ${isRecording ? 'active' : ''}`}>
+            {isRecording ? '🔴' : '⚫'} {status}
           </div>
         </div>
         
         <div className="control-buttons">
           <button 
-            className={`main-button ${isActive ? 'stop' : 'start'}`}
-            onClick={isActive ? stopVoiceChanger : startVoiceChanger}
+            className={`main-button ${isRecording ? 'stop' : 'start'}`}
+            onClick={isRecording ? stopRecording : startRecording}
+            disabled={recordedAudio && !isRecording}
           >
-            {isActive ? '⏹️ STOP' : '▶️ START'}
+            {isRecording ? '⏹️ STOP RECORDING' : '🎤 START RECORDING'}
           </button>
+          {recordedAudio && !isRecording && (
+            <button className="play-button" onClick={playRecording}>
+              ▶️ PLAY TRANSFORMED
+            </button>
+          )}
           <button className="test-button" onClick={testSpeakers}>
             🔊 Test Speakers
           </button>
@@ -248,7 +380,7 @@ const Domain = () => {
         
         <div className="level-meters">
           <div className="meter">
-            <label>Input Level</label>
+            <label>Recording Level</label>
             <div className="meter-bar">
               <div 
                 className="meter-fill input" 
@@ -256,58 +388,49 @@ const Domain = () => {
               />
             </div>
           </div>
-          <div className="meter">
-            <label>Output Level</label>
-            <div className="meter-bar">
-              <div 
-                className="meter-fill output" 
-                style={{width: `${outputLevel}%`}}
-              />
-            </div>
-          </div>
         </div>
         
         <div className="effects-panel">
-          <h3>Voice Effects</h3>
+          <h3>Voice Effects (Select before recording)</h3>
           <div className="effects-grid">
             <div 
               className={`effect-card ${currentEffect === 'normal' ? 'active' : ''}`}
-              onClick={() => setCurrentEffect('normal')}
+              onClick={() => !isRecording && setCurrentEffect('normal')}
             >
               <div className="effect-icon">👤</div>
               <div className="effect-name">Normal</div>
             </div>
             <div 
               className={`effect-card ${currentEffect === 'deep' ? 'active' : ''}`}
-              onClick={() => setCurrentEffect('deep')}
+              onClick={() => !isRecording && setCurrentEffect('deep')}
             >
               <div className="effect-icon">👹</div>
-              <div className="effect-name">Deep</div>
+              <div className="effect-name">Deep Voice</div>
             </div>
             <div 
               className={`effect-card ${currentEffect === 'high' ? 'active' : ''}`}
-              onClick={() => setCurrentEffect('high')}
+              onClick={() => !isRecording && setCurrentEffect('high')}
             >
               <div className="effect-icon">🐿️</div>
-              <div className="effect-name">High</div>
+              <div className="effect-name">High Voice</div>
             </div>
             <div 
               className={`effect-card ${currentEffect === 'robot' ? 'active' : ''}`}
-              onClick={() => setCurrentEffect('robot')}
+              onClick={() => !isRecording && setCurrentEffect('robot')}
             >
               <div className="effect-icon">🤖</div>
               <div className="effect-name">Robot</div>
             </div>
             <div 
               className={`effect-card ${currentEffect === 'echo' ? 'active' : ''}`}
-              onClick={() => setCurrentEffect('echo')}
+              onClick={() => !isRecording && setCurrentEffect('echo')}
             >
               <div className="effect-icon">🏔️</div>
               <div className="effect-name">Echo</div>
             </div>
             <div 
               className={`effect-card ${currentEffect === 'alien' ? 'active' : ''}`}
-              onClick={() => setCurrentEffect('alien')}
+              onClick={() => !isRecording && setCurrentEffect('alien')}
             >
               <div className="effect-icon">👽</div>
               <div className="effect-name">Alien</div>
@@ -315,8 +438,19 @@ const Domain = () => {
           </div>
         </div>
         
+        <div className="instructions">
+          <h3>How to use:</h3>
+          <ol>
+            <li>Select a voice effect</li>
+            <li>Click "START RECORDING"</li>
+            <li>Speak into your microphone</li>
+            <li>Click "STOP RECORDING"</li>
+            <li>Click "PLAY TRANSFORMED" to hear the effect</li>
+          </ol>
+        </div>
+        
         <div className="volume-control">
-          <label>Volume: {volume}%</label>
+          <label>Playback Volume: {volume}%</label>
           <input 
             type="range" 
             min="0" 

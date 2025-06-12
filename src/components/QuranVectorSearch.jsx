@@ -23,14 +23,16 @@ const QuranVectorSearch = ({ savedState = {} }) => {
         rashadMedia: true,
         finalTestament: false,
         newsletters: false,
-        arabicVerses: false
+        arabicVerses: false,
+        appendices: false
       };
     } else if (sessionSource === 'QuranTalkNewsletters') {
       return {
         rashadMedia: false,
         finalTestament: false,
         newsletters: true,
-        arabicVerses: false
+        arabicVerses: false,
+        appendices: false
       };
     } else if (sessionSource === 'QuranTalkArticles') {
       // Articles are likely part of newsletters/qurantalk
@@ -38,7 +40,8 @@ const QuranVectorSearch = ({ savedState = {} }) => {
         rashadMedia: false,
         finalTestament: false,
         newsletters: true,
-        arabicVerses: false
+        arabicVerses: false,
+        appendices: false
       };
     } else {
       // Default states from saved state
@@ -46,7 +49,8 @@ const QuranVectorSearch = ({ savedState = {} }) => {
         rashadMedia: savedState.includeRashadMedia ?? false,
         finalTestament: savedState.includeFinalTestament ?? true,
         newsletters: savedState.includeNewsletters ?? false,
-        arabicVerses: savedState.includeArabicVerses ?? false
+        arabicVerses: savedState.includeArabicVerses ?? false,
+        appendices: savedState.includeAppendices ?? false
       };
     }
   };
@@ -57,6 +61,7 @@ const QuranVectorSearch = ({ savedState = {} }) => {
   const [includeFinalTestament, setIncludeFinalTestament] = useState(initialStates.finalTestament);
   const [includeNewsletters, setIncludeNewsletters] = useState(initialStates.newsletters);
   const [includeArabicVerses, setIncludeArabicVerses] = useState(initialStates.arabicVerses);
+  const [includeAppendices, setIncludeAppendices] = useState(initialStates.appendices);
   const [useRegex, setUseRegex] = useState(savedState.useRegex ?? false);
   const [regexResults, setRegexResults] = useState(savedState.regexResults || []);
   const [quranData, setQuranData] = useState(null);
@@ -129,6 +134,12 @@ const QuranVectorSearch = ({ savedState = {} }) => {
       } else if (result.collection === 'RashadAllMedia' && result.youtube_link) {
         // For Rashad Media, include the YouTube link with timestamp
         verseText = `${result.content}\n\nWatch on YouTube: ${result.youtube_link}`;
+      } else if (result.collection === 'Appendices') {
+        // For Appendices, include title and URL
+        verseText = `${result.title}\n\n${result.content}`;
+        if (result.source_url) {
+          verseText += `\n\nRead full appendix: ${result.source_url}`;
+        }
       } else {
         // For other collections (articles, newsletters, etc.), just copy the content
         verseText = result.content;
@@ -393,7 +404,8 @@ const QuranVectorSearch = ({ savedState = {} }) => {
       'FinalTestament': '#2196F3',
       'QuranTalkArticles': '#FF9800',
       'Newsletters': '#9C27B0',
-      'ArabicVerses': '#7c3aed'
+      'ArabicVerses': '#7c3aed',
+      'Appendices': '#FF5722'
     };
     return colors[collection] || '#666';
   };
@@ -404,7 +416,8 @@ const QuranVectorSearch = ({ savedState = {} }) => {
       'FinalTestament': '📖',
       'QuranTalkArticles': '📄',
       'Newsletters': '📰',
-      'ArabicVerses': '🕌'
+      'ArabicVerses': '🕌',
+      'Appendices': '📚'
     };
     return emojis[collection] || '📌';
   };
@@ -414,6 +427,7 @@ const QuranVectorSearch = ({ savedState = {} }) => {
     if (source?.includes('Footnote')) return '#fff3cd'; // Light yellow for footnotes
     if (source?.includes('Subtitle')) return '#e8f5e9'; // Light green for subtitles
     if (source === 'Final Testament') return '#e3f2fd'; // Light blue for verses
+    if (source === 'Final Testament Appendices') return '#ffebe9'; // Light red for appendices
     return '#f9f9f9'; // Default gray
   };
   
@@ -422,6 +436,7 @@ const QuranVectorSearch = ({ savedState = {} }) => {
     if (source?.includes('Footnote')) return '#ffeaa7'; // Yellow for footnotes
     if (source?.includes('Subtitle')) return '#81c784'; // Green for subtitles
     if (source === 'Final Testament') return '#90caf9'; // Blue for verses
+    if (source === 'Final Testament Appendices') return '#ffab91'; // Red for appendices
     return '#ddd'; // Default gray
   };
 
@@ -500,7 +515,8 @@ const QuranVectorSearch = ({ savedState = {} }) => {
             include_final_testament: includeFinalTestament,
             include_qurantalk: includeNewsletters,
             include_newsletters: includeNewsletters,
-            include_arabic_verses: includeArabicVerses
+            include_arabic_verses: includeArabicVerses,
+            include_appendices: includeAppendices
           })
         });
 
@@ -703,6 +719,15 @@ const QuranVectorSearch = ({ savedState = {} }) => {
               style={{ marginRight: '8px' }}
             />
             <span style={{ color: '#9C27B0', fontWeight: 'bold' }}>📰 Newsletters & Articles</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={includeAppendices}
+              onChange={(e) => setIncludeAppendices(e.target.checked)}
+              style={{ marginRight: '8px' }}
+            />
+            <span style={{ color: '#FF5722', fontWeight: 'bold' }}>📚 Appendices</span>
           </label>
           <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
             <input

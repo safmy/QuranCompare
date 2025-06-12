@@ -143,8 +143,28 @@
   color: #fff;
 }
 
-.main-button:hover {
+.main-button:hover:not(:disabled) {
   transform: scale(1.05);
+}
+
+.main-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.play-button {
+  padding: 20px 30px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+.play-button:hover {
+  background: #0056b3;
 }
 
 .test-button {

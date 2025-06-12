@@ -89,6 +89,7 @@ class SearchRequest(BaseModel):
     include_qurantalk: bool = True
     include_newsletters: bool = True
     include_arabic_verses: bool = True
+    include_appendices: bool = True
 
 class VerseRangeRequest(BaseModel):
     verse_range: str  # Format: "1:1-7" or "2:5-10" or "3:15"
@@ -268,8 +269,8 @@ def create_embedding(text: str, force_english: bool = False, collection_name: st
                 query_text = text
         
         # Use the correct embedding model for each collection
-        if collection_name == "ArabicVerses":
-            model = "text-embedding-3-small"  # Arabic verses use the newer model
+        if collection_name in ["ArabicVerses", "Appendices"]:
+            model = "text-embedding-3-small"  # Arabic verses and Appendices use the newer model
         else:
             model = "text-embedding-ada-002"  # All other collections use ada-002
         
@@ -600,7 +601,8 @@ async def vector_search(request: SearchRequest):
             "FinalTestament": request.include_final_testament,
             "QuranTalkArticles": request.include_qurantalk,
             "Newsletters": request.include_newsletters,
-            "ArabicVerses": request.include_arabic_verses
+            "ArabicVerses": request.include_arabic_verses,
+            "Appendices": request.include_appendices
         }
         
         selected_collections = [k for k, v in collection_filter.items() if v]
@@ -624,8 +626,8 @@ async def vector_search(request: SearchRequest):
             collection_data = VECTOR_COLLECTIONS[collection_name]
             
             # Create appropriate embedding for this collection
-            if collection_name == "ArabicVerses":
-                # For Arabic verses, use regular embedding processing with correct model
+            if collection_name in ["ArabicVerses", "Appendices"]:
+                # For Arabic verses and Appendices, use regular embedding processing with correct model
                 query_embedding = create_embedding(request.query, force_english=False, collection_name=collection_name)
             else:
                 # For English collections, force English processing with correct model
@@ -741,6 +743,22 @@ async def vector_search(request: SearchRequest):
                         similarity_score=similarity,
                         source=source,
                         source_url=None,
+                        youtube_link=None
+                    ))
+                    
+                elif collection_name == "Appendices":
+                    title = metadata.get("title", "Unknown Appendix")
+                    content = metadata.get("content", "")[:500] + "..." if len(metadata.get("content", "")) > 500 else metadata.get("content", "")
+                    appendix_url = metadata.get("url", "")
+                    source = "Final Testament Appendices"
+                    
+                    all_results.append(SearchResult(
+                        collection=collection_name,
+                        title=title,
+                        content=content,
+                        similarity_score=similarity,
+                        source=source,
+                        source_url=appendix_url,
                         youtube_link=None
                     ))
                     

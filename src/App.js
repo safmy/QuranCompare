@@ -47,6 +47,8 @@ function AppContent() {
     return saved ? JSON.parse(saved) : {};
   });
   
+  const [showDomain, setShowDomain] = useState(false);
+  
   const verseLookupRef = useRef(null);
   const compareRef = useRef(null);
   
@@ -249,11 +251,6 @@ function AppContent() {
           </p>
         </div>
       )
-    },
-    {
-      id: 'domain',
-      label: 'Domain',
-      component: <Domain />
     }
   ];
 
@@ -309,15 +306,28 @@ function AppContent() {
               justifyContent: "center"
             }}>
               Quran Analysis & Comparison Tool
-              <span style={{
-                fontSize: "14px",
-                color: "rgba(255,255,255,0.8)",
-                fontWeight: "normal",
-                backgroundColor: "rgba(255,255,255,0.15)",
-                padding: "4px 10px",
-                borderRadius: "12px",
-                border: "1px solid rgba(255,255,255,0.2)"
-              }}>
+              <span 
+                onClick={() => setShowDomain(true)}
+                style={{
+                  fontSize: "14px",
+                  color: "rgba(255,255,255,0.8)",
+                  fontWeight: "normal",
+                  backgroundColor: "rgba(255,255,255,0.15)",
+                  padding: "4px 10px",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease"
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = "rgba(255,255,255,0.25)";
+                  e.target.style.borderColor = "rgba(255,255,255,0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = "rgba(255,255,255,0.15)";
+                  e.target.style.borderColor = "rgba(255,255,255,0.2)";
+                }}
+              >
                 v{appConfig.version}
               </span>
             </h1>
@@ -420,6 +430,46 @@ function AppContent() {
       }}>
         <p style={{ margin: 0, fontSize: "14px" }}>© 2025 Quran Analysis & Comparison Tool</p>
       </footer>
+      {showDomain && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.9)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{
+            width: '90%',
+            maxWidth: '900px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            position: 'relative'
+          }}>
+            <button
+              onClick={() => setShowDomain(false)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'transparent',
+                border: 'none',
+                color: 'white',
+                fontSize: '30px',
+                cursor: 'pointer',
+                zIndex: 10000
+              }}
+            >
+              ×
+            </button>
+            <Domain onClose={() => setShowDomain(false)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
