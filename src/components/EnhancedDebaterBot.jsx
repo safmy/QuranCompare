@@ -109,7 +109,10 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
   const [hoveredChatId, setHoveredChatId] = useState(null);
   const [deletingChatId, setDeletingChatId] = useState(null);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
-  const [showRelatedContent, setShowRelatedContent] = useState(true);
+  const [showRelatedContent, setShowRelatedContent] = useState(() => {
+    const saved = sessionStorage.getItem('debaterShowRelatedContent');
+    return saved !== null ? saved === 'true' : true;
+  });
   const [relatedData, setRelatedData] = useState(() => {
     const saved = sessionStorage.getItem('debaterRelatedData');
     try {
@@ -156,6 +159,10 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       sessionStorage.setItem('debaterRelatedData', JSON.stringify(relatedData));
     }
   }, [relatedData]);
+
+  useEffect(() => {
+    sessionStorage.setItem('debaterShowRelatedContent', showRelatedContent.toString());
+  }, [showRelatedContent]);
 
   // Detect mobile device
   useEffect(() => {
@@ -851,6 +858,19 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
             <div style={{ flex: 1, minWidth: 0 }}>
               <h1 style={{ margin: 0, fontSize: isMobile ? '18px' : '24px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 🤖 AI Debater Bot Enhanced
+                {!showRelatedContent && (relatedData.verses.length > 0 || relatedData.searchResults.length > 0 || relatedData.rootAnalysis.length > 0) && (
+                  <span style={{
+                    marginLeft: '10px',
+                    fontSize: '14px',
+                    backgroundColor: '#ff9800',
+                    color: 'white',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    fontWeight: 'normal'
+                  }}>
+                    📚 {(relatedData.verses?.length || 0) + (relatedData.searchResults?.length || 0) + (relatedData.rootAnalysis?.length || 0)} items
+                  </span>
+                )}
               </h1>
               {currentTopic && (
                 <p style={{ margin: '2px 0 0 0', fontSize: '12px', opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1385,25 +1405,39 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
               <button
                 onClick={() => setShowRelatedContent(true)}
                 style={{
-                  position: 'absolute',
-                  right: '10px',
+                  position: 'fixed',
+                  right: '20px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   backgroundColor: '#2196F3',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '4px 0 0 4px',
-                  padding: '10px 5px',
+                  borderRadius: '8px',
+                  padding: '12px 8px',
                   cursor: 'pointer',
                   fontSize: '14px',
                   writingMode: 'vertical-rl',
                   textOrientation: 'mixed',
-                  boxShadow: '-2px 0 5px rgba(0,0,0,0.1)',
-                  zIndex: 10
+                  boxShadow: '0 4px 12px rgba(33, 150, 243, 0.4)',
+                  zIndex: 1000,
+                  animation: 'pulse 2s infinite',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-50%) translateX(-5px)';
+                  e.target.style.boxShadow = '0 6px 16px rgba(33, 150, 243, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(-50%)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(33, 150, 243, 0.4)';
                 }}
                 title="Show Related Content"
               >
-                Related Content
+                📚 Related Content ({
+                  (relatedData.verses?.length || 0) + 
+                  (relatedData.searchResults?.length || 0) + 
+                  (relatedData.rootAnalysis?.length || 0)
+                })
               </button>
             )}
         {showRelatedContent && (
@@ -1538,34 +1572,65 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                       marginBottom: '8px',
                       border: '1px solid #e0e0e0'
                     }}>
-                      <button
-                        onClick={() => {
-                          if (result.collection === 'RashadAllMedia' && result.youtube_link) {
-                            window.open(result.youtube_link, '_blank');
-                          } else if (result.source_url) {
-                            window.open(result.source_url, '_blank');
-                          }
-                        }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#1976d2',
-                          cursor: 'pointer',
-                          fontWeight: 'bold',
-                          padding: 0,
-                          marginBottom: '5px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '5px'
-                        }}
-                      >
-                        {result.title}
-                        {result.youtube_link && <FaPlay style={{ fontSize: '10px' }} />}
-                        {result.source_url && <FaExternalLinkAlt style={{ fontSize: '10px' }} />}
-                      </button>
-                      <p style={{ margin: '5px 0', fontSize: '12px', color: '#666' }}>
-                        {result.content.substring(0, 150)}...
-                      </p>
+                      <div>
+                        <button
+                          onClick={() => {
+                            // Extract a meaningful search query from the content
+                            let searchQuery = '';
+                            
+                            if (result.collection === 'RashadAllMedia') {
+                              // For Rashad media, use part of the transcript content
+                              // Get first 100 chars of content, clean it up
+                              searchQuery = result.content
+                                .substring(0, 100)
+                                .replace(/\s+/g, ' ')
+                                .trim();
+                              
+                              // If there's a meaningful title, use it as part of the query
+                              if (result.title && !result.title.includes('Item #')) {
+                                searchQuery = result.title;
+                              }
+                            } else {
+                              // For other content, use title or content excerpt
+                              searchQuery = result.title || result.content.substring(0, 50);
+                            }
+                            
+                            // Dispatch to semantic search with the appropriate source
+                            window.dispatchEvent(new CustomEvent('openSemanticSearch', {
+                              detail: { 
+                                query: searchQuery,
+                                source: result.collection || 'RashadAllMedia'
+                              }
+                            }));
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#1976d2',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            padding: 0,
+                            marginBottom: '5px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            textAlign: 'left',
+                            width: '100%'
+                          }}
+                          title="Click to search in Semantic Search"
+                        >
+                          <span style={{ flex: 1 }}>{result.title}</span>
+                          <FaSearch style={{ fontSize: '12px', color: '#666' }} />
+                        </button>
+                        <p style={{ margin: '5px 0', fontSize: '12px', color: '#666' }}>
+                          {result.content.substring(0, 150)}...
+                        </p>
+                        {result.collection && (
+                          <p style={{ margin: '5px 0', fontSize: '11px', color: '#999' }}>
+                            Source: {result.collection}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1577,11 +1642,22 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
         )}
       </div>
 
-      {/* CSS for spinner animation */}
+      {/* CSS for animations */}
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+            transform: translateY(-50%) scale(1);
+          }
+          50% {
+            opacity: 0.9;
+            transform: translateY(-50%) scale(1.05);
+          }
         }
       `}</style>
 
