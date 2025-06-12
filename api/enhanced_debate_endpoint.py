@@ -266,26 +266,25 @@ class DebateContextManager:
         if collection_name == "RashadAllMedia":
             content = metadata.get("content", "")
             
-            # Try to get the proper video title using the YouTube mapper
-            title = metadata.get("title", "")
-            youtube_link = None
+            # Use the same content-based mapping approach as the regular search endpoint
+            mapped_title, mapped_link, is_exact_match = self.youtube_mapper.find_title_for_content_simple(content)
             
-            # Check if we have an index in metadata to map to video title
-            text_index = metadata.get("index", idx)  # Use idx as fallback
-            
-            # Try to get video title and link from the mapper
-            if text_index in self.youtube_mapper.index_to_title_map:
-                title = self.youtube_mapper.index_to_title_map[text_index]
-                youtube_link = self.youtube_mapper.index_to_link_map.get(text_index)
-            elif not title or "Item" in title:
-                # Fallback to content excerpt if no proper title
-                title = content[:50] + "..."
-            
-            # If no YouTube link from mapper, try to extract from content
-            if not youtube_link and ("youtube.com" in content or "youtu.be" in content):
-                url_match = re.search(r'(https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[^\s]+)', content)
-                if url_match:
-                    youtube_link = url_match.group(1)
+            # Use mapped title if found, otherwise fallback to metadata or content excerpt
+            if mapped_title:
+                title = mapped_title
+                youtube_link = mapped_link
+            else:
+                # Fallback to metadata title or content excerpt
+                title = metadata.get("title", "")
+                if not title or "Item" in title:
+                    title = content[:50] + "..."
+                
+                # Try to extract YouTube link from content if not mapped
+                youtube_link = None
+                if "youtube.com" in content or "youtu.be" in content:
+                    url_match = re.search(r'(https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[^\s]+)', content)
+                    if url_match:
+                        youtube_link = url_match.group(1)
             
             return VectorSearchResult(
                 collection=collection_name,
