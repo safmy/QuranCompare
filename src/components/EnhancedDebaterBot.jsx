@@ -767,6 +767,7 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       {/* Subscription Modal */}
       {showSubscriptionModal && (
         <SubscriptionModal 
+          user={user}
           onClose={() => setShowSubscriptionModal(false)}
           feature="AI Debater"
         />
