@@ -393,7 +393,7 @@ async def debug_info():
                 "loaded": name in VECTOR_COLLECTIONS,
                 "vectors": VECTOR_COLLECTIONS[name]["size"] if name in VECTOR_COLLECTIONS else 0
             }
-            for name in ["RashadAllMedia", "FinalTestament", "QuranTalkArticles", "Newsletters", "ArabicVerses"]
+            for name in ["RashadAllMedia", "FinalTestament", "QuranTalkArticles", "Newsletters", "ArabicVerses", "FootnotesSubtitles", "Appendices"]
         }
     }
 
