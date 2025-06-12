@@ -1605,8 +1605,7 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                             color: '#1976d2',
                             cursor: 'pointer',
                             fontWeight: 'bold',
-                            padding: 0,
-                            marginBottom: '5px',
+                            padding: '8px 0',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '5px',
@@ -1615,7 +1614,21 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                           }}
                           title="Click to search in Semantic Search"
                         >
-                          <span style={{ flex: 1 }}>{result.title}</span>
+                          <span style={{ flex: 1 }}>
+                            {(() => {
+                              let displayTitle = result.title;
+                              
+                              // For RashadAllMedia items with generic titles, show content excerpt
+                              if (result.collection === 'RashadAllMedia' && result.title && result.title.includes('Item')) {
+                                displayTitle = 'Search for: "' + result.content
+                                  .replace(/\(\d+:\d+\)/g, '') // Remove timestamps
+                                  .substring(0, 50)
+                                  .trim() + '..."';
+                              }
+                              
+                              return displayTitle;
+                            })()}
+                          </span>
                           <FaSearch style={{ fontSize: '12px', color: '#666' }} />
                         </button>
                         <p style={{ margin: '5px 0', fontSize: '12px', color: '#666' }}>
