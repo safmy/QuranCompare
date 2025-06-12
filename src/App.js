@@ -485,4 +485,4 @@ function App() {
 }
 
 export default App;
-// Trigger Netlify deployment - Fri 13 Dec 2024 - v1.5.9 - Fix AI Debater integrated features panel visibility
+// Trigger Netlify deployment - Thu 12 Dec 2024 - v1.5.10 - Add Appendices to semantic search with text-embedding-3-small

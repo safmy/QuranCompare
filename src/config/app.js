@@ -1,6 +1,6 @@
 export const appConfig = {
   supportEmail: 'syedahmadfahmybinsyedsalim@gmail.com',
   appName: 'QuranCompare',
-  version: '1.5.8',
+  version: '1.5.10',
   // Add other app-wide configuration here
 };
