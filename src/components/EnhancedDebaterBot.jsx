@@ -546,6 +546,12 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       setShowSubscription(true);
       return;
     }
+    
+    // If not in debate mode, start debate mode when sending first message
+    if (!debateMode) {
+      setDebateMode(true);
+      setCurrentTopic(inputText.substring(0, 100));
+    }
 
     const userMessage = {
       id: Date.now(),

@@ -435,4 +435,4 @@ function App() {
 }
 
 export default App;
-// Trigger Netlify deployment - Fri 13 Dec 2024 - v1.5.5 - Enhanced AI Debater to always show integrated features panel with better messaging
+// Trigger Netlify deployment - Fri 13 Dec 2024 - v1.5.9 - Fix AI Debater integrated features panel visibility
