@@ -13,7 +13,7 @@ import logging
 import re
 from openai import OpenAI
 import numpy as np
-from youtube_mapper import YouTubeMapper
+from youtube_mapper import YouTubeMapper, youtube_mapper
 
 logger = logging.getLogger("EnhancedDebateAPI")
 
@@ -66,9 +66,8 @@ class DebateContextManager:
         self.vector_collections = vector_collections
         self.verses_data = verses_data
         self.client = client
-        self.youtube_mapper = YouTubeMapper()
-        self.youtube_mapper.load_mappings()
-        self.youtube_mapper.load_rashad_content()
+        # Use the global youtube_mapper instance that's already loaded
+        self.youtube_mapper = youtube_mapper
         
     def extract_verse_references(self, text: str) -> List[str]:
         """Extract verse references from text"""

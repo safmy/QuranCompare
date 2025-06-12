@@ -1619,8 +1619,14 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                             {(() => {
                               let displayTitle = result.title;
                               
-                              // For RashadAllMedia items, check if we have a proper YouTube title
+                              // Debug log for RashadAllMedia items
                               if (result.collection === 'RashadAllMedia') {
+                                console.log('RashadAllMedia result:', {
+                                  title: result.title,
+                                  content: result.content?.substring(0, 100),
+                                  collection: result.collection
+                                });
+                                
                                 // If title contains pipe character, it's likely a proper YouTube title
                                 if (displayTitle && displayTitle.includes('|') && !displayTitle.startsWith('(')) {
                                   // It's a proper YouTube title, display as is
