@@ -547,11 +547,12 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
         return versePatterns.some(pattern => pattern.test(trimmed));
     };
 
-    const fetchVerses = async () => {
-        if (!verseRange.trim()) return;
+    const fetchVerses = async (rangeToFetch = null) => {
+        const range = rangeToFetch || verseRange;
+        if (!range.trim()) return;
         
         // Normalize the input first
-        const normalizedInput = normalizeVerseInput(verseRange);
+        const normalizedInput = normalizeVerseInput(range);
         
         setLoading(true);
         setError(null);
@@ -1186,11 +1187,14 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
         };
         loadAllVerses();
         
-        // Only update verseRange from initialRange on first mount or when explicitly changed
-        if (initialRange && initialRange !== verseRange && !savedState.verseRange) {
+        // Update verseRange from initialRange when it changes
+        if (initialRange && initialRange !== verseRange) {
             setVerseRange(initialRange);
             setSearchMode('range');
-            fetchVerses();
+            // Clear any saved state to ensure fresh search
+            sessionStorage.removeItem('verseLookupState');
+            // Pass the initialRange directly to fetchVerses
+            fetchVerses(initialRange);
         }
     }, [initialRange]);
     
