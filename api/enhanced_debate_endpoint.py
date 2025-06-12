@@ -13,6 +13,7 @@ import logging
 import re
 from openai import OpenAI
 import numpy as np
+from youtube_mapper import YouTubeMapper
 
 logger = logging.getLogger("EnhancedDebateAPI")
 
@@ -65,6 +66,9 @@ class DebateContextManager:
         self.vector_collections = vector_collections
         self.verses_data = verses_data
         self.client = client
+        self.youtube_mapper = YouTubeMapper()
+        self.youtube_mapper.load_mappings()
+        self.youtube_mapper.load_rashad_content()
         
     def extract_verse_references(self, text: str) -> List[str]:
         """Extract verse references from text"""
@@ -261,11 +265,24 @@ class DebateContextManager:
         """Format search result based on collection type"""
         if collection_name == "RashadAllMedia":
             content = metadata.get("content", "")
-            title = metadata.get("title", content[:50] + "...")
             
-            # Extract YouTube link if available
+            # Try to get the proper video title using the YouTube mapper
+            title = metadata.get("title", "")
             youtube_link = None
-            if "youtube.com" in content or "youtu.be" in content:
+            
+            # Check if we have an index in metadata to map to video title
+            text_index = metadata.get("index", idx)  # Use idx as fallback
+            
+            # Try to get video title and link from the mapper
+            if text_index in self.youtube_mapper.index_to_title_map:
+                title = self.youtube_mapper.index_to_title_map[text_index]
+                youtube_link = self.youtube_mapper.index_to_link_map.get(text_index)
+            elif not title or "Item" in title:
+                # Fallback to content excerpt if no proper title
+                title = content[:50] + "..."
+            
+            # If no YouTube link from mapper, try to extract from content
+            if not youtube_link and ("youtube.com" in content or "youtu.be" in content):
                 url_match = re.search(r'(https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[^\s]+)', content)
                 if url_match:
                     youtube_link = url_match.group(1)
