@@ -26,6 +26,17 @@ const QuranCompare = ({ initialVerses = [] }) => {
   const [selectedRootData, setSelectedRootData] = useState(null); // Selected root from verse lookup
   const [hoveredEnglishIndex, setHoveredEnglishIndex] = useState(null); // For English word hover
   const [hoveredArabicIndex, setHoveredArabicIndex] = useState(null); // For Arabic word hover
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  
+  // Handle scroll event to show/hide scroll-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     // Load Quran data
@@ -976,6 +987,17 @@ const QuranCompare = ({ initialVerses = [] }) => {
         }}>
           Loading Quran data...
         </div>
+      )}
+      
+      {/* Scroll to top button */}
+      {showScrollTop && (
+        <button
+          className="scroll-to-top-btn"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          title="Scroll to top"
+        >
+          ↑
+        </button>
       )}
     </div>
   );

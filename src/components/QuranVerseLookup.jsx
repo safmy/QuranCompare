@@ -247,6 +247,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
     const [hoveredEnglishIndex, setHoveredEnglishIndex] = useState(null); // For English word hover
     const [hoveredArabicIndex, setHoveredArabicIndex] = useState(null); // For Arabic word hover
     const [isDarkMode, setIsDarkMode] = useState(false); // Dark mode detection
+    const [showScrollTop, setShowScrollTop] = useState(false);
     
     // Long press functionality
     const [longPressTimer, setLongPressTimer] = useState(null);
@@ -1223,6 +1224,16 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
         });
         window.dispatchEvent(event);
     }, [verseRange, verses, searchMode, showArabic, exactMatch, excludeVerse0]);
+    
+    // Handle scroll event to show/hide scroll-to-top button
+    useEffect(() => {
+        const handleScroll = () => {
+            setShowScrollTop(window.scrollY > 300);
+        };
+        
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     return (
         <div className={`verse-lookup-container ${isDarkMode ? 'dark-mode' : ''}`}>
@@ -1509,6 +1520,17 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                     currentLanguage={currentLanguage}
                     getTranslationText={getTranslationText}
                 />
+            )}
+            
+            {/* Scroll to top button */}
+            {showScrollTop && (
+                <button
+                    className="scroll-to-top-btn"
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    title="Scroll to top"
+                >
+                    ↑
+                </button>
             )}
             
         </div>

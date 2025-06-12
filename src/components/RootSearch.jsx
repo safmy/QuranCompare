@@ -39,6 +39,17 @@ const RootSearch = () => {
     arabic: { query: '', results: null },
     smart: { query: '', results: null }
   });
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  
+  // Handle scroll event to show/hide scroll-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   // Load root mapping data and initialize word-to-root map
   useEffect(() => {
@@ -1097,6 +1108,17 @@ const RootSearch = () => {
             </button>
           </div>
         </div>
+      )}
+      
+      {/* Scroll to top button */}
+      {showScrollTop && (
+        <button
+          className="scroll-to-top-btn"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          title="Scroll to top"
+        >
+          ↑
+        </button>
       )}
     </div>
   );
