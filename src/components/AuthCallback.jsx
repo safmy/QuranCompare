@@ -5,6 +5,45 @@ const AuthCallback = () => {
   const [status, setStatus] = useState('processing');
 
   useEffect(() => {
+    // Add meta refresh as ultimate fallback
+    const metaRefresh = document.createElement('meta');
+    metaRefresh.httpEquiv = 'refresh';
+    metaRefresh.content = '10;url=/';
+    document.head.appendChild(metaRefresh);
+
+    // Cleanup on unmount
+    return () => {
+      if (metaRefresh.parentNode) {
+        metaRefresh.parentNode.removeChild(metaRefresh);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const performRedirect = () => {
+      console.log('Performing redirect to home page...');
+      try {
+        // Try multiple redirect methods to ensure it works
+        window.location.replace('/');
+      } catch (e1) {
+        console.error('Replace failed:', e1);
+        try {
+          window.location.href = '/';
+        } catch (e2) {
+          console.error('Href assignment failed:', e2);
+          try {
+            window.location.assign('/');
+          } catch (e3) {
+            console.error('Assign failed:', e3);
+            // Last resort - create a link and click it
+            const link = document.createElement('a');
+            link.href = '/';
+            link.click();
+          }
+        }
+      }
+    };
+
     const handleAuthCallback = async () => {
       try {
         console.log('AuthCallback: Starting auth callback process');
@@ -47,10 +86,16 @@ const AuthCallback = () => {
               detail: { user: data.session.user }
             }));
             
-            // Redirect to the main app after a short delay
+            // Redirect after delay
+            setTimeout(performRedirect, 2000);
+            
+            // Backup redirect after 5 seconds if still on this page
             setTimeout(() => {
-              window.location.href = '/';
-            }, 2000);
+              if (window.location.pathname === '/auth/callback') {
+                console.log('Still on callback page, attempting redirect again...');
+                performRedirect();
+              }
+            }, 5000);
           } else {
             console.log('No session found, trying to refresh...');
             // Try refreshing the session
@@ -65,9 +110,13 @@ const AuthCallback = () => {
             if (refreshData.session) {
               console.log('Session refreshed successfully');
               setStatus('success');
-              setTimeout(() => {
-                window.location.href = '/';
-              }, 2000);
+              
+              // Trigger auth state update event
+              window.dispatchEvent(new CustomEvent('supabase-auth-success', {
+                detail: { user: refreshData.session.user }
+              }));
+              
+              setTimeout(performRedirect, 2000);
             } else {
               console.log('Still no session after refresh');
               setStatus('error');
@@ -88,9 +137,7 @@ const AuthCallback = () => {
           if (data.session) {
             console.log('Existing session found');
             setStatus('success');
-            setTimeout(() => {
-              window.location.href = '/';
-            }, 1000);
+            setTimeout(performRedirect, 1000);
           } else {
             console.log('No existing session, redirecting to home');
             setStatus('error');
@@ -104,6 +151,10 @@ const AuthCallback = () => {
 
     handleAuthCallback();
   }, []);
+
+  const handleManualRedirect = () => {
+    window.location.replace('/');
+  };
 
   return (
     <div style={{
@@ -137,11 +188,22 @@ const AuthCallback = () => {
         )}
 
         {status === 'success' && (
-          <>
+          <div 
+            onClick={handleManualRedirect}
+            style={{ cursor: 'pointer' }}
+          >
             <div style={{ fontSize: '48px', marginBottom: '20px' }}>✅</div>
             <h2 style={{ color: '#4caf50' }}>Authentication Successful!</h2>
             <p>You're being redirected to the app...</p>
-          </>
+            <p style={{ 
+              fontSize: '12px', 
+              color: '#666', 
+              marginTop: '10px',
+              textDecoration: 'underline'
+            }}>
+              Click here if you're not redirected automatically
+            </p>
+          </div>
         )}
 
         {status === 'error' && (
