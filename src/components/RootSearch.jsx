@@ -730,21 +730,16 @@ const RootSearch = () => {
                         </h5>
                         <div className="word-cloud">
                           {data.englishWords.map((word, index) => (
-                            <div key={index} className="word-with-arabic">
-                              <span 
-                                className="related-word"
-                                onClick={() => {
-                                  setSearchQuery(word);
-                                  setSearchMode('english');
-                                }}
-                              >
-                                {word}
-                              </span>
-                              <span className="word-arabic-hint" dir="rtl">
-                                {/* This would show the Arabic word if we had a mapping */}
-                                {root}
-                              </span>
-                            </div>
+                            <span 
+                              key={index}
+                              className="related-word"
+                              onClick={() => {
+                                setSearchQuery(word);
+                                setSearchMode('english');
+                              }}
+                            >
+                              {word}
+                            </span>
                           ))}
                         </div>
                       </div>
