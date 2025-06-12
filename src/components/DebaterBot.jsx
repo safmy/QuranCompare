@@ -83,7 +83,7 @@ const DebaterBot = () => {
   const [hoveredChatId, setHoveredChatId] = useState(null);
   const [deletingChatId, setDeletingChatId] = useState(null);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
-  const { user, isAuthenticated, hasActiveSubscription: authHasSubscription } = useAuth();
+  const { user, isAuthenticated, hasActiveSubscription: authHasSubscription, loading: authLoading } = useAuth();
   const messagesEndRef = useRef(null);
 
   const subscriptionInfo = getSubscriptionInfo();
@@ -109,14 +109,17 @@ const DebaterBot = () => {
 
   // Check access on component mount and when user changes
   useEffect(() => {
+    // Don't check auth if still loading
+    if (authLoading) return;
+    
     // Don't show modals immediately if auth is still loading
     if (!isAuthenticated && user === null) {
-      // User might still be loading, wait a bit
+      // User might still be loading, wait a bit longer
       const timer = setTimeout(() => {
-        if (!isAuthenticated) {
+        if (!isAuthenticated && !authLoading) {
           setShowAuth(true);
         }
-      }, 1000);
+      }, 2000); // Increased timeout to 2 seconds
       return () => clearTimeout(timer);
     }
     
@@ -132,7 +135,7 @@ const DebaterBot = () => {
         loadChatHistory();
       }
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, authLoading]);
   
   // Load previous chat history
   const loadChatHistory = async () => {

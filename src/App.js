@@ -6,6 +6,7 @@ import QuranVerseLookup from './components/QuranVerseLookup';
 import QuranCompare from './components/QuranCompare';
 import EnhancedDebaterBot from './components/EnhancedDebaterBot';
 import RootSearch from './components/RootSearch';
+import Domain from './components/Domain';
 import AuthCallback from './components/AuthCallback';
 import PaymentSuccess from './components/PaymentSuccess';
 import PaymentCancel from './components/PaymentCancel';
@@ -248,6 +249,11 @@ function AppContent() {
           </p>
         </div>
       )
+    },
+    {
+      id: 'domain',
+      label: 'Domain',
+      component: <Domain />
     }
   ];
 
@@ -429,4 +435,4 @@ function App() {
 }
 
 export default App;
-// Trigger Netlify deployment - Thu 12 Dec 2024 - v1.5.1 - Merged EnhancedDebaterBot with history functionality
+// Trigger Netlify deployment - Fri 13 Dec 2024 - v1.5.5 - Enhanced AI Debater to always show integrated features panel with better messaging

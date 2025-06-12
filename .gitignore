@@ -27,3 +27,4 @@ verses_array_roots_meanings_subtitles_footnotes.json
 
 # Local Netlify folder
 .netlify
+.env.local

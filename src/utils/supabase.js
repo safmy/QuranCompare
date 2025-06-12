@@ -38,6 +38,14 @@ export const checkUserSubscription = async (email) => {
     return data;
   } catch (err) {
     console.error('Error checking subscription via API:', err);
+    // Check if it's the Supabase "Project not specified" error
+    if (err.message.includes('Project not specified')) {
+      return { 
+        hasSubscription: false, 
+        error: 'Database service is temporarily unavailable. Please try again later.',
+        isSupabaseError: true
+      };
+    }
     // Fallback to direct Supabase if API fails
     try {
       const { data, error } = await supabase
@@ -78,6 +86,14 @@ export const createOrUpdateUser = async (email) => {
     });
 
     if (!response.ok) {
+      const errorData = await response.text();
+      if (errorData.includes('Project not specified')) {
+        return { 
+          success: false, 
+          error: 'Database service is temporarily unavailable. Please try again later.',
+          isSupabaseError: true
+        };
+      }
       throw new Error(`API request failed: ${response.status}`);
     }
 
@@ -85,6 +101,14 @@ export const createOrUpdateUser = async (email) => {
     return data;
   } catch (err) {
     console.error('Error creating user via API:', err);
+    // Check if it's the Supabase "Project not specified" error
+    if (err.message.includes('Project not specified')) {
+      return { 
+        success: false, 
+        error: 'Database service is temporarily unavailable. Please try again later.',
+        isSupabaseError: true
+      };
+    }
     // Fallback to direct Supabase if API fails
     try {
       const { data: existingUser } = await supabase

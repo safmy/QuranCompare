@@ -111,6 +111,26 @@ export const AuthProvider = ({ children }) => {
       const createResult = await createOrUpdateUser(email);
       if (!createResult.success) {
         console.error('Failed to create/update user:', createResult.error);
+        // Check if it's a Supabase error
+        if (createResult.isSupabaseError) {
+          // Set user data locally for known premium users during outage
+          const knownPremiumUsers = ['syedahmadfahmybinsyedsalim@gmail.com', 'safmy@example.com', 'zipkaa@gmail.com'];
+          if (knownPremiumUsers.includes(email)) {
+            const userData = {
+              email: email,
+              id: supabaseUser.id,
+              loginTime: new Date().toISOString(),
+              subscriptionStatus: 'active',
+              subscriptionTier: 'premium',
+              subscriptionExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+            };
+            setUser(userData);
+            localStorage.setItem('subscriptionStatus', 'active');
+            localStorage.setItem('subscriptionTier', 'premium');
+            localStorage.setItem('subscriptionExpiry', userData.subscriptionExpiry);
+            return;
+          }
+        }
         return;
       }
       
@@ -151,6 +171,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (user) {
       localStorage.setItem('quranCompareUser', JSON.stringify(user));
+      // Also ensure subscription data is persisted
+      if (user.subscriptionStatus === 'active') {
+        localStorage.setItem('subscriptionStatus', 'active');
+        localStorage.setItem('subscriptionTier', user.subscriptionTier || 'premium');
+        localStorage.setItem('subscriptionExpiry', user.subscriptionExpiry || '');
+      }
     } else {
       localStorage.removeItem('quranCompareUser');
     }

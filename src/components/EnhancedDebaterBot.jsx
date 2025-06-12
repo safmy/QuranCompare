@@ -69,7 +69,7 @@ const dearabizeText = (text) => {
 };
 
 const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recentSearch }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const { language } = useLanguage();
   const [messages, setMessages] = useState(() => {
     const saved = sessionStorage.getItem('debaterMessages');
@@ -133,6 +133,7 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       };
     }
   });
+  const [selectedMessageId, setSelectedMessageId] = useState(null); // Track which message's related content to show
   const messagesEndRef = useRef(null);
 
   // Save state to sessionStorage
@@ -185,14 +186,17 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
 
   // Check access on component mount and when user changes
   useEffect(() => {
+    // Don't check auth if still loading
+    if (authLoading) return;
+    
     // Don't show modals immediately if auth is still loading
     if (!isAuthenticated && user === null) {
-      // User might still be loading, wait a bit
+      // User might still be loading, wait a bit longer
       const timer = setTimeout(() => {
-        if (!isAuthenticated) {
+        if (!isAuthenticated && !authLoading) {
           setShowAuth(true);
         }
-      }, 1000);
+      }, 2000); // Increased timeout to 2 seconds
       return () => clearTimeout(timer);
     }
     
@@ -208,7 +212,7 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
         loadChatHistory();
       }
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, authLoading]);
   
   // Load previous chat history
   const loadChatHistory = async () => {
@@ -239,19 +243,11 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       const lastMessage = messages[messages.length - 1]?.content || '';
       const summary = currentTopic || lastMessage.substring(0, 100) + (lastMessage.length > 100 ? '...' : '');
       
-      // Create an enhanced messages array that includes related data
-      const enhancedMessages = messages.map((msg, index) => {
-        if (msg.role === 'assistant' && index === messages.length - 1) {
-          // Attach relatedData to the last assistant message
-          return { ...msg, relatedData };
-        }
-        return msg;
-      });
-      
+      // Messages already contain relatedData with each assistant message
       const chatData = {
         user_email: user.email,
         topic: summary,
-        messages: JSON.stringify(enhancedMessages), // Store with related data
+        messages: JSON.stringify(messages), // Store messages as-is, with embedded relatedData
         is_active: true,
         updated_at: new Date().toISOString()
       };
@@ -301,7 +297,7 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
         ? JSON.parse(chat.messages) 
         : chat.messages || [];
       
-      // Extract relatedData from messages if present
+      // Extract relatedData from the last assistant message
       let extractedRelatedData = {
         verses: [],
         searchResults: [],
@@ -310,18 +306,16 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
         citations: []
       };
       
-      // Look for relatedData in assistant messages
+      // Look for relatedData in the last assistant message
       const lastAssistantMsg = [...parsedMessages].reverse().find(msg => msg.role === 'assistant' && msg.relatedData);
       if (lastAssistantMsg && lastAssistantMsg.relatedData) {
         extractedRelatedData = lastAssistantMsg.relatedData;
       }
       
-      // Convert timestamp strings back to Date objects and clean messages
+      // Convert timestamp strings back to Date objects (keep relatedData with messages)
       const messagesWithDates = parsedMessages.map(msg => {
-        const cleanMsg = { ...msg };
-        delete cleanMsg.relatedData; // Remove relatedData from individual messages
         return {
-          ...cleanMsg,
+          ...msg,
           timestamp: new Date(msg.timestamp)
         };
       });
@@ -346,6 +340,7 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
     setDebateMode(false);
     setShowChatHistory(false);
     setError(null);
+    setSelectedMessageId(null);
     setRelatedData({
       verses: [],
       searchResults: [],
@@ -468,9 +463,19 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
 
       const data = await response.json();
       
+      // Always log what we received
+      console.log(`Debate response from ${endpoint}:`, {
+        hasRelatedVerses: !!data.relatedVerses,
+        relatedVersesCount: data.relatedVerses?.length || 0,
+        hasSearchResults: !!data.searchResults,
+        searchResultsCount: data.searchResults?.length || 0,
+        hasRootAnalysis: !!data.rootAnalysis,
+        rootAnalysisCount: data.rootAnalysis?.length || 0
+      });
+      
       // Update related data if available
-      if (endpoint === '/debate/enhanced' && data.relatedVerses) {
-        console.log('Enhanced debate search results:', data.searchResults);
+      if (data.relatedVerses || data.searchResults || data.rootAnalysis) {
+        console.log('Enhanced debate data received');
         // Log detailed info about RashadAllMedia results
         if (data.searchResults) {
           data.searchResults.forEach((result, index) => {
@@ -493,11 +498,31 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
         });
       }
       
+      // Prepare related data for this message
+      let messageRelatedData = {
+        verses: data.relatedVerses || [],
+        searchResults: data.searchResults || [],
+        rootAnalysis: data.rootAnalysis || [],
+        suggestedTabs: data.suggestedTabs || [],
+        citations: data.citations || []
+      };
+      
+      // If no related data from API, add a note
+      if (endpoint === '/debate' && !data.relatedVerses && !data.searchResults && !data.rootAnalysis) {
+        console.warn('Regular debate endpoint used - no integrated features available');
+        messageRelatedData.citations = [{
+          type: 'note',
+          content: 'Enhanced features unavailable. Try asking about specific verses or topics for better integration.'
+        }];
+      }
+      
       const botMessage = {
         id: Date.now() + 1,
         role: 'assistant',
         content: dearabizeText(data.response),
-        timestamp: new Date()
+        timestamp: new Date(),
+        // Store related data with this specific message
+        relatedData: messageRelatedData
       };
 
       setMessages(prev => [...prev, botMessage]);
@@ -557,8 +582,8 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       });
 
       if (!response.ok) {
-        // Fallback to regular endpoint
-        console.log('Enhanced endpoint failed, trying regular endpoint...');
+        // Enhanced endpoint might be temporarily unavailable
+        console.warn(`Enhanced endpoint failed with status ${response.status}, trying regular endpoint...`);
         endpoint = '/debate';
         response = await fetch(`${API_BASE_URL}${endpoint}`, {
           method: 'POST',
@@ -578,13 +603,26 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
         if (!response.ok) {
           throw new Error(`Failed to get response: ${response.status}`);
         }
+        
+        // Notify user that enhanced features are temporarily unavailable
+        console.warn('AI Debater is running with limited features. Verse lookup, media search, and root analysis may not be available for this response.');
       }
 
       const data = await response.json();
       
+      // Always log what we received
+      console.log(`Debate response from ${endpoint}:`, {
+        hasRelatedVerses: !!data.relatedVerses,
+        relatedVersesCount: data.relatedVerses?.length || 0,
+        hasSearchResults: !!data.searchResults,
+        searchResultsCount: data.searchResults?.length || 0,
+        hasRootAnalysis: !!data.rootAnalysis,
+        rootAnalysisCount: data.rootAnalysis?.length || 0
+      });
+      
       // Update related data if available
-      if (endpoint === '/debate/enhanced' && data.relatedVerses) {
-        console.log('Enhanced debate search results:', data.searchResults);
+      if (data.relatedVerses || data.searchResults || data.rootAnalysis) {
+        console.log('Enhanced debate data received');
         // Log detailed info about RashadAllMedia results
         if (data.searchResults) {
           data.searchResults.forEach((result, index) => {
@@ -607,11 +645,31 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
         });
       }
       
+      // Prepare related data for this message
+      let messageRelatedData = {
+        verses: data.relatedVerses || [],
+        searchResults: data.searchResults || [],
+        rootAnalysis: data.rootAnalysis || [],
+        suggestedTabs: data.suggestedTabs || [],
+        citations: data.citations || []
+      };
+      
+      // If no related data from API, add a note
+      if (endpoint === '/debate' && !data.relatedVerses && !data.searchResults && !data.rootAnalysis) {
+        console.warn('Regular debate endpoint used - no integrated features available');
+        messageRelatedData.citations = [{
+          type: 'note',
+          content: 'Enhanced features unavailable. Try asking about specific verses or topics for better integration.'
+        }];
+      }
+      
       const botMessage = {
         id: Date.now() + 1,
         role: 'assistant',
         content: dearabizeText(data.response),
-        timestamp: new Date()
+        timestamp: new Date(),
+        // Store related data with this specific message
+        relatedData: messageRelatedData
       };
 
       setMessages(prev => [...prev, botMessage]);
@@ -886,7 +944,8 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
             <div style={{ flex: 1, minWidth: 0 }}>
               <h1 style={{ margin: 0, fontSize: isMobile ? '18px' : '24px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 🤖 AI Debater Bot Enhanced
-                {!showRelatedContent && (relatedData.verses.length > 0 || relatedData.searchResults.length > 0 || relatedData.rootAnalysis.length > 0) && (
+                {!showRelatedContent && messages.some(m => m.role === 'assistant' && m.relatedData && 
+                  (m.relatedData.verses?.length > 0 || m.relatedData.searchResults?.length > 0 || m.relatedData.rootAnalysis?.length > 0)) && (
                   <span style={{
                     marginLeft: '10px',
                     fontSize: '14px',
@@ -896,7 +955,14 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                     borderRadius: '12px',
                     fontWeight: 'normal'
                   }}>
-                    📚 {(relatedData.verses?.length || 0) + (relatedData.searchResults?.length || 0) + (relatedData.rootAnalysis?.length || 0)} items
+                    📚 {messages.reduce((total, m) => {
+                      if (m.role === 'assistant' && m.relatedData) {
+                        return total + (m.relatedData.verses?.length || 0) + 
+                               (m.relatedData.searchResults?.length || 0) + 
+                               (m.relatedData.rootAnalysis?.length || 0);
+                      }
+                      return total;
+                    }, 0)} items
                   </span>
                 )}
               </h1>
@@ -1252,7 +1318,8 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                     style={{
                       display: 'flex',
                       marginBottom: '20px',
-                      justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start'
+                      justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
+                      position: 'relative'
                     }}
                   >
                     <div style={{
@@ -1260,7 +1327,8 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                       padding: '12px 16px',
                       borderRadius: '18px',
                       backgroundColor: message.role === 'user' ? '#2196F3' : '#f0f0f0',
-                      color: message.role === 'user' ? 'white' : '#333'
+                      color: message.role === 'user' ? 'white' : '#333',
+                      position: 'relative'
                     }}>
                       <div style={{ fontSize: '14px', lineHeight: '1.4' }}>
                         {parseMessageContent(message.content).map((part, index) => {
@@ -1308,9 +1376,40 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                       <div style={{
                         fontSize: '11px',
                         marginTop: '5px',
-                        opacity: 0.7
+                        opacity: 0.7,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
                       }}>
-                        {formatTimestamp(message.timestamp)}
+                        <span>{formatTimestamp(message.timestamp)}</span>
+                        {message.role === 'assistant' && message.relatedData && 
+                         (message.relatedData.verses?.length > 0 || 
+                          message.relatedData.searchResults?.length > 0 || 
+                          message.relatedData.rootAnalysis?.length > 0) && (
+                          <button
+                            onClick={() => {
+                              setSelectedMessageId(message.id);
+                              setShowRelatedContent(true);
+                            }}
+                            style={{
+                              background: selectedMessageId === message.id ? '#1976d2' : 'transparent',
+                              color: selectedMessageId === message.id ? 'white' : '#1976d2',
+                              border: '1px solid #1976d2',
+                              borderRadius: '12px',
+                              padding: '2px 8px',
+                              fontSize: '10px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '3px'
+                            }}
+                            title="View related content for this response"
+                          >
+                            📚 {(message.relatedData.verses?.length || 0) + 
+                                (message.relatedData.searchResults?.length || 0) + 
+                                (message.relatedData.rootAnalysis?.length || 0)}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1426,7 +1525,28 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
         </div>
 
         {/* Related Content Panel - Only visible in debate mode and not on mobile */}
-        {debateMode && !isMobile && (relatedData.verses.length > 0 || relatedData.searchResults.length > 0 || relatedData.rootAnalysis.length > 0) && (
+        {debateMode && !isMobile && (() => {
+          // Get related data from selected message or use the latest
+          let displayRelatedData = relatedData;
+          if (selectedMessageId) {
+            const selectedMessage = messages.find(m => m.id === selectedMessageId);
+            if (selectedMessage?.relatedData) {
+              displayRelatedData = selectedMessage.relatedData;
+            }
+          } else {
+            // Find the latest assistant message with related data
+            const latestAssistantMsg = [...messages].reverse().find(m => m.role === 'assistant' && m.relatedData);
+            if (latestAssistantMsg?.relatedData) {
+              displayRelatedData = latestAssistantMsg.relatedData;
+            }
+          }
+          
+          // Always show the panel in debate mode to emphasize the integrated nature
+          const hasRelatedContent = (displayRelatedData.verses?.length > 0 || 
+                                   displayRelatedData.searchResults?.length > 0 || 
+                                   displayRelatedData.rootAnalysis?.length > 0);
+          
+          return true && (
           <>
             {/* Toggle button when collapsed */}
             {!showRelatedContent && (
@@ -1462,9 +1582,9 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                 title="Show Related Content"
               >
                 📚 Related Content ({
-                  (relatedData.verses?.length || 0) + 
-                  (relatedData.searchResults?.length || 0) + 
-                  (relatedData.rootAnalysis?.length || 0)
+                  (displayRelatedData.verses?.length || 0) + 
+                  (displayRelatedData.searchResults?.length || 0) + 
+                  (displayRelatedData.rootAnalysis?.length || 0)
                 })
               </button>
             )}
@@ -1505,14 +1625,48 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
               overflowY: 'auto',
               padding: '15px'
             }}>
+              {/* Show message if no content */}
+              {!hasRelatedContent && (
+                <div style={{
+                  padding: '20px',
+                  textAlign: 'center',
+                  color: '#666'
+                }}>
+                  <p style={{ fontSize: '14px', marginBottom: '15px' }}>
+                    🔍 No related content found for this response
+                  </p>
+                  <div style={{
+                    backgroundColor: '#f5f5f5',
+                    padding: '15px',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    lineHeight: '1.6',
+                    textAlign: 'left'
+                  }}>
+                    <p style={{ fontWeight: 'bold', marginBottom: '10px' }}>
+                      The AI Debater should normally provide:
+                    </p>
+                    <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                      <li>Related Quran verses with context</li>
+                      <li>Relevant media from Rashad Khalifa's talks</li>
+                      <li>Arabic root word analysis</li>
+                      <li>Related articles and newsletters</li>
+                    </ul>
+                    <p style={{ marginTop: '10px', fontStyle: 'italic' }}>
+                      Try asking about specific verses, topics, or concepts for better integration.
+                    </p>
+                  </div>
+                </div>
+              )}
+              
               {/* Related Verses */}
-              {relatedData.verses.length > 0 && (
+              {displayRelatedData.verses.length > 0 && (
                 <div style={{ marginBottom: '20px' }}>
                   <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#555' }}>
                     <FaBook style={{ marginRight: '5px' }} />
                     Related Verses
                   </h4>
-                  {relatedData.verses.map((verse, index) => (
+                  {displayRelatedData.verses.map((verse, index) => (
                     <div key={index} style={{
                       padding: '10px',
                       backgroundColor: 'white',
@@ -1543,13 +1697,13 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
               )}
 
               {/* Root Analysis */}
-              {relatedData.rootAnalysis.length > 0 && (
+              {displayRelatedData.rootAnalysis.length > 0 && (
                 <div style={{ marginBottom: '20px' }}>
                   <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#555' }}>
                     <FaLanguage style={{ marginRight: '5px' }} />
                     Root Analysis
                   </h4>
-                  {relatedData.rootAnalysis.map((root, index) => (
+                  {displayRelatedData.rootAnalysis.map((root, index) => (
                     <div key={index} style={{
                       padding: '8px',
                       backgroundColor: 'white',
@@ -1586,13 +1740,13 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
               )}
 
               {/* Search Results */}
-              {relatedData.searchResults.length > 0 && (
+              {displayRelatedData.searchResults.length > 0 && (
                 <div style={{ marginBottom: '20px' }}>
                   <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#555' }}>
                     <FaSearch style={{ marginRight: '5px' }} />
                     Relevant Media & Articles
                   </h4>
-                  {relatedData.searchResults.map((result, index) => (
+                  {displayRelatedData.searchResults.map((result, index) => (
                     <div key={index} style={{
                       padding: '10px',
                       backgroundColor: 'white',
@@ -1692,7 +1846,7 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
           </div>
         )}
           </>
-        )}
+        )})()}
       </div>
 
       {/* CSS for animations */}

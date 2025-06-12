@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { supabase } from '../utils/supabase';
+import DatabaseErrorModal from './DatabaseErrorModal';
 
 const AuthModal = ({ onClose, onSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [email, setEmail] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showDatabaseError, setShowDatabaseError] = useState(false);
 
   const handleGoogleAuth = async () => {
     try {
@@ -23,7 +25,11 @@ const AuthModal = ({ onClose, onSuccess }) => {
       
     } catch (err) {
       console.error('Google auth error:', err);
-      setError('Failed to sign in with Google. Please try again.');
+      if (err.message?.includes('Project not specified') || err.message?.includes('Database service')) {
+        setShowDatabaseError(true);
+      } else {
+        setError('Failed to sign in with Google. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +71,11 @@ const AuthModal = ({ onClose, onSuccess }) => {
       }
     } catch (err) {
       console.error('Email auth error:', err);
-      setError(err.message || 'Authentication failed. Please try again.');
+      if (err.message?.includes('Project not specified') || err.message?.includes('Database service')) {
+        setShowDatabaseError(true);
+      } else {
+        setError(err.message || 'Authentication failed. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -255,6 +265,11 @@ const AuthModal = ({ onClose, onSuccess }) => {
           </button>
         </div>
       </div>
+      
+      <DatabaseErrorModal 
+        show={showDatabaseError} 
+        onClose={() => setShowDatabaseError(false)} 
+      />
     </div>
   );
 };

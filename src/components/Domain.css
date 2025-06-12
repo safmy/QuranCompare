@@ -1,0 +1,311 @@
+.domain-container {
+  min-height: 100vh;
+  background: #0f0f0f;
+  color: #fff;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Login Screen */
+.domain-login {
+  max-width: 400px;
+  margin: 100px auto;
+  background: #1a1a1a;
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.domain-login h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #00ff41;
+}
+
+.domain-login form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.domain-login input {
+  padding: 12px;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 16px;
+}
+
+.domain-login input:focus {
+  outline: none;
+  border-color: #00ff41;
+}
+
+.domain-login button {
+  padding: 12px;
+  background: #00ff41;
+  color: #000;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.domain-login button:hover {
+  background: #00cc33;
+  transform: translateY(-2px);
+}
+
+.error-message {
+  color: #ff4444;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* Main Interface */
+.domain-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.domain-header h1 {
+  color: #00ff41;
+  font-size: 2.5em;
+  margin: 0;
+}
+
+.logout-btn {
+  padding: 8px 20px;
+  background: #444;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: #555;
+}
+
+.domain-content {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* Status Panel */
+.status-panel {
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.status-indicator {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.status-indicator.active {
+  color: #00ff41;
+}
+
+/* Control Buttons */
+.control-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.main-button {
+  padding: 20px 40px;
+  font-size: 1.3em;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.main-button.start {
+  background: #00ff41;
+  color: #000;
+}
+
+.main-button.stop {
+  background: #ff0041;
+  color: #fff;
+}
+
+.main-button:hover {
+  transform: scale(1.05);
+}
+
+.test-button {
+  padding: 20px 30px;
+  background: #444;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.1em;
+}
+
+.test-button:hover {
+  background: #555;
+}
+
+/* Level Meters */
+.level-meters {
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.meter {
+  margin-bottom: 15px;
+}
+
+.meter label {
+  display: block;
+  margin-bottom: 5px;
+  color: #888;
+  font-size: 0.9em;
+}
+
+.meter-bar {
+  height: 30px;
+  background: #2a2a2a;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  transition: width 0.1s ease;
+  border-radius: 15px;
+}
+
+.meter-fill.input {
+  background: linear-gradient(90deg, #00ff41, #00cc33);
+}
+
+.meter-fill.output {
+  background: linear-gradient(90deg, #ff0041, #cc0033);
+}
+
+/* Effects Panel */
+.effects-panel {
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.effects-panel h3 {
+  margin-bottom: 20px;
+  color: #00ff41;
+}
+
+.effects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+}
+
+.effect-card {
+  background: #2a2a2a;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 2px solid transparent;
+}
+
+.effect-card:hover {
+  background: #3a3a3a;
+  transform: translateY(-2px);
+}
+
+.effect-card.active {
+  background: #00ff41;
+  color: #000;
+  border-color: #00ff41;
+}
+
+.effect-icon {
+  font-size: 2em;
+  margin-bottom: 5px;
+}
+
+.effect-name {
+  font-weight: bold;
+}
+
+/* Volume Control */
+.volume-control {
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.volume-control label {
+  display: block;
+  margin-bottom: 10px;
+  color: #888;
+}
+
+.volume-control input[type="range"] {
+  width: 100%;
+  height: 6px;
+  background: #2a2a2a;
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.volume-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #00ff41;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.volume-control input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #00ff41;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .domain-header h1 {
+    font-size: 1.8em;
+  }
+  
+  .control-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .main-button, .test-button {
+    width: 200px;
+  }
+  
+  .effects-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

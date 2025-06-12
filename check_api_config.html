@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check API Configuration</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        pre { background: #f4f4f4; padding: 10px; overflow: auto; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Check QuranCompare API Configuration</h1>
+    <button onclick="checkAPIStatus()">Check API Status</button>
+    <button onclick="checkSupabaseStatus()">Check Supabase Status</button>
+    
+    <div id="results"></div>
+
+    <script>
+        async function checkAPIStatus() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Checking API status...</p>';
+            
+            try {
+                const response = await fetch('https://qurancompare.onrender.com/api/payment/test');
+                const data = await response.json();
+                
+                resultsDiv.innerHTML = '<h2>API Status:</h2><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                // Highlight issues
+                if (!data.supabase_configured) {
+                    resultsDiv.innerHTML += '<p class="error">❌ Supabase is NOT configured properly!</p>';
+                    if (data.supabase_error) {
+                        resultsDiv.innerHTML += '<p class="error">Error: ' + data.supabase_error + '</p>';
+                    }
+                } else {
+                    resultsDiv.innerHTML += '<p class="success">✅ Supabase is configured</p>';
+                }
+                
+            } catch (error) {
+                resultsDiv.innerHTML = '<p class="error">Error checking API: ' + error.message + '</p>';
+            }
+        }
+        
+        async function checkSupabaseStatus() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Checking Supabase connection...</p>';
+            
+            try {
+                const response = await fetch('https://qurancompare.onrender.com/api/payment/test-supabase');
+                const data = await response.json();
+                
+                resultsDiv.innerHTML = '<h2>Supabase Status:</h2><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                if (data.status === 'error') {
+                    resultsDiv.innerHTML += '<p class="error">❌ ' + data.message + '</p>';
+                    resultsDiv.innerHTML += '<h3>Troubleshooting:</h3>';
+                    resultsDiv.innerHTML += '<ul>';
+                    resultsDiv.innerHTML += '<li>Check if SUPABASE_SERVICE_KEY is set in Render environment variables</li>';
+                    resultsDiv.innerHTML += '<li>Verify the SUPABASE_URL is correct</li>';
+                    resultsDiv.innerHTML += '<li>Make sure the service key is valid and not expired</li>';
+                    resultsDiv.innerHTML += '</ul>';
+                }
+                
+            } catch (error) {
+                resultsDiv.innerHTML = '<p class="error">Error checking Supabase: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>
