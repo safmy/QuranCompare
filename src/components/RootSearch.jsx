@@ -42,6 +42,7 @@ const RootSearch = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [expandedWords, setExpandedWords] = useState(new Set());
   const [rootPronunciations, setRootPronunciations] = useState({});
+  const [showAllArabic, setShowAllArabic] = useState(false);
   
   // Handle scroll event to show/hide scroll-to-top button
   useEffect(() => {
@@ -812,7 +813,16 @@ const RootSearch = () => {
                 
                 {results.relatedWordsByRoot && Object.keys(results.relatedWordsByRoot).length > 0 ? (
                   <div className="related-words-by-root">
-                    <h4>Related Words:</h4>
+                    <div className="related-words-header">
+                      <h4>Related Words:</h4>
+                      <button
+                        className="toggle-arabic-btn"
+                        onClick={() => setShowAllArabic(!showAllArabic)}
+                        title={showAllArabic ? "Hide Arabic words" : "Show Arabic words"}
+                      >
+                        {showAllArabic ? "Hide Arabic" : "Show Arabic"}
+                      </button>
+                    </div>
                     {Object.entries(results.relatedWordsByRoot).map(([root, data]) => (
                       <div key={root} className="root-word-group">
                         <h5 className="root-group-header">
@@ -865,7 +875,7 @@ const RootSearch = () => {
                                 >
                                   {word}
                                 </span>
-                                {arabicData.length > 0 && expandedWords.has(`${root}-${word}`) && (
+                                {arabicData.length > 0 && (showAllArabic || expandedWords.has(`${root}-${word}`)) && (
                                   <div className="arabic-examples">
                                     {arabicData.map(([arabic, info], idx) => (
                                       <div key={idx} className="arabic-example">

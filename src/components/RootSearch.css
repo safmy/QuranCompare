@@ -839,6 +839,36 @@ body.dark-mode .root-word-group {
   border-color: #444;
 }
 
+/* Related words header */
+.related-words-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.related-words-header h4 {
+  margin: 0;
+}
+
+.toggle-arabic-btn {
+  background: #6b46c1;
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.toggle-arabic-btn:hover {
+  background: #5835b0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(107, 70, 193, 0.2);
+}
+
 /* Word with Arabic structure */
 .word-with-arabic {
   display: inline-flex;
@@ -960,5 +990,13 @@ body.dark-mode .scroll-to-top-btn {
 }
 
 body.dark-mode .scroll-to-top-btn:hover {
+  background: #7c3aed;
+}
+
+body.dark-mode .toggle-arabic-btn {
+  background: #9b7fd3;
+}
+
+body.dark-mode .toggle-arabic-btn:hover {
   background: #7c3aed;
 }
