@@ -851,13 +851,26 @@ const RootSearch = () => {
                             // Get Arabic words for this English word that share the same root
                             let arabicData = [];
                             if (englishToArabicWords && englishToArabicWords[word]) {
-                              // Filter to only show Arabic words that have the current root
+                              // Filter to only show Arabic words that appear in verses with the current root
                               arabicData = Object.entries(englishToArabicWords[word])
                                 .filter(([arabic, info]) => {
-                                  // Check if any verse with this Arabic word has the matching root
-                                  return info.verses && info.verses.some(v => {
-                                    // The verse should contain this root
-                                    return v.roots && v.roots.includes(root);
+                                  // Check if any verse reference matches verses that contain this root
+                                  if (!info.verses || !data.verses) return false;
+                                  
+                                  return info.verses.some(verseInfo => {
+                                    // Check if this verse reference is in our data.verses (which contain the root)
+                                    return data.verses.some(rootVerse => {
+                                      if (rootVerse.sura_verse === verseInfo.ref) {
+                                        // Now check if the Arabic word at this position has the matching root
+                                        const arabicWords = rootVerse.arabic ? rootVerse.arabic.split(/\s+/) : [];
+                                        const roots = rootVerse.roots ? rootVerse.roots.split(',').map(r => r.trim()) : [];
+                                        const wordIndex = parseInt(verseInfo.wordNum) - 1; // wordNum is 1-based
+                                        
+                                        // Check if the root at this word position matches our target root
+                                        return wordIndex >= 0 && wordIndex < roots.length && roots[wordIndex] === root;
+                                      }
+                                      return false;
+                                    });
                                   });
                                 })
                                 .slice(0, 2); // Limit to 2 examples
