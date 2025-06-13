@@ -850,6 +850,15 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
 
     // Parse Arabic text with roots and meanings for hover functionality
     const parseArabicText = (arabic, roots, meanings, verse) => {
+        console.log('parseArabicText called:', { 
+            verse: verse.sura_verse, 
+            hasArabic: !!arabic, 
+            hasRoots: !!roots, 
+            hasMeanings: !!meanings,
+            isMobile,
+            hoveredArabicIndex 
+        });
+        
         if (!arabic) return arabic;
         
         if (!roots || !meanings) {
@@ -965,6 +974,14 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
     
     // Parse English text to make words hoverable
     const parseEnglishText = (englishText, roots, meanings, verse) => {
+        console.log('parseEnglishText called:', { 
+            verse: verse.sura_verse, 
+            hasEnglish: !!englishText, 
+            hasRoots: !!roots, 
+            hasMeanings: !!meanings,
+            hoveredArabicIndex 
+        });
+        
         if (!englishText || !roots || !meanings) return englishText;
         
         const rootsArray = roots.split(',').map(r => r.trim());
@@ -1396,6 +1413,12 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                                 onTouchCancel={handleLongPressEnd}
                                 onContextMenu={(e) => e.preventDefault()}
                             >
+                                {console.log('Translation render check:', { 
+                                    currentLanguage, 
+                                    hasRoots: !!verse.roots, 
+                                    hasMeanings: !!verse.meanings,
+                                    willParseEnglish: currentLanguage === 'english' && verse.roots && verse.meanings 
+                                })}
                                 {currentLanguage === 'english' && verse.roots && verse.meanings
                                     ? parseEnglishText(getTranslationText(verse, currentLanguage), verse.roots, verse.meanings, verse)
                                     : getTranslationText(verse, currentLanguage)
