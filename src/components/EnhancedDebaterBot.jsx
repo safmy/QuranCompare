@@ -438,23 +438,26 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       return;
     }
 
-    setCurrentTopic(topic);
-    setDebateMode(true);
+    // Clear any previous error
     setError(null);
-    setIsLoading(true);
-
+    setInputText('');
+    
     const userMessage = {
       id: Date.now(),
       role: 'user',
-      content: `Let's debate about: ${topic}`,
+      content: topic,
       timestamp: new Date()
     };
 
+    // Update state in one batch to prevent flickering
+    setCurrentTopic(topic);
+    setDebateMode(true);
+    setIsLoading(true);
     setMessages([userMessage]);
 
     try {
-      // Try enhanced endpoint first
-      let endpoint = '/debate/enhanced';
+      // Try simple endpoint first since enhanced is having issues
+      let endpoint = '/debate';
       let response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: {
@@ -463,48 +466,14 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
         body: JSON.stringify({
           topic: topic,
           isNewTopic: true,
-          conversationHistory: [],
-          currentTab,
-          currentVerses: currentVerses || [],
-          searchContext: recentSearch,
-          userLanguage: language,
-          // Force integration features
-          forceRelatedContent: true,
-          requestEnhanced: true,
-          includeVerses: true,
-          includeMedia: true,
-          includeRootAnalysis: true,
-          // Include critical rules
-          criticalRules: [
-            "The age of responsibility is 40 years old per verse 46:15.",
-            "Those who die before age 40 go to heaven as they haven't reached the age of responsibility.",
-            "Reference appendix 32 and audio 47 at minute 46 for details on age of responsibility."
-          ]
+          conversationHistory: []
         })
       });
 
       if (!response.ok) {
-        // Add a small delay before retry
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Fallback to regular endpoint
-        console.log('Enhanced endpoint failed, trying regular endpoint...');
-        endpoint = '/debate';
-        response = await fetch(`${API_BASE_URL}${endpoint}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            topic: topic,
-            isNewTopic: true,
-            conversationHistory: []
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to start debate: ${response.status}`);
-        }
+        const errorText = await response.text();
+        console.error(`Debate API error (${response.status}):`, errorText);
+        throw new Error(`Failed to start debate. The AI service may be temporarily unavailable. Please try again in a moment.`);
       }
 
       const data = await response.json();
@@ -2029,6 +1998,115 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
             window.location.reload();
           }}
         />
+      )}
+
+      {/* Training Modal */}
+      {showTrainingMode && selectedMessageForTraining && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '600px',
+            width: '90%',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0', color: '#333' }}>
+              🎓 Training Correction
+            </h3>
+            <p style={{ color: '#666', marginBottom: '16px' }}>
+              Provide a correction for this AI response. Your correction will help improve future responses.
+            </p>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#555' }}>
+                Original Response:
+              </label>
+              <div style={{
+                padding: '12px',
+                backgroundColor: '#f5f5f5',
+                borderRadius: '8px',
+                maxHeight: '150px',
+                overflow: 'auto',
+                fontSize: '14px',
+                lineHeight: '1.5'
+              }}>
+                {messages.find(m => m.id === selectedMessageForTraining)?.content}
+              </div>
+            </div>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#555' }}>
+                Your Correction:
+              </label>
+              <textarea
+                value={trainingInput}
+                onChange={(e) => setTrainingInput(e.target.value)}
+                placeholder="Provide the correct response or explanation..."
+                style={{
+                  width: '100%',
+                  minHeight: '150px',
+                  padding: '12px',
+                  border: '2px solid #e0e0e0',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+            
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setShowTrainingMode(false);
+                  setTrainingInput('');
+                  setSelectedMessageForTraining(null);
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#f5f5f5',
+                  color: '#666',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitTrainingCorrection}
+                disabled={!trainingInput.trim()}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: trainingInput.trim() ? '#ff9800' : '#ccc',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: trainingInput.trim() ? 'pointer' : 'not-allowed',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Submit Correction
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
