@@ -436,7 +436,13 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
           currentTab,
           currentVerses: currentVerses || [],
           searchContext: recentSearch,
-          userLanguage: language
+          userLanguage: language,
+          // Force integration features
+          forceRelatedContent: true,
+          requestEnhanced: true,
+          includeVerses: true,
+          includeMedia: true,
+          includeRootAnalysis: true
         })
       });
 
@@ -583,7 +589,13 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
           currentTab,
           currentVerses: currentVerses || [],
           searchContext: recentSearch,
-          userLanguage: language
+          userLanguage: language,
+          // Force integration features
+          forceRelatedContent: true,
+          requestEnhanced: true,
+          includeVerses: true,
+          includeMedia: true,
+          includeRootAnalysis: true
         })
       });
 
@@ -971,6 +983,17 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                     }, 0)} items
                   </span>
                 )}
+                <span style={{
+                  marginLeft: '10px',
+                  fontSize: '12px',
+                  backgroundColor: '#4caf50',
+                  color: 'white',
+                  padding: '2px 6px',
+                  borderRadius: '8px',
+                  fontWeight: 'normal'
+                }} title="Integrated with Quran verses, Rashad Khalifa media, and Arabic root analysis">
+                  ✨ Integrated
+                </span>
               </h1>
               {currentTopic && (
                 <p style={{ margin: '2px 0 0 0', fontSize: '12px', opacity: 0.9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1196,6 +1219,8 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
               <p style={{ marginBottom: '20px', color: '#666', textAlign: 'center', maxWidth: '600px' }}>
                 I can help you explore Islamic topics with integrated verse lookup, media search, and root analysis.
                 I have access to all Quran translations, Rashad Khalifa's videos, articles, and newsletters.
+                <br />
+                <strong style={{ color: '#4caf50' }}>✨ Every response includes related verses, media, and root analysis automatically!</strong>
               </p>
               
               {/* Custom Topic Input - Always visible on mobile */}
@@ -1434,7 +1459,13 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                       color: '#666'
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ fontSize: '14px' }}>AI is thinking...</div>
+                        <div style={{ fontSize: '14px' }}>
+                          AI is thinking...
+                          <br />
+                          <span style={{ fontSize: '12px', color: '#888' }}>
+                            ✨ Searching for related verses, media, and roots...
+                          </span>
+                        </div>
                         <div style={{
                           width: '16px',
                           height: '16px',
