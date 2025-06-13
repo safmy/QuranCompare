@@ -1286,19 +1286,19 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
             )}
 
             <div className="verses-container">
-                {verses.map((verse, index) => {
+                {verses.map((verse, verseIndex) => {
                     // Get subtitle for current language
                     const currentSubtitle = getSubtitleText(verse, currentLanguage);
-                    const previousSubtitle = index > 0 ? getSubtitleText(verses[index - 1], currentLanguage) : null;
+                    const previousSubtitle = verseIndex > 0 ? getSubtitleText(verses[verseIndex - 1], currentLanguage) : null;
                     
                     // Check if this is the first verse or if subtitle is different from previous
                     const showSubtitle = currentSubtitle && (
-                        index === 0 || 
+                        verseIndex === 0 || 
                         currentSubtitle !== previousSubtitle
                     );
                     
                     return (
-                        <div key={verse.sura_verse}>
+                        <div key={`${verse.sura_verse}-${hoveredArabicIndex}`}>
                             
                             {/* Display subtitle if this verse has one and it's different from previous */}
                             {showSubtitle && (
@@ -1375,7 +1375,6 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                             )}
                             
                             <div 
-                                key={`translation-${verse.sura_verse}-${hoveredArabicIndex}`}
                                 className="translation-text" 
                                 style={{ direction: getLanguageConfig(currentLanguage).direction }}
                                 onMouseDown={(e) => handleLongPressStart(verse, e)}
