@@ -865,7 +865,7 @@ const RootSearch = () => {
                                     // Show Arabic on hover with delay
                                     const timeoutId = setTimeout(() => {
                                       setExpandedWords(prev => new Set([...prev, `${root}-${word}`]));
-                                    }, 300); // 300ms delay
+                                    }, 100); // 100ms delay - much more responsive
                                     setHoverTimeouts(prev => ({ ...prev, [`${root}-${word}`]: timeoutId }));
                                   }}
                                   onMouseLeave={() => {
@@ -899,7 +899,29 @@ const RootSearch = () => {
                                             onClick={(e) => {
                                               e.stopPropagation();
                                               const verseRef = info.verses[0].ref;
-                                              scrollToVerse(verseRef);
+                                              // Try to scroll to verse first
+                                              const verseElements = document.querySelectorAll('.verse-result');
+                                              let found = false;
+                                              verseElements.forEach(element => {
+                                                const refElement = element.querySelector('.verse-ref');
+                                                if (refElement && refElement.textContent === verseRef) {
+                                                  element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                  element.style.backgroundColor = '#ffeb3b';
+                                                  setTimeout(() => {
+                                                    element.style.backgroundColor = '';
+                                                  }, 2000);
+                                                  found = true;
+                                                }
+                                              });
+                                              
+                                              // If not found, navigate to verse lookup
+                                              if (!found) {
+                                                sessionStorage.setItem('verseRangeForLookup', verseRef);
+                                                const event = new CustomEvent('openVerseRange', { 
+                                                  detail: { range: verseRef } 
+                                                });
+                                                window.dispatchEvent(event);
+                                              }
                                             }}
                                             title={`Scroll to ${info.verses[0].ref}`}
                                           >

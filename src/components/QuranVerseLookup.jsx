@@ -975,30 +975,53 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
             const cleanWord = word.toLowerCase().replace(/[^a-z]/gi, '');
             let isHighlighted = false;
             
+            // Skip highlighting for articles and very short words
+            const articles = ['a', 'an', 'the', 'in', 'on', 'at', 'to', 'of', 'for', 'by', 'is', 'as'];
+            if (articles.includes(cleanWord)) {
+                return <span key={idx}>{word}{idx < words.length - 1 ? ' ' : ''}</span>;
+            }
+            
             // Check if this English word corresponds to the hovered Arabic word
-            if (hoveredArabicIndex !== null && hoveredArabicIndex >= 0 && hoveredArabicIndex < meaningsArray.length) {
+            if (hoveredArabicIndex !== null) {
                 const hoveredMeaning = meaningsArray[hoveredArabicIndex];
                 if (hoveredMeaning && hoveredMeaning !== '-') {
-                    const meaningWords = hoveredMeaning.toLowerCase().split(/\s+/);
+                    const cleanedMeaning = hoveredMeaning.toLowerCase().replace(/^(a|an|the)\s+/i, '');
+                    const meaningWords = cleanedMeaning.split(/\s+/);
                     const allRelatedWords = new Set();
                     
-                    // Add the original meaning words
                     meaningWords.forEach(mw => {
-                        allRelatedWords.add(mw.replace(/[^a-z]/gi, ''));
-                        // Add synonyms
-                        getSynonyms(mw).forEach(syn => allRelatedWords.add(syn));
+                        const cleanMw = mw.replace(/[^a-z]/gi, '');
+                        if (cleanMw && cleanMw.length > 2) {
+                            allRelatedWords.add(cleanMw);
+                            if (cleanMw.endsWith('s')) {
+                                allRelatedWords.add(cleanMw.slice(0, -1));
+                            } else {
+                                allRelatedWords.add(cleanMw + 's');
+                            }
+                            getSynonyms(cleanMw).forEach(syn => {
+                                allRelatedWords.add(syn);
+                                if (syn.endsWith('s')) {
+                                    allRelatedWords.add(syn.slice(0, -1));
+                                } else {
+                                    allRelatedWords.add(syn + 's');
+                                }
+                            });
+                        }
                     });
                     
-                    // Check if current word matches any related word - be more strict
                     isHighlighted = Array.from(allRelatedWords).some(rw => {
-                        // Exact match
                         if (cleanWord === rw) return true;
-                        // Check if it's a plural/singular form
                         if (cleanWord === rw + 's' || cleanWord + 's' === rw) return true;
-                        // Check for common verb forms
-                        if (cleanWord === rw + 'ed' || cleanWord === rw + 'd') return true;
-                        if (cleanWord === rw + 'ing') return true;
-                        // Don't do partial matches to avoid false positives
+                        if (cleanWord.length <= 3 || rw.length <= 3) return false;
+                        if (rw.length >= 4 && cleanWord.length >= 4) {
+                            if (cleanWord.includes(rw)) {
+                                const index = cleanWord.indexOf(rw);
+                                const beforeChar = index > 0 ? cleanWord[index - 1] : ' ';
+                                const afterChar = index + rw.length < cleanWord.length ? cleanWord[index + rw.length] : ' ';
+                                return /[^a-z]/i.test(beforeChar) && /[^a-z]/i.test(afterChar);
+                            }
+                            return rw.includes(cleanWord);
+                        }
                         return false;
                     });
                 }
