@@ -26,6 +26,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
   const [selectedRootData, setSelectedRootData] = useState(null); // Selected root from verse lookup
   const [hoveredEnglishIndex, setHoveredEnglishIndex] = useState(null); // For English word hover
   const [hoveredArabicIndex, setHoveredArabicIndex] = useState(null); // For Arabic word hover
+  const [lockedArabicIndex, setLockedArabicIndex] = useState(null); // For locked Arabic word
   const [showScrollTop, setShowScrollTop] = useState(false);
   
   // Handle scroll event to show/hide scroll-to-top button
@@ -342,9 +343,10 @@ const QuranCompare = ({ initialVerses = [] }) => {
       const cleanWord = word.toLowerCase().replace(/[^a-z]/gi, '');
       let isHighlighted = false;
       
-      // Check if this English word corresponds to the hovered Arabic word
-      if (hoveredArabicIndex !== null) {
-        const hoveredMeaning = meaningsArray[hoveredArabicIndex];
+      // Check if this English word corresponds to the hovered or locked Arabic word
+      const activeIndex = lockedArabicIndex !== null ? lockedArabicIndex : hoveredArabicIndex;
+      if (activeIndex !== null) {
+        const hoveredMeaning = meaningsArray[activeIndex];
         if (hoveredMeaning && hoveredMeaning !== '-') {
           const cleanedMeaning = hoveredMeaning.toLowerCase().replace(/^(a|an|the)\s+/i, '');
           const meaningWords = cleanedMeaning.split(/\s+/);
@@ -489,26 +491,34 @@ const QuranCompare = ({ initialVerses = [] }) => {
                 meaning: meaning
               });
             }
-            setHoveredArabicIndex(index);
+            // Only set hovered index if nothing is locked
+            if (lockedArabicIndex === null) {
+              setHoveredArabicIndex(index);
+            }
           }}
           onMouseLeave={() => {
             setHoveredWord(null);
             if (!lockedRoot) {
               setHoveredRoot(null);
             }
-            setHoveredArabicIndex(null);
+            // Only clear hovered index if nothing is locked
+            if (lockedArabicIndex === null) {
+              setHoveredArabicIndex(null);
+            }
           }}
           onClick={() => {
             if (root && root !== '-') {
               // Toggle lock mode
-              if (lockedRoot === root) {
+              if (lockedRoot === root && lockedArabicIndex === index) {
                 // Unlock - go back to hover mode
                 setLockedRoot(null);
                 setHoveredRoot(null);
+                setLockedArabicIndex(null);
               } else {
-                // Lock this root
+                // Lock this root and index
                 setLockedRoot(root);
                 setHoveredRoot(null);
+                setLockedArabicIndex(index);
               }
             }
           }}

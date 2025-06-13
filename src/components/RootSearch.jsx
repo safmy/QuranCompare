@@ -33,6 +33,7 @@ const RootSearch = () => {
   const [isResultsSummaryExpanded, setIsResultsSummaryExpanded] = useState(true);
   const [hoveredEnglishIndex, setHoveredEnglishIndex] = useState(null);
   const [hoveredArabicIndex, setHoveredArabicIndex] = useState(null);
+  const [lockedArabicIndex, setLockedArabicIndex] = useState(null);
   const [englishToArabicWords, setEnglishToArabicWords] = useState(null);
   const [searchHistory, setSearchHistory] = useState({
     english: { query: '', results: null },
@@ -437,9 +438,10 @@ const RootSearch = () => {
         });
       }
       
-      // Check if this English word corresponds to the hovered Arabic word
-      if (hoveredArabicIndex !== null) {
-        const hoveredMeaning = meaningsArray[hoveredArabicIndex];
+      // Check if this English word corresponds to the hovered or locked Arabic word
+      const activeIndex = lockedArabicIndex !== null ? lockedArabicIndex : hoveredArabicIndex;
+      if (activeIndex !== null) {
+        const hoveredMeaning = meaningsArray[activeIndex];
         if (hoveredMeaning && hoveredMeaning !== '-') {
           const cleanedMeaning = hoveredMeaning.toLowerCase().replace(/^(a|an|the)\s+/i, '');
           const meaningWords = cleanedMeaning.split(/\s+/);
@@ -585,7 +587,10 @@ const RootSearch = () => {
               if (root && root !== '-' && !lockedRoot) {
                 setHighlightedRoot(root);
               }
-              setHoveredArabicIndex(index);
+              // Only set hovered index if nothing is locked
+              if (lockedArabicIndex === null) {
+                setHoveredArabicIndex(index);
+              }
             }
           }}
           onMouseLeave={() => {
@@ -593,16 +598,21 @@ const RootSearch = () => {
             if (!lockedRoot) {
               setHighlightedRoot(null);
             }
-            setHoveredArabicIndex(null);
+            // Only clear hovered index if nothing is locked
+            if (lockedArabicIndex === null) {
+              setHoveredArabicIndex(null);
+            }
           }}
           onClick={() => {
             if (isClickable) {
-              if (lockedRoot === root) {
+              if (lockedRoot === root && lockedArabicIndex === index) {
                 setLockedRoot(null);
                 setHighlightedRoot(null);
+                setLockedArabicIndex(null);
               } else {
                 setLockedRoot(root);
                 setHighlightedRoot(root);
+                setLockedArabicIndex(index);
               }
             }
           }}
