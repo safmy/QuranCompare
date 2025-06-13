@@ -976,7 +976,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
             let isHighlighted = false;
             
             // Check if this English word corresponds to the hovered Arabic word
-            if (hoveredArabicIndex !== null) {
+            if (hoveredArabicIndex !== null && hoveredArabicIndex >= 0 && hoveredArabicIndex < meaningsArray.length) {
                 const hoveredMeaning = meaningsArray[hoveredArabicIndex];
                 if (hoveredMeaning && hoveredMeaning !== '-') {
                     const meaningWords = hoveredMeaning.toLowerCase().split(/\s+/);
@@ -1352,6 +1352,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                             )}
                             
                             <div 
+                                key={`translation-${verse.sura_verse}-${hoveredArabicIndex}`}
                                 className="translation-text" 
                                 style={{ direction: getLanguageConfig(currentLanguage).direction }}
                                 onMouseDown={(e) => handleLongPressStart(verse, e)}

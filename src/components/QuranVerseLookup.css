@@ -395,10 +395,7 @@
     z-index: 1;
 }
 
-/* Prevent arabic-text hover from interfering */
-.arabic-text:hover {
-    background: #f8f9fa;
-}
+/* Prevent arabic-text hover from interfering - remove hover effect */
 
 .arabic-word {
     cursor: default;
