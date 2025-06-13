@@ -850,15 +850,6 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
 
     // Parse Arabic text with roots and meanings for hover functionality
     const parseArabicText = (arabic, roots, meanings, verse) => {
-        console.log('parseArabicText called:', { 
-            verse: verse.sura_verse, 
-            hasArabic: !!arabic, 
-            hasRoots: !!roots, 
-            hasMeanings: !!meanings,
-            isMobile,
-            hoveredArabicIndex 
-        });
-        
         if (!arabic) return arabic;
         
         if (!roots || !meanings) {
@@ -899,7 +890,6 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                             }
                             // Always set the hovered index for highlighting
                             setHoveredArabicIndex(index);
-                            console.log('Arabic word hovered:', { index, word, meaning, verse: verse.sura_verse });
                         }
                     }}
                     onMouseLeave={(e) => {
@@ -974,14 +964,6 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
     
     // Parse English text to make words hoverable
     const parseEnglishText = (englishText, roots, meanings, verse) => {
-        console.log('parseEnglishText called:', { 
-            verse: verse.sura_verse, 
-            hasEnglish: !!englishText, 
-            hasRoots: !!roots, 
-            hasMeanings: !!meanings,
-            hoveredArabicIndex 
-        });
-        
         if (!englishText || !roots || !meanings) return englishText;
         
         const rootsArray = roots.split(',').map(r => r.trim());
@@ -1002,12 +984,6 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
             // Check if this English word corresponds to the hovered Arabic word
             if (hoveredArabicIndex !== null) {
                 const hoveredMeaning = meaningsArray[hoveredArabicIndex];
-                console.log('Checking English word highlight:', { 
-                    cleanWord, 
-                    hoveredArabicIndex, 
-                    hoveredMeaning,
-                    meaningsArray 
-                });
                 if (hoveredMeaning && hoveredMeaning !== '-') {
                     const cleanedMeaning = hoveredMeaning.toLowerCase().replace(/^(a|an|the)\s+/i, '');
                     const meaningWords = cleanedMeaning.split(/\s+/);
@@ -1048,10 +1024,6 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                         }
                         return false;
                     });
-                    
-                    if (isHighlighted) {
-                        console.log('English word will be highlighted:', { cleanWord, hoveredMeaning });
-                    }
                 }
             }
             
@@ -1114,9 +1086,13 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
     useEffect(() => {
         // Detect mobile device
         const checkMobile = () => {
-            setIsMobile(window.matchMedia('(max-width: 768px)').matches || 
-                       'ontouchstart' in window || 
-                       navigator.maxTouchPoints > 0);
+            // More accurate mobile detection that doesn't false-positive on Macs
+            const isTouchDevice = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+            const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
+            const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isAndroidDevice = /Android/.test(navigator.userAgent);
+            
+            setIsMobile(isSmallScreen || isTouchDevice || isIOSDevice || isAndroidDevice);
         };
         
         // Detect dark mode
@@ -1413,12 +1389,6 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                                 onTouchCancel={handleLongPressEnd}
                                 onContextMenu={(e) => e.preventDefault()}
                             >
-                                {console.log('Translation render check:', { 
-                                    currentLanguage, 
-                                    hasRoots: !!verse.roots, 
-                                    hasMeanings: !!verse.meanings,
-                                    willParseEnglish: currentLanguage === 'english' && verse.roots && verse.meanings 
-                                })}
                                 {currentLanguage === 'english' && verse.roots && verse.meanings
                                     ? parseEnglishText(getTranslationText(verse, currentLanguage), verse.roots, verse.meanings, verse)
                                     : getTranslationText(verse, currentLanguage)
