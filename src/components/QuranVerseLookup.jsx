@@ -890,6 +890,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                             }
                             // Always set the hovered index for highlighting
                             setHoveredArabicIndex(index);
+                            console.log('Arabic word hovered:', { index, word, meaning, verse: verse.sura_verse });
                         }
                     }}
                     onMouseLeave={(e) => {
@@ -984,6 +985,12 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
             // Check if this English word corresponds to the hovered Arabic word
             if (hoveredArabicIndex !== null) {
                 const hoveredMeaning = meaningsArray[hoveredArabicIndex];
+                console.log('Checking English word highlight:', { 
+                    cleanWord, 
+                    hoveredArabicIndex, 
+                    hoveredMeaning,
+                    meaningsArray 
+                });
                 if (hoveredMeaning && hoveredMeaning !== '-') {
                     const cleanedMeaning = hoveredMeaning.toLowerCase().replace(/^(a|an|the)\s+/i, '');
                     const meaningWords = cleanedMeaning.split(/\s+/);
@@ -1024,6 +1031,10 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                         }
                         return false;
                     });
+                    
+                    if (isHighlighted) {
+                        console.log('English word will be highlighted:', { cleanWord, hoveredMeaning });
+                    }
                 }
             }
             
