@@ -867,7 +867,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
             const isClickable = root && root !== '-';
             const wordKey = `${verse.sura_verse}-${index}`;
             const isSelected = selectedWord?.key === wordKey;
-            const isHighlighted = hoveredEnglishIndex === index;
+            const isHighlighted = hoveredEnglishIndex === index || hoveredArabicIndex === index;
             
             return (
                 <span
@@ -985,7 +985,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                     // Add the original meaning words
                     meaningWords.forEach(mw => {
                         const cleanMw = mw.replace(/[^a-z]/gi, '');
-                        if (cleanMw && cleanMw.length > 2) { // Skip very short words
+                        if (cleanMw && cleanMw.length >= 2 && !['in', 'on', 'at', 'to', 'of', 'for', 'by', 'is', 'as', 'it', 'all'].includes(cleanMw)) { // Skip common words
                             allRelatedWords.add(cleanMw);
                             // Add plural/singular forms
                             if (cleanMw.endsWith('s')) {
@@ -1037,7 +1037,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                                 
                                 meaningWords.forEach(mw => {
                                     const cleanMw = mw.replace(/[^a-z]/gi, '');
-                                    if (cleanMw && cleanMw.length > 2) { // Skip very short words
+                                    if (cleanMw && cleanMw.length >= 2 && !['in', 'on', 'at', 'to', 'of', 'for', 'by', 'is', 'as', 'it', 'all'].includes(cleanMw)) { // Skip common words
                                         allRelatedWords.add(cleanMw);
                                         // Add plural/singular forms
                                         if (cleanMw.endsWith('s')) {

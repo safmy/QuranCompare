@@ -387,6 +387,12 @@
     margin-bottom: 15px;
 }
 
+/* Ensure highlighting works inside arabic-text container */
+.arabic-text .arabic-word.highlighted {
+    background-color: #ffeb3b !important;
+    color: #000000 !important;
+}
+
 .arabic-word {
     cursor: default;
     transition: background-color 0.2s;
