@@ -10,6 +10,18 @@
   STRIPE_DEBATER_PRICE_ID = "price_1RXeD5ImvcH9DSE1KcvO2Iy9"
 
 [[redirects]]
+  from = "https://qurancompare.netlify.app/*"
+  to = "https://quranonlystudies.app/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.quranonlystudies.app/*"
+  to = "https://quranonlystudies.app/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

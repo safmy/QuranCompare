@@ -65,13 +65,13 @@ Secondary: Reference
 © 2025 Submission Movement
 
 ## Support URL
-https://qurancompare.netlify.app
+https://quranonlystudies.app
 
 ## Privacy Policy URL
-https://qurancompare.netlify.app/privacy-policy.html
+https://quranonlystudies.app/privacy-policy.html
 
 ## Marketing URL (optional)
-https://qurancompare.netlify.app
+https://quranonlystudies.app
 
 ## Version Notes (for 1.0)
 Initial release of QuranCompare featuring:

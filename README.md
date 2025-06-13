@@ -1,75 +1,117 @@
-<<<<<<< HEAD
-# Getting Started with Create React App
+# QuranOnlyStudies - Advanced Quran Study Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A comprehensive web application for studying the Quran with advanced features including multi-translation comparison, AI-powered semantic search, manuscript analysis, and more.
 
-## Available Scripts
+## 🌐 Live Application
 
-In the project directory, you can run:
+Visit: [https://quranonlystudies.app](https://quranonlystudies.app)
 
-### `npm start`
+## ✨ Features
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **Multi-Translation Comparison**: Compare verses across multiple authorized translations
+- **AI-Powered Semantic Search**: Search by meaning and context, not just keywords
+- **Voice Search**: Speak your queries for instant results
+- **Manuscript Analysis**: Explore mathematical patterns and verse statistics
+- **Root Word Analysis**: Study Arabic root words and their occurrences
+- **AI Debater Bot**: Engage with an AI assistant trained on Submission principles
+- **Dark Mode**: Eye-friendly interface for extended study sessions
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🚀 Development Setup
 
-### `npm test`
+### Prerequisites
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Node.js (v14 or higher)
+- npm or yarn
+- Git
 
-### `npm run build`
+### Installation
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+1. Clone the repository:
+```bash
+git clone https://github.com/safmy/QuranCompare.git
+cd QuranCompare
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+2. Install dependencies:
+```bash
+npm install
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+3. Create a `.env` file with required environment variables:
+```env
+REACT_APP_SUPABASE_URL=your_supabase_url
+REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
+REACT_APP_API_URL=your_api_url
+```
 
-### `npm run eject`
+4. Start the development server:
+```bash
+npm start
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+The app will open at [http://localhost:3000](http://localhost:3000).
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 📱 iOS App Development
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Building for iOS
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+1. Install Capacitor dependencies:
+```bash
+npm run ios:setup
+```
 
-## Learn More
+2. Build and sync with iOS:
+```bash
+npm run ios:build
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+3. Open in Xcode:
+```bash
+npm run ios:open
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🛠️ Available Scripts
 
-### Code Splitting
+- `npm start` - Run development server
+- `npm run build` - Build for production
+- `npm test` - Run test suite
+- `npm run ios:setup` - Setup iOS dependencies
+- `npm run ios:build` - Build and sync iOS app
+- `npm run ios:open` - Open project in Xcode
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## 📂 Project Structure
 
-### Analyzing the Bundle Size
+```
+QuranCompare/
+├── src/
+│   ├── components/     # React components
+│   ├── contexts/       # Context providers
+│   ├── data/          # Static data files
+│   ├── utils/         # Utility functions
+│   └── config/        # Configuration files
+├── public/            # Public assets
+├── api/              # Backend API (separate deployment)
+└── ios/              # iOS app files
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## 🔧 Backend API
 
-### Making a Progressive Web App
+The backend API is deployed separately on Render. See `/api/README.md` for API documentation.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 🤝 Contributing
 
-### Advanced Configuration
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 📄 License
 
-### Deployment
+This project is licensed under the MIT License.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## 🙏 Acknowledgments
 
-### `npm run build` fails to minify
+- Built for the Submission community
+- Based on the authorized translation by Rashad Khalifa
+- Mathematical analysis inspired by Code 19 discoveries
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-=======
-# QuranCompare
-Compares the quranic manuscripts for letter by letter deviation
->>>>>>> 43961df91b4bc83ea7dec1b58e54866face74f1f
+---
+
+For support, please visit [https://quranonlystudies.app](https://quranonlystudies.app) or contact the development team.

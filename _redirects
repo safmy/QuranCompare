@@ -1,0 +1,10 @@
+# Domain redirects
+# Redirect from old domain to new domain
+https://qurancompare.netlify.app/* https://quranonlystudies.app/:splat 301!
+https://www.qurancompare.netlify.app/* https://quranonlystudies.app/:splat 301!
+
+# Handle www to non-www redirect for new domain
+https://www.quranonlystudies.app/* https://quranonlystudies.app/:splat 301!
+
+# SPA redirect - this must be last
+/*    /index.html   200
