@@ -884,17 +884,20 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                     key={index}
                     className={`arabic-word ${isClickable ? 'clickable' : ''} ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}`}
                     onMouseEnter={(e) => {
-                        if (!isMobile && (root || meaning)) {
-                            const rect = e.target.getBoundingClientRect();
-                            setTooltipPosition({
-                                x: rect.left + rect.width / 2,
-                                y: rect.top - 10
-                            });
-                            setHoveredWord({
-                                word: word,
-                                root: root,
-                                meaning: meaning
-                            });
+                        if (!isMobile) {
+                            if (root || meaning) {
+                                const rect = e.target.getBoundingClientRect();
+                                setTooltipPosition({
+                                    x: rect.left + rect.width / 2,
+                                    y: rect.top - 10
+                                });
+                                setHoveredWord({
+                                    word: word,
+                                    root: root,
+                                    meaning: meaning
+                                });
+                            }
+                            // Always set the hovered index for highlighting
                             setHoveredArabicIndex(index);
                         }
                     }}
