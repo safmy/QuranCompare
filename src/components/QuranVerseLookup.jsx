@@ -1298,7 +1298,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                     );
                     
                     return (
-                        <div key={`${verse.sura_verse}-${hoveredArabicIndex}`}>
+                        <div key={`${verse.sura_verse}-${verseIndex}`}>
                             
                             {/* Display subtitle if this verse has one and it's different from previous */}
                             {showSubtitle && (
