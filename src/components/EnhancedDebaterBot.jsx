@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { checkPremiumAccess, PREMIUM_FEATURES } from '../config/premium';
@@ -110,6 +110,13 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
   const [deletingChatId, setDeletingChatId] = useState(null);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isTrainer, setIsTrainer] = useState(false);
+  const [showTrainingMode, setShowTrainingMode] = useState(false);
+  const [trainingInput, setTrainingInput] = useState('');
+  const [selectedMessageForTraining, setSelectedMessageForTraining] = useState(null);
+  
+  // List of authorized trainers
+  const authorizedTrainers = ['syedahmadfahmybinsyedsalim@gmail.com'];
   const [showRelatedContent, setShowRelatedContent] = useState(() => {
     const saved = sessionStorage.getItem('debaterShowRelatedContent');
     return saved !== null ? saved === 'true' : true;
@@ -225,6 +232,10 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
         setShowSubscription(false);
         // Load previous chats
         loadChatHistory();
+        // Check if user is an authorized trainer
+        if (user.email && authorizedTrainers.includes(user.email)) {
+          setIsTrainer(true);
+        }
       }
     }
   }, [isAuthenticated, user, authLoading]);
@@ -457,7 +468,13 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
           requestEnhanced: true,
           includeVerses: true,
           includeMedia: true,
-          includeRootAnalysis: true
+          includeRootAnalysis: true,
+          // Include critical rules
+          criticalRules: [
+            "The age of responsibility is 40 years old per verse 46:15.",
+            "Those who die before age 40 go to heaven as they haven't reached the age of responsibility.",
+            "Reference appendix 32 and audio 47 at minute 46 for details on age of responsibility."
+          ]
         })
       });
 
@@ -617,7 +634,13 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
           requestEnhanced: true,
           includeVerses: true,
           includeMedia: true,
-          includeRootAnalysis: true
+          includeRootAnalysis: true,
+          // Include critical rules
+          criticalRules: [
+            "The age of responsibility is 40 years old per verse 46:15.",
+            "Those who die before age 40 go to heaven as they haven't reached the age of responsibility.",
+            "Reference appendix 32 and audio 47 at minute 46 for details on age of responsibility."
+          ]
         })
       });
 
@@ -848,6 +871,40 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
     "What is Submission?",
     "Are hadiths authorized?"
   ];
+  
+  // Submit training correction
+  const submitTrainingCorrection = async () => {
+    if (!trainingInput.trim() || !selectedMessageForTraining) return;
+    
+    try {
+      // Send correction to backend
+      const response = await fetch(`${API_BASE_URL}/debate/training`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messageId: selectedMessageForTraining,
+          correction: trainingInput,
+          userEmail: user.email,
+          timestamp: new Date().toISOString()
+        })
+      });
+      
+      if (response.ok) {
+        // Clear training input and close modal
+        setTrainingInput('');
+        setSelectedMessageForTraining(null);
+        setShowTrainingMode(false);
+        // Show success message
+        setError('Training correction submitted successfully!');
+        setTimeout(() => setError(null), 3000);
+      }
+    } catch (err) {
+      console.error('Error submitting training correction:', err);
+      setError('Failed to submit training correction');
+    }
+  };
 
   // Show auth modal if not authenticated
   if (!isAuthenticated) {
@@ -1453,6 +1510,30 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                                 (message.relatedData.rootAnalysis?.length || 0)}
                           </button>
                         )}
+                        {message.role === 'assistant' && isTrainer && (
+                          <button
+                            onClick={() => {
+                              setSelectedMessageForTraining(message.id);
+                              setShowTrainingMode(true);
+                            }}
+                            style={{
+                              background: '#ff9800',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '12px',
+                              padding: '2px 8px',
+                              fontSize: '10px',
+                              cursor: 'pointer',
+                              marginLeft: '5px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '3px'
+                            }}
+                            title="Train/Correct this response"
+                          >
+                            🎓 Train
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1517,7 +1598,7 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                   <textarea
                     placeholder="Type your response..."
                     value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
+                    onChange={handleInputChange}
                     onKeyPress={handleKeyPress}
                     disabled={isLoading}
                     style={{
