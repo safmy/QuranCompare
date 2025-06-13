@@ -985,7 +985,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                     // Add the original meaning words
                     meaningWords.forEach(mw => {
                         const cleanMw = mw.replace(/[^a-z]/gi, '');
-                        if (cleanMw && cleanMw.length >= 2 && !['in', 'on', 'at', 'to', 'of', 'for', 'by', 'is', 'as', 'it', 'all'].includes(cleanMw)) { // Skip common words
+                        if (cleanMw && cleanMw.length >= 2) { // Add all words from the meaning
                             allRelatedWords.add(cleanMw);
                             // Add plural/singular forms
                             if (cleanMw.endsWith('s')) {
@@ -1037,7 +1037,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                                 
                                 meaningWords.forEach(mw => {
                                     const cleanMw = mw.replace(/[^a-z]/gi, '');
-                                    if (cleanMw && cleanMw.length >= 2 && !['in', 'on', 'at', 'to', 'of', 'for', 'by', 'is', 'as', 'it', 'all'].includes(cleanMw)) { // Skip common words
+                                    if (cleanMw && cleanMw.length >= 2) { // Add all words from the meaning
                                         allRelatedWords.add(cleanMw);
                                         // Add plural/singular forms
                                         if (cleanMw.endsWith('s')) {
