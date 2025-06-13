@@ -490,15 +490,18 @@
 }
 
 .footnote {
-    padding: 10px;
-    background: #fff3cd;
-    border-radius: 6px;
-    border-left: 4px solid #ffc107;
+    padding: 15px;
+    background: #f8f9fa !important;
+    border-radius: 8px;
+    border-left: 4px solid #7c3aed;
+    margin-top: 10px;
 }
 
 .footnote small {
-    color: #856404;
-    line-height: 1.4;
+    color: #495057 !important;
+    line-height: 1.5;
+    font-size: 14px;
+    display: block;
 }
 
 .word-tooltip {
@@ -1020,8 +1023,12 @@
 }
 
 .dark-mode .footnote {
-    background: #3d3d2d;
-    border-left-color: #ffc107;
+    background: #2d2d2d !important;
+    border-left-color: #7c3aed;
+}
+
+.dark-mode .footnote small {
+    color: #b8b8b8 !important;
 }
 
 .dark-mode .lookup-button {
