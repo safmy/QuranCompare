@@ -414,10 +414,11 @@
 
 /* Bidirectional highlighting */
 .arabic-word.highlighted {
-    background-color: #ffeb3b;
+    background-color: #ffeb3b !important;
     border-radius: 4px;
-    padding: 2px 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 2px 4px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    font-weight: 600 !important;
 }
 
 .english-word {
@@ -436,9 +437,9 @@
 .english-word-highlighted {
     background-color: #ffeb3b !important;
     border-radius: 3px;
-    padding: 2px 4px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-    font-weight: 600;
+    padding: 2px 4px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+    font-weight: 600 !important;
     color: #000000 !important;
     display: inline-block;
 }
@@ -472,11 +473,17 @@
 /* Ensure english words inside translation text are visible */
 .translation-text .english-word {
     color: #000000;
+    display: inline;
+    transition: all 0.15s ease;
 }
 
 .translation-text .english-word.english-word-highlighted {
     background-color: #ffeb3b !important;
     color: #000000 !important;
+    border-radius: 3px;
+    padding: 2px 4px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+    font-weight: 600 !important;
 }
 
 .footnote {

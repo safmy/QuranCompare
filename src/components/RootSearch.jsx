@@ -848,9 +848,20 @@ const RootSearch = () => {
                         </h5>
                         <div className="word-cloud">
                           {data.englishWords.map((word, index) => {
-                            // Get Arabic words for this English word
-                            const arabicData = englishToArabicWords && englishToArabicWords[word] ? 
-                              Object.entries(englishToArabicWords[word]).slice(0, 2) : [];
+                            // Get Arabic words for this English word that share the same root
+                            let arabicData = [];
+                            if (englishToArabicWords && englishToArabicWords[word]) {
+                              // Filter to only show Arabic words that have the current root
+                              arabicData = Object.entries(englishToArabicWords[word])
+                                .filter(([arabic, info]) => {
+                                  // Check if any verse with this Arabic word has the matching root
+                                  return info.verses && info.verses.some(v => {
+                                    // The verse should contain this root
+                                    return v.roots && v.roots.includes(root);
+                                  });
+                                })
+                                .slice(0, 2); // Limit to 2 examples
+                            }
                             
                             return (
                               <div key={index} className="word-with-arabic">

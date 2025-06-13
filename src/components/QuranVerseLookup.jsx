@@ -852,16 +852,6 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
     const parseArabicText = (arabic, roots, meanings, verse) => {
         if (!arabic) return arabic;
         
-        // Debug logging
-        console.log('ParseArabicText called with:', {
-            verse: verse.sura_verse,
-            hasArabic: !!arabic,
-            hasRoots: !!roots,
-            hasMeanings: !!meanings,
-            roots: roots,
-            meanings: meanings
-        });
-        
         if (!roots || !meanings) {
             // If no roots/meanings, just return plain Arabic text
             return arabic;
@@ -1405,7 +1395,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                                 onTouchCancel={handleLongPressEnd}
                                 onContextMenu={(e) => e.preventDefault()}
                             >
-                                {verse.arabic && verse.roots && verse.meanings && currentLanguage === 'english' 
+                                {currentLanguage === 'english' && verse.roots && verse.meanings
                                     ? parseEnglishText(getTranslationText(verse, currentLanguage), verse.roots, verse.meanings, verse)
                                     : getTranslationText(verse, currentLanguage)
                                 }
