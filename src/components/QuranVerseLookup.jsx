@@ -874,6 +874,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                     key={index}
                     className={`arabic-word ${isClickable ? 'clickable' : ''} ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}`}
                     onMouseEnter={(e) => {
+                        e.stopPropagation();
                         if (!isMobile) {
                             if (root || meaning) {
                                 const rect = e.target.getBoundingClientRect();
@@ -891,7 +892,8 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                             setHoveredArabicIndex(index);
                         }
                     }}
-                    onMouseLeave={() => {
+                    onMouseLeave={(e) => {
+                        e.stopPropagation();
                         if (!isMobile) {
                             setHoveredWord(null);
                             setHoveredArabicIndex(null);
@@ -1026,7 +1028,8 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                     key={idx} 
                     className={`english-word ${isHighlighted ? 'english-word-highlighted' : ''} clickable`}
                     style={{ cursor: 'pointer' }}
-                    onMouseEnter={() => {
+                    onMouseEnter={(e) => {
+                        e.stopPropagation();
                         // Find which Arabic word corresponds to this English word
                         meaningsArray.forEach((meaning, index) => {
                             if (meaning && meaning !== '-') {
@@ -1083,7 +1086,8 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                             }
                         });
                     }}
-                    onMouseLeave={() => {
+                    onMouseLeave={(e) => {
+                        e.stopPropagation();
                         setHoveredEnglishIndex(null);
                     }}
                 >

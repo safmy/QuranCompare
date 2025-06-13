@@ -391,6 +391,13 @@
 .arabic-text .arabic-word.highlighted {
     background-color: #ffeb3b !important;
     color: #000000 !important;
+    position: relative;
+    z-index: 1;
+}
+
+/* Prevent arabic-text hover from interfering */
+.arabic-text:hover {
+    background: #f8f9fa;
 }
 
 .arabic-word {
@@ -405,7 +412,7 @@
     border-bottom: 1px dotted transparent;
 }
 
-.arabic-word.clickable:hover {
+.arabic-word.clickable:hover:not(.highlighted) {
     background-color: rgba(124, 58, 237, 0.1);
     border-bottom-color: #7c3aed;
 }
@@ -425,6 +432,7 @@
     padding: 2px 4px !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
     font-weight: 600 !important;
+    border-bottom-color: transparent !important;
 }
 
 .english-word {
@@ -490,6 +498,7 @@
     padding: 2px 4px !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
     font-weight: 600 !important;
+    display: inline-block !important;
 }
 
 .footnote {
