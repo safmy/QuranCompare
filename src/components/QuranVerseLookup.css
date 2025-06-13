@@ -3,8 +3,8 @@
     margin: 0 auto;
     padding: 20px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-    background-color: #ffffff;
-    color: #000000;
+    background-color: #ffffff !important;
+    color: #000000 !important;
 }
 
 .verse-lookup-header {
@@ -270,13 +270,14 @@
 }
 
 .verse-card {
-    background: #fafbfc;
+    background: #fafbfc !important;
     border: 1px solid #e8ecf0;
     border-radius: 10px;
     padding: 15px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     transition: box-shadow 0.2s;
     margin-bottom: 12px;
+    color: #000000 !important;
 }
 
 .verse-card:hover {
@@ -381,10 +382,11 @@
     line-height: 1.9;
     text-align: right;
     padding: 20px;
-    background: #f8f9fa;
+    background: #f8f9fa !important;
     border-radius: 8px;
     border-right: 4px solid #7c3aed;
     margin-bottom: 15px;
+    color: #000000 !important;
 }
 
 /* Ensure highlighting works inside arabic-text container */
@@ -464,10 +466,10 @@
 .translation-text {
     font-size: 17px;
     line-height: 1.7;
-    color: #000000;
+    color: #000000 !important;
     padding: 18px;
     font-weight: 400;
-    background: #ffffff;
+    background: #ffffff !important;
     border-radius: 8px;
     border: 1px solid #e8ecf0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -1063,35 +1065,11 @@
     background: #7c3aed;
 }
 
-/* Add responsive dark mode support */
+/* Media query for dark mode should only apply when no explicit mode is set */
 @media (prefers-color-scheme: dark) {
-    .verse-lookup-container:not(.light-mode) {
-        background-color: #1a1a1a;
-        color: #e0e0e0;
-    }
-    
-    .verse-lookup-container:not(.light-mode) .verse-card {
-        background: #2d2d2d;
-        border-color: #404040;
-        color: #e0e0e0;
-    }
-    
-    .verse-lookup-container:not(.light-mode) .arabic-text {
-        background: #333;
-        color: #fff;
-        border-right-color: #7c3aed;
-    }
-    
-    .verse-lookup-container:not(.light-mode) .english-text {
-        color: #ffffff;
-        background: #2d2d2d;
-        border-color: #404040;
-    }
-    
-    .verse-lookup-container:not(.light-mode) .translation-text {
-        color: #ffffff;
-        background: #2d2d2d;
-        border-color: #404040;
+    /* Only apply dark styles if the container doesn't have an explicit dark-mode class */
+    body:not(.light-mode-forced) .verse-lookup-container:not(.dark-mode) {
+        /* Let the JS handle dark mode detection */
     }
 }
 /* Responsive design improvements */
