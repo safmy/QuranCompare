@@ -4,15 +4,14 @@ import QuranSearch from './components/QuranSearch';
 import QuranVectorSearch from './components/QuranVectorSearch';
 import QuranVerseLookup from './components/QuranVerseLookup';
 import QuranCompare from './components/QuranCompare';
-// import EnhancedDebaterBot from './components/EnhancedDebaterBot'; // Removed for iOS
+import EnhancedDebaterBot from './components/EnhancedDebaterBot';
 import RootSearch from './components/RootSearch';
 import Domain from './components/Domain';
 import AuthCallback from './components/AuthCallback';
-// import PaymentSuccess from './components/PaymentSuccess'; // Removed for iOS
-// import PaymentCancel from './components/PaymentCancel'; // Removed for iOS
+import PaymentSuccess from './components/PaymentSuccess';
+import PaymentCancel from './components/PaymentCancel';
 import LanguageSwitcher from './components/LanguageSwitcher';
-// import UserProfile from './components/UserProfile'; // Removed for iOS
-import UserProfileIOS from './components/UserProfileIOS'; // iOS version without payments
+import UserProfile from './components/UserProfile';
 import SidebarMenu from './components/SidebarMenu';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -171,7 +170,24 @@ function AppContent() {
     },
     { id: 'compare', label: 'Compare', component: <QuranCompare key={compareVerses.join(',')} initialVerses={compareVerses} /> },
     { id: 'roots', label: '🌳 Root Search', component: <RootSearch /> },
-    // AI Debater removed for iOS build
+    { 
+      id: 'debater', 
+      label: '🤖 AI Debater', 
+      component: <EnhancedDebaterBot 
+        onNavigateToTab={(tabId, data) => {
+          if (data && data.query) {
+            sessionStorage.setItem(tabId === 'semanticSearch' ? 'vectorSearchQuery' : 'rootSearchQuery', data.query);
+            if (data.source) {
+              sessionStorage.setItem('vectorSearchSource', data.source);
+            }
+          }
+          setActiveTab(tabId);
+        }}
+        currentTab={activeTab}
+        currentVerses={lookupState.verses || []}
+        recentSearch={vectorSearchState.lastQuery || ''}
+      /> 
+    },
     {
       id: 'discord',
       label: (
@@ -242,7 +258,12 @@ function AppContent() {
   if (window.location.pathname === '/auth/callback') {
     return <AuthCallback />;
   }
-  // Payment routes removed for iOS
+  if (window.location.pathname === '/payment/success') {
+    return <PaymentSuccess />;
+  }
+  if (window.location.pathname === '/payment/cancel') {
+    return <PaymentCancel />;
+  }
 
   return (
     <div className="App">
@@ -351,7 +372,7 @@ function AppContent() {
             >
               {isDarkMode ? '☀️' : '🌙'}
             </button>
-            <UserProfileIOS />
+            <UserProfile />
           </div>
         </div>
         <nav style={{
@@ -480,4 +501,4 @@ function App() {
 }
 
 export default App;
-// Trigger Netlify deployment - Fri 13 Dec 2024 - v1.5.16 - Display actual Arabic words with verse references under English words
+// Trigger Netlify deployment - Fri 13 Dec 2024 - v1.5.20 - CRITICAL FIX: Restored AI Debater and main branch functionality after iOS merge error
