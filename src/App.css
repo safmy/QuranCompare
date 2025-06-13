@@ -63,6 +63,35 @@ body.dark-mode main {
   color: #e0e0e0;
 }
 
+/* Ensure all text is readable in dark mode */
+body.dark-mode * {
+  color: inherit;
+}
+
+/* Fix specific text color issues */
+body.dark-mode p,
+body.dark-mode span,
+body.dark-mode div,
+body.dark-mode label {
+  color: inherit;
+}
+
+/* Ensure form inputs are visible */
+body.dark-mode input,
+body.dark-mode textarea,
+body.dark-mode select {
+  background-color: #2d2d2d;
+  color: #e0e0e0;
+  border-color: #404040;
+}
+
+body.dark-mode input:focus,
+body.dark-mode textarea:focus,
+body.dark-mode select:focus {
+  border-color: #7c3aed;
+  outline: none;
+}
+
 /* Enhanced scrollbar styles */
 ::-webkit-scrollbar {
   width: 12px;

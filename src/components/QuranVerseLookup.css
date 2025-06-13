@@ -941,158 +941,162 @@
 }
 
 /* Dark mode support */
-.dark-mode .verse-lookup-container {
+body.dark-mode .verse-lookup-container {
     background-color: #1a1a1a !important;
     color: #e0e0e0 !important;
 }
 
-.dark-mode .verse-card {
+body.dark-mode .verse-card {
     background: #2d2d2d;
     border-color: #404040;
     color: #e0e0e0;
 }
 
-.dark-mode .arabic-text {
+body.dark-mode .arabic-text {
     background: #333;
     color: #fff;
     border-right-color: #7c3aed;
 }
 
-.dark-mode .english-text {
+body.dark-mode .english-text {
     color: #ffffff;
     background: #2d2d2d;
     border-color: #404040;
 }
 
-.dark-mode .translation-text {
+body.dark-mode .translation-text {
     color: #ffffff;
     background: #2d2d2d;
     border-color: #404040;
 }
 
-.dark-mode .verse-input {
+body.dark-mode .verse-input {
     background: #2d2d2d;
     border-color: #404040;
     color: #e0e0e0;
 }
 
-.dark-mode .verse-input:focus {
+body.dark-mode .verse-input:focus {
     border-color: #7c3aed;
 }
 
-.dark-mode .mode-button {
+body.dark-mode .mode-button {
     background: #2d2d2d;
     border-color: #404040;
     color: #e0e0e0;
 }
 
-.dark-mode .mode-button:hover {
+body.dark-mode .mode-button:hover {
     border-color: #7c3aed;
     color: #7c3aed;
 }
 
-.dark-mode .mode-button.active {
+body.dark-mode .mode-button.active {
     background: #7c3aed;
     color: white;
     border-color: #7c3aed;
 }
 
-.dark-mode .subtitle-text {
+body.dark-mode .subtitle-text {
     background: linear-gradient(135deg, #7c3aed, #9b6aed);
 }
 
-.dark-mode .verse-info {
+body.dark-mode .verse-info {
     background: #333;
     border-color: #404040;
     color: #b0b0b0;
 }
 
-.dark-mode .results-header {
+body.dark-mode .results-header {
     background-color: #2d2d2d !important;
     border-color: #404040;
 }
 
-.dark-mode .result-count {
+body.dark-mode .result-count {
     color: #e0e0e0 !important;
 }
 
-.dark-mode .tap-hint {
+body.dark-mode .tap-hint {
     color: #64b5f6 !important;
 }
 
-.dark-mode .search-hint-inline {
+body.dark-mode .search-hint-inline {
     color: #b0b0b0 !important;
 }
 
-.dark-mode .search-hint {
+body.dark-mode .search-hint {
     background: #2d2d2d !important;
     color: #64b5f6 !important;
     border-color: #404040 !important;
 }
 
-.dark-mode .loading {
+body.dark-mode .loading {
     color: #b0b0b0 !important;
 }
 
-.dark-mode .word-tooltip {
+body.dark-mode .word-tooltip {
     background: #1a1a1a;
     border-color: rgba(255, 255, 255, 0.2);
 }
 
-.dark-mode .footnote {
+body.dark-mode .footnote {
     background: #2d2d2d !important;
     border-left-color: #7c3aed;
 }
 
-.dark-mode .footnote small {
+body.dark-mode .footnote small {
     color: #b8b8b8 !important;
 }
 
-.dark-mode .lookup-button {
+body.dark-mode .lookup-button {
     background: #7c3aed;
 }
 
-.dark-mode .lookup-button:hover:not(:disabled) {
+body.dark-mode .lookup-button:hover:not(:disabled) {
     background: #6b46c1;
 }
 
-.dark-mode .chapter-button {
+body.dark-mode .chapter-button {
     background: #4a90e2;
 }
 
-.dark-mode .chapter-button:hover:not(:disabled) {
+body.dark-mode .chapter-button:hover:not(:disabled) {
     background: #357abd;
 }
 
 /* Ensure proper contrast for highlighted words in dark mode */
-.dark-mode .arabic-word.highlighted {
+body.dark-mode .arabic-word.highlighted {
     background-color: #ffeb3b;
     color: #000000;
 }
 
-.dark-mode .english-word-highlighted {
+body.dark-mode .english-word-highlighted {
     background-color: #ffeb3b !important;
     color: #000000 !important;
 }
 
-.dark-mode .translation-text .english-word.english-word-highlighted {
+body.dark-mode .translation-text .english-word {
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode .translation-text .english-word.english-word-highlighted {
     background-color: #ffeb3b !important;
     color: #000000 !important;
 }
 
-.dark-mode .scroll-to-top-btn {
+body.dark-mode .scroll-to-top-btn {
     background: #9b7fd3;
     box-shadow: 0 4px 12px rgba(155, 127, 211, 0.3);
 }
 
-.dark-mode .scroll-to-top-btn:hover {
+body.dark-mode .scroll-to-top-btn:hover {
     background: #7c3aed;
 }
 
 /* Media query for dark mode should only apply when no explicit mode is set */
 @media (prefers-color-scheme: dark) {
     /* Only apply dark styles if the container doesn't have an explicit dark-mode class */
-    body:not(.light-mode-forced) .verse-lookup-container:not(.dark-mode) {
+    body:not(.light-mode-forced) .verse-lookup-container:not(body.dark-mode) {
         /* Let the JS handle dark mode detection */
     }
 }

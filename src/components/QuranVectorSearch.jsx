@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import VoiceSearchButtonEnhanced from './VoiceSearchButtonEnhanced';
 import { Clipboard } from '@capacitor/clipboard';
+import './QuranVectorSearch.css';
 
 // API endpoint - change this to your deployed API URL in production
 const API_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
@@ -669,7 +670,7 @@ const QuranVectorSearch = ({ savedState = {} }) => {
           background: #555;
         }
       `}</style>
-    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px' }}>
+    <div className="vector-search-container">
       <h2 style={{ color: '#333', marginBottom: '20px' }}>Semantic Search</h2>
       <p style={{ color: '#666', marginBottom: '20px' }}>
         Search individual collections using AI-powered semantic search. Select checkboxes below to choose sources.

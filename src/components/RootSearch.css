@@ -752,6 +752,14 @@ body.dark-mode .error-message {
   color: #ff6b6b;
 }
 
+body.dark-mode .english-word {
+  color: #e0e0e0;
+}
+
+body.dark-mode .translation-text .english-word {
+  color: #e0e0e0 !important;
+}
+
 body.dark-mode .english-word.search-highlighted {
   background-color: #1976d2;
   color: white;

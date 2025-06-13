@@ -230,6 +230,14 @@ body.dark-mode .results-header {
     color: #e0e0e0;
 }
 
+body.dark-mode .english-word {
+    color: #e0e0e0;
+}
+
+body.dark-mode .translation-text .english-word {
+    color: #e0e0e0 !important;
+}
+
 body.dark-mode .arabic-text {
     background: #333;
     color: #fff;
