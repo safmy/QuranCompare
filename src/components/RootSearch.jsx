@@ -43,6 +43,7 @@ const RootSearch = () => {
   const [expandedWords, setExpandedWords] = useState(new Set());
   const [rootPronunciations, setRootPronunciations] = useState({});
   const [showAllArabic, setShowAllArabic] = useState(false);
+  const [hoverTimeouts, setHoverTimeouts] = useState({});
   
   // Handle scroll event to show/hide scroll-to-top button
   useEffect(() => {
@@ -861,11 +862,23 @@ const RootSearch = () => {
                                     setSearchMode('english');
                                   }}
                                   onMouseEnter={() => {
-                                    // Show Arabic on hover
-                                    setExpandedWords(prev => new Set([...prev, `${root}-${word}`]));
+                                    // Show Arabic on hover with delay
+                                    const timeoutId = setTimeout(() => {
+                                      setExpandedWords(prev => new Set([...prev, `${root}-${word}`]));
+                                    }, 300); // 300ms delay
+                                    setHoverTimeouts(prev => ({ ...prev, [`${root}-${word}`]: timeoutId }));
                                   }}
                                   onMouseLeave={() => {
-                                    // Hide Arabic on mouse leave
+                                    // Clear timeout and hide Arabic on mouse leave
+                                    const timeoutId = hoverTimeouts[`${root}-${word}`];
+                                    if (timeoutId) {
+                                      clearTimeout(timeoutId);
+                                      setHoverTimeouts(prev => {
+                                        const newTimeouts = { ...prev };
+                                        delete newTimeouts[`${root}-${word}`];
+                                        return newTimeouts;
+                                      });
+                                    }
                                     setExpandedWords(prev => {
                                       const newSet = new Set(prev);
                                       newSet.delete(`${root}-${word}`);

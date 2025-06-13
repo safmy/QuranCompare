@@ -979,33 +979,14 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
             if (hoveredArabicIndex !== null) {
                 const hoveredMeaning = meaningsArray[hoveredArabicIndex];
                 if (hoveredMeaning && hoveredMeaning !== '-') {
-                    // Remove articles (a, an, the) from the meaning before processing
-                    const cleanedMeaning = hoveredMeaning.toLowerCase().replace(/^(a|an|the)\s+/i, '');
-                    const meaningWords = cleanedMeaning.split(/\s+/);
+                    const meaningWords = hoveredMeaning.toLowerCase().split(/\s+/);
                     const allRelatedWords = new Set();
                     
                     // Add the original meaning words
                     meaningWords.forEach(mw => {
-                        const cleanMw = mw.replace(/[^a-z]/gi, '');
-                        if (cleanMw && cleanMw.length >= 2) { // Add all words from the meaning
-                            allRelatedWords.add(cleanMw);
-                            // Add plural/singular forms
-                            if (cleanMw.endsWith('s')) {
-                                allRelatedWords.add(cleanMw.slice(0, -1)); // Remove 's' for singular
-                            } else {
-                                allRelatedWords.add(cleanMw + 's'); // Add 's' for plural
-                            }
-                            // Add synonyms
-                            getSynonyms(cleanMw).forEach(syn => {
-                                allRelatedWords.add(syn);
-                                // Also add plural/singular forms of synonyms
-                                if (syn.endsWith('s')) {
-                                    allRelatedWords.add(syn.slice(0, -1));
-                                } else {
-                                    allRelatedWords.add(syn + 's');
-                                }
-                            });
-                        }
+                        allRelatedWords.add(mw.replace(/[^a-z]/gi, ''));
+                        // Add synonyms
+                        getSynonyms(mw).forEach(syn => allRelatedWords.add(syn));
                     });
                     
                     // Check if current word matches any related word - be more strict
@@ -1033,31 +1014,13 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                         // Find which Arabic word corresponds to this English word
                         meaningsArray.forEach((meaning, index) => {
                             if (meaning && meaning !== '-') {
-                                // Remove articles (a, an, the) from the meaning before processing
-                                const cleanedMeaning = meaning.toLowerCase().replace(/^(a|an|the)\s+/i, '');
-                                const meaningWords = cleanedMeaning.split(/\s+/);
+                                const meaningWords = meaning.toLowerCase().split(/\s+/);
                                 const allRelatedWords = new Set();
                                 
                                 meaningWords.forEach(mw => {
-                                    const cleanMw = mw.replace(/[^a-z]/gi, '');
-                                    if (cleanMw && cleanMw.length >= 2) { // Add all words from the meaning
-                                        allRelatedWords.add(cleanMw);
-                                        // Add plural/singular forms
-                                        if (cleanMw.endsWith('s')) {
-                                            allRelatedWords.add(cleanMw.slice(0, -1));
-                                        } else {
-                                            allRelatedWords.add(cleanMw + 's');
-                                        }
-                                        // Add synonyms and their forms
-                                        getSynonyms(cleanMw).forEach(syn => {
-                                            allRelatedWords.add(syn);
-                                            if (syn.endsWith('s')) {
-                                                allRelatedWords.add(syn.slice(0, -1));
-                                            } else {
-                                                allRelatedWords.add(syn + 's');
-                                            }
-                                        });
-                                    }
+                                    allRelatedWords.add(mw.replace(/[^a-z]/gi, ''));
+                                    // Add synonyms
+                                    getSynonyms(mw).forEach(syn => allRelatedWords.add(syn));
                                 });
                                 
                                 if (Array.from(allRelatedWords).some(rw => {
