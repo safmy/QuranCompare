@@ -144,6 +144,11 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
   const [selectedMessageId, setSelectedMessageId] = useState(null); // Track which message's related content to show
   const messagesEndRef = useRef(null);
 
+  // Memoize onChange handler to prevent unnecessary re-renders
+  const handleInputChange = useCallback((e) => {
+    setInputText(e.target.value);
+  }, []);
+
   // Save state to sessionStorage
   useEffect(() => {
     if (messages.length > 0) {
