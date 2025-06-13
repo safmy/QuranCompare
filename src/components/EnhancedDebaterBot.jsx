@@ -109,6 +109,7 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
   const [hoveredChatId, setHoveredChatId] = useState(null);
   const [deletingChatId, setDeletingChatId] = useState(null);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [showRelatedContent, setShowRelatedContent] = useState(() => {
     const saved = sessionStorage.getItem('debaterShowRelatedContent');
     return saved !== null ? saved === 'true' : true;
@@ -165,14 +166,28 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
     sessionStorage.setItem('debaterShowRelatedContent', showRelatedContent.toString());
   }, [showRelatedContent]);
 
-  // Detect mobile device
+  // Detect mobile device and dark mode
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
+    const checkDarkMode = () => {
+      setIsDarkMode(document.body.classList.contains('dark-mode'));
+    };
+    
     checkMobile();
+    checkDarkMode();
+    
     window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    
+    // Watch for dark mode changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      observer.disconnect();
+    };
   }, []);
 
   // Scroll to bottom when new messages are added
@@ -447,6 +462,9 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       });
 
       if (!response.ok) {
+        // Add a small delay before retry
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         // Fallback to regular endpoint
         console.log('Enhanced endpoint failed, trying regular endpoint...');
         endpoint = '/debate';
@@ -535,6 +553,10 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
     } catch (err) {
       console.error('Error starting debate:', err);
       setError('Failed to start debate. Please try again.');
+      // Remove the failed user message
+      setMessages([]);
+      setDebateMode(false);
+      setCurrentTopic('');
     } finally {
       setIsLoading(false);
     }
@@ -553,10 +575,10 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       return;
     }
     
-    // If not in debate mode, start debate mode when sending first message
+    // If not in debate mode, use startDebate for first message
     if (!debateMode) {
-      setDebateMode(true);
-      setCurrentTopic(inputText.substring(0, 100));
+      startDebate(inputText);
+      return;
     }
 
     const userMessage = {
@@ -742,8 +764,7 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
     // Regex to match verse references like "2:255" or "[2:255]"
     const verseRegex = /\[?(\d{1,3}):(\d{1,3})\]?/g;
     
-    // Regex to match Rashad-related terms
-    const rashadTerms = /\b(Rashad Khalifa|Dr\. Rashad|Dr Rashad|Rashad's|messenger of the covenant|God's messenger|the messenger|final testament|mathematical miracle|code 19|miracle 19)\b/gi;
+    // NO LONGER AUTO-LINKING RASHAD KHALIFA - removed per user request
     
     const parts = [];
     let processedText = content;
@@ -762,28 +783,8 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       });
     }
     
-    // Then, find Rashad-related terms (only in non-verse parts)
-    const rashadMatches = [];
-    let rashadMatch;
-    while ((rashadMatch = rashadTerms.exec(content)) !== null) {
-      // Check if this overlaps with any verse reference
-      const overlapsVerse = verseMatches.some(vm => 
-        (rashadMatch.index >= vm.start && rashadMatch.index < vm.end) ||
-        (rashadMatch.index + rashadMatch[0].length > vm.start && rashadMatch.index + rashadMatch[0].length <= vm.end)
-      );
-      
-      if (!overlapsVerse) {
-        rashadMatches.push({
-          start: rashadMatch.index,
-          end: rashadMatch.index + rashadMatch[0].length,
-          type: 'rashad',
-          content: rashadMatch[0]
-        });
-      }
-    }
-    
-    // Combine and sort all matches
-    const allMatches = [...verseMatches, ...rashadMatches].sort((a, b) => a.start - b.start);
+    // Only use verse matches (removed Rashad hyperlinking)
+    const allMatches = [...verseMatches].sort((a, b) => a.start - b.start);
     
     let lastIndex = 0;
     allMatches.forEach(match => {
@@ -1357,52 +1358,63 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                       maxWidth: '70%',
                       padding: '12px 16px',
                       borderRadius: '18px',
-                      backgroundColor: message.role === 'user' ? '#2196F3' : '#f0f0f0',
-                      color: message.role === 'user' ? 'white' : '#333',
+                      backgroundColor: message.role === 'user' ? '#2196F3' : (isDarkMode ? '#2d2d2d' : '#f0f0f0'),
+                      color: message.role === 'user' ? 'white' : (isDarkMode ? '#e0e0e0' : '#333'),
                       position: 'relative'
                     }}>
-                      <div style={{ fontSize: '14px', lineHeight: '1.4' }}>
-                        {parseMessageContent(message.content).map((part, index) => {
-                          if (part.type === 'verse') {
-                            return (
-                              <span
-                                key={index}
-                                style={{
-                                  color: message.role === 'user' ? '#bbdefb' : '#1976d2',
-                                  textDecoration: 'underline',
-                                  cursor: 'pointer',
-                                  fontWeight: 'bold'
-                                }}
-                                onClick={() => handleVerseClick(part.chapter, part.verse)}
-                                title={`Click to view verse ${part.chapter}:${part.verse}`}
-                              >
-                                {part.content}
-                              </span>
-                            );
-                          } else if (part.type === 'rashad') {
-                            return (
-                              <span
-                                key={index}
-                                style={{
-                                  color: message.role === 'user' ? '#ffeb3b' : '#ff9800',
-                                  textDecoration: 'underline',
-                                  cursor: 'pointer',
-                                  fontWeight: 'bold'
-                                }}
-                                onClick={() => {
-                                  const searchTerm = part.content.toLowerCase().includes('code 19') || part.content.toLowerCase().includes('miracle 19') 
-                                    ? 'mathematical miracle code 19' 
-                                    : part.content;
-                                  handleRashadMediaClick(searchTerm);
-                                }}
-                                title={`Click to search for "${part.content}" in Rashad Khalifa Media`}
-                              >
-                                {part.content} 🔗
-                              </span>
-                            );
-                          }
-                          return <span key={index}>{part.content}</span>;
-                        })}
+                      <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+                        {message.role === 'assistant' ? (
+                          // Format assistant messages with paragraphs
+                          message.content.split(/\n\n|\n/).filter(p => p.trim()).map((paragraph, pIndex, paragraphs) => (
+                            <div key={pIndex} style={{ 
+                              marginBottom: pIndex < paragraphs.length - 1 ? '12px' : '0',
+                              textAlign: 'left'
+                            }}>
+                              {parseMessageContent(paragraph).map((part, index) => {
+                                if (part.type === 'verse') {
+                                  return (
+                                    <span
+                                      key={index}
+                                      style={{
+                                        color: '#1976d2',
+                                        textDecoration: 'underline',
+                                        cursor: 'pointer',
+                                        fontWeight: 'bold'
+                                      }}
+                                      onClick={() => handleVerseClick(part.chapter, part.verse)}
+                                      title={`Click to view verse ${part.chapter}:${part.verse}`}
+                                    >
+                                      {part.content}
+                                    </span>
+                                  );
+                                }
+                                return <span key={index}>{part.content}</span>;
+                              })}
+                            </div>
+                          ))
+                        ) : (
+                          // User messages remain as single block
+                          parseMessageContent(message.content).map((part, index) => {
+                            if (part.type === 'verse') {
+                              return (
+                                <span
+                                  key={index}
+                                  style={{
+                                    color: '#bbdefb',
+                                    textDecoration: 'underline',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold'
+                                  }}
+                                  onClick={() => handleVerseClick(part.chapter, part.verse)}
+                                  title={`Click to view verse ${part.chapter}:${part.verse}`}
+                                >
+                                  {part.content}
+                                </span>
+                              );
+                            }
+                            return <span key={index}>{part.content}</span>;
+                          })
+                        )}
                       </div>
                       <div style={{
                         fontSize: '11px',
