@@ -95,7 +95,9 @@ function AppContent() {
     
     // Listen for navigate to compare events
     const handleNavigateToCompare = (event) => {
+      console.log('handleNavigateToCompare received event:', event.detail);
       const verses = event.detail.verses || JSON.parse(sessionStorage.getItem('compareVerses') || '[]');
+      console.log('Setting compare verses:', verses);
       setCompareVerses(verses);
       
       // Store memorization mode if enabled
@@ -103,6 +105,7 @@ function AppContent() {
         sessionStorage.setItem('enableMemorization', 'true');
       }
       
+      console.log('Switching to compare tab');
       setActiveTab('compare');
     };
     

@@ -163,6 +163,9 @@ const RootAnalysisModal = ({
                                 <button
                                     className="compare-option-btn"
                                     onClick={() => {
+                                        console.log('One from Each Meaning clicked');
+                                        console.log('rootAnalysisData:', rootAnalysisData);
+                                        
                                         // Compare one from each meaning
                                         const versesToCompare = [];
                                         const seenVerses = new Set();
@@ -177,6 +180,9 @@ const RootAnalysisModal = ({
                                                 seenVerses.add(uniqueVerse.verseRef);
                                             }
                                         });
+                                        
+                                        console.log('Verses to compare:', versesToCompare);
+                                        console.log('Calling onCompare function');
                                         
                                         onCompare(versesToCompare.slice(0, 11), rootAnalysisData);
                                         onClose();

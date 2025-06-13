@@ -818,6 +818,8 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
     };
     
     const navigateToCompare = (verses, meaningData = null) => {
+        console.log('navigateToCompare called with:', verses, meaningData);
+        
         // Store verses in sessionStorage to pass to Compare tab
         sessionStorage.setItem('compareVerses', JSON.stringify(verses.map(v => v.sura_verse)));
         
@@ -835,6 +837,7 @@ const QuranVerseLookup = ({ initialRange = '', savedState = {} }) => {
                 meaningData: meaningData
             } 
         });
+        console.log('Dispatching navigateToCompare event');
         window.dispatchEvent(event);
     };
     
