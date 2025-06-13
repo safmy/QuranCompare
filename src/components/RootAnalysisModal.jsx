@@ -91,7 +91,15 @@ const RootAnalysisModal = ({
     };
     
     return (
-        <div className="root-analysis-modal">
+        <div 
+            className="root-analysis-modal"
+            onClick={(e) => {
+                // Close modal if clicking on overlay (outside content)
+                if (e.target.className === 'root-analysis-modal') {
+                    onClose();
+                }
+            }}
+        >
             <div className="root-analysis-content">
                 <div className="root-analysis-header">
                     <h3>Root Analysis: "{rootAnalysisData.selectedRoot}"</h3>

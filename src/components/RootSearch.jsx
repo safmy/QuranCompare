@@ -40,6 +40,8 @@ const RootSearch = () => {
     smart: { query: '', results: null }
   });
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [expandedWords, setExpandedWords] = useState(new Set());
+  const [rootPronunciations, setRootPronunciations] = useState({});
   
   // Handle scroll event to show/hide scroll-to-top button
   useEffect(() => {
@@ -848,10 +850,22 @@ const RootSearch = () => {
                                     setSearchQuery(word);
                                     setSearchMode('english');
                                   }}
+                                  onMouseEnter={() => {
+                                    // Show Arabic on hover
+                                    setExpandedWords(prev => new Set([...prev, `${root}-${word}`]));
+                                  }}
+                                  onMouseLeave={() => {
+                                    // Hide Arabic on mouse leave
+                                    setExpandedWords(prev => {
+                                      const newSet = new Set(prev);
+                                      newSet.delete(`${root}-${word}`);
+                                      return newSet;
+                                    });
+                                  }}
                                 >
                                   {word}
                                 </span>
-                                {arabicData.length > 0 && (
+                                {arabicData.length > 0 && expandedWords.has(`${root}-${word}`) && (
                                   <div className="arabic-examples">
                                     {arabicData.map(([arabic, info], idx) => (
                                       <div key={idx} className="arabic-example">

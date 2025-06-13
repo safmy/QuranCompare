@@ -245,6 +245,7 @@
   background: #ffc107;
   color: white;
   transform: scale(1.05);
+  cursor: pointer;
 }
 
 .suggestions {

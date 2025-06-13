@@ -432,19 +432,33 @@
 }
 
 .english-word-highlighted {
-    background-color: #ffeb3b;
+    background-color: #ffeb3b !important;
     border-radius: 3px;
-    padding: 1px 3px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 2px 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    font-weight: 600;
 }
 
 .english-text {
     font-size: 17px;
     line-height: 1.7;
-    color: inherit;
+    color: #000000;
     padding: 18px;
     font-weight: 400;
-    background: inherit;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e8ecf0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    margin: 10px 0;
+}
+
+.translation-text {
+    font-size: 17px;
+    line-height: 1.7;
+    color: #000000;
+    padding: 18px;
+    font-weight: 400;
+    background: #ffffff;
     border-radius: 8px;
     border: 1px solid #e8ecf0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
