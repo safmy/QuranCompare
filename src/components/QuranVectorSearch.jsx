@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import VoiceSearchButtonEnhanced from './VoiceSearchButtonEnhanced';
 import { Clipboard } from '@capacitor/clipboard';
 import './QuranVectorSearch.css';
@@ -7,6 +7,21 @@ import './QuranVectorSearch.css';
 const API_URL = process.env.REACT_APP_API_URL || 'https://qurancompare.onrender.com';
 
 const QuranVectorSearch = ({ savedState = {} }) => {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.body.classList.contains('dark-mode'));
+    };
+    
+    checkDarkMode();
+    
+    // Watch for dark mode changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    
+    return () => observer.disconnect();
+  }, []);
   // Check for query and source from sessionStorage (e.g., from DebaterBot)
   const sessionQuery = sessionStorage.getItem('vectorSearchQuery');
   const sessionSource = sessionStorage.getItem('vectorSearchSource');

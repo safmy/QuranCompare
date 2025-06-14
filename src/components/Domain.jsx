@@ -8,13 +8,15 @@ const Domain = ({ onClose }) => {
   
   // Voice changer state
   const [isActive, setIsActive] = useState(false);
-  const [currentEffect, setCurrentEffect] = useState('normal');
+  const [selectedPersona, setSelectedPersona] = useState('british_woman');
   const [inputLevel, setInputLevel] = useState(0);
   const [outputLevel, setOutputLevel] = useState(0);
   const [volume, setVolume] = useState(70);
   const [status, setStatus] = useState('Ready');
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState(null);
+  const [transformedAudio, setTransformedAudio] = useState(null);
+  const [isTransforming, setIsTransforming] = useState(false);
   
   const audioContextRef = useRef(null);
   const streamRef = useRef(null);
@@ -284,6 +286,54 @@ const Domain = ({ onClose }) => {
     return arrayBuffer;
   };
 
+  const transformVoice = async () => {
+    if (!recordedAudio || isTransforming) return;
+    
+    setIsTransforming(true);
+    setStatus('Connecting to voice transformation server...');
+    
+    try {
+      // Create FormData for audio upload
+      const formData = new FormData();
+      formData.append('audio', recordedAudio, 'recording.webm');
+      formData.append('persona', selectedPersona);
+      
+      // Send to voice transformation API
+      const response = await fetch('http://localhost:8888/api/transform_voice', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Voice transformation failed');
+      }
+      
+      const blob = await response.blob();
+      const audioUrl = URL.createObjectURL(blob);
+      setTransformedAudio(audioUrl);
+      setStatus(`Voice transformed to ${selectedPersona.replace('_', ' ')}!`);
+      
+    } catch (error) {
+      console.error('Transformation error:', error);
+      setStatus('Error: Could not transform voice. Make sure the voice server is running.');
+    } finally {
+      setIsTransforming(false);
+    }
+  };
+  
+  const playTransformed = () => {
+    if (!transformedAudio) return;
+    
+    const audio = new Audio(transformedAudio);
+    audio.volume = volume / 100;
+    audio.play();
+    setStatus('Playing transformed voice...');
+    
+    audio.onended = () => {
+      setStatus('Playback complete');
+    };
+  };
+  
   const playRecording = () => {
     if (recordedAudio) {
       const audio = new Audio(URL.createObjectURL(recordedAudio));
@@ -377,9 +427,16 @@ const Domain = ({ onClose }) => {
             {isRecording ? '⏹️ STOP RECORDING' : '🎤 START RECORDING'}
           </button>
           {recordedAudio && !isRecording && (
-            <button className="play-button" onClick={playRecording}>
-              ▶️ PLAY TRANSFORMED
-            </button>
+            <>
+              <button className="transform-button" onClick={transformVoice}>
+                🎤 TRANSFORM VOICE
+              </button>
+              {transformedAudio && (
+                <button className="play-button" onClick={playTransformed}>
+                  ▶️ PLAY AS {selectedPersona.replace('_', ' ').toUpperCase()}
+                </button>
+              )}
+            </>
           )}
           <button className="test-button" onClick={testSpeakers}>
             🔊 Test Speakers
@@ -399,49 +456,49 @@ const Domain = ({ onClose }) => {
         </div>
         
         <div className="effects-panel">
-          <h3>Voice Effects (Select before recording)</h3>
+          <h3>Voice Personas - Transform into different people</h3>
           <div className="effects-grid">
             <div 
-              className={`effect-card ${currentEffect === 'normal' ? 'active' : ''}`}
-              onClick={() => !isRecording && setCurrentEffect('normal')}
+              className={`effect-card ${selectedPersona === 'british_woman' ? 'active' : ''}`}
+              onClick={() => !isRecording && setSelectedPersona('british_woman')}
             >
-              <div className="effect-icon">👤</div>
-              <div className="effect-name">Normal</div>
+              <div className="effect-icon">🇬🇧</div>
+              <div className="effect-name">British Woman</div>
             </div>
             <div 
-              className={`effect-card ${currentEffect === 'deep' ? 'active' : ''}`}
-              onClick={() => !isRecording && setCurrentEffect('deep')}
+              className={`effect-card ${selectedPersona === 'indian_man' ? 'active' : ''}`}
+              onClick={() => !isRecording && setSelectedPersona('indian_man')}
             >
-              <div className="effect-icon">👹</div>
-              <div className="effect-name">Deep Voice</div>
+              <div className="effect-icon">🇮🇳</div>
+              <div className="effect-name">Indian Man</div>
             </div>
             <div 
-              className={`effect-card ${currentEffect === 'high' ? 'active' : ''}`}
-              onClick={() => !isRecording && setCurrentEffect('high')}
+              className={`effect-card ${selectedPersona === 'american_woman' ? 'active' : ''}`}
+              onClick={() => !isRecording && setSelectedPersona('american_woman')}
             >
-              <div className="effect-icon">🐿️</div>
-              <div className="effect-name">High Voice</div>
+              <div className="effect-icon">🇺🇸</div>
+              <div className="effect-name">American Woman</div>
             </div>
             <div 
-              className={`effect-card ${currentEffect === 'robot' ? 'active' : ''}`}
-              onClick={() => !isRecording && setCurrentEffect('robot')}
+              className={`effect-card ${selectedPersona === 'australian_man' ? 'active' : ''}`}
+              onClick={() => !isRecording && setSelectedPersona('australian_man')}
             >
-              <div className="effect-icon">🤖</div>
-              <div className="effect-name">Robot</div>
+              <div className="effect-icon">🇦🇺</div>
+              <div className="effect-name">Australian Man</div>
             </div>
             <div 
-              className={`effect-card ${currentEffect === 'echo' ? 'active' : ''}`}
-              onClick={() => !isRecording && setCurrentEffect('echo')}
+              className={`effect-card ${selectedPersona === 'french_woman' ? 'active' : ''}`}
+              onClick={() => !isRecording && setSelectedPersona('french_woman')}
             >
-              <div className="effect-icon">🏔️</div>
-              <div className="effect-name">Echo</div>
+              <div className="effect-icon">🇫🇷</div>
+              <div className="effect-name">French Woman</div>
             </div>
             <div 
-              className={`effect-card ${currentEffect === 'alien' ? 'active' : ''}`}
-              onClick={() => !isRecording && setCurrentEffect('alien')}
+              className={`effect-card ${selectedPersona === 'spanish_woman' ? 'active' : ''}`}
+              onClick={() => !isRecording && setSelectedPersona('spanish_woman')}
             >
-              <div className="effect-icon">👽</div>
-              <div className="effect-name">Alien</div>
+              <div className="effect-icon">🇪🇸</div>
+              <div className="effect-name">Spanish Woman</div>
             </div>
           </div>
         </div>
@@ -449,11 +506,12 @@ const Domain = ({ onClose }) => {
         <div className="instructions">
           <h3>How to use:</h3>
           <ol>
-            <li>Select a voice effect</li>
+            <li>Select a voice persona (British Woman, Indian Man, etc.)</li>
             <li>Click "START RECORDING"</li>
-            <li>Speak into your microphone</li>
+            <li>Speak naturally into your microphone</li>
             <li>Click "STOP RECORDING"</li>
-            <li>Click "PLAY TRANSFORMED" to hear the effect</li>
+            <li>Click "TRANSFORM VOICE" to hear yourself as that persona</li>
+            <li>Your voice will be completely transformed with the selected accent and gender</li>
           </ol>
         </div>
         

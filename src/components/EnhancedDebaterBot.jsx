@@ -958,7 +958,7 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
       height: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      backgroundColor: '#f5f5f5',
+      backgroundColor: isDarkMode ? '#1a1a1a' : '#f5f5f5',
       position: 'relative'
     }}>
       {/* Header */}
@@ -1077,19 +1077,19 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
           left: 0,
           width: isMobile ? '100%' : '300px',
           height: `calc(100% - ${isMobile ? '50px' : '70px'})`,
-          backgroundColor: 'white',
+          backgroundColor: isDarkMode ? '#2d2d2d' : 'white',
           boxShadow: '2px 0 5px rgba(0,0,0,0.1)',
           zIndex: 5,
           display: 'flex',
           flexDirection: 'column',
-          borderRight: '1px solid #e0e0e0'
+          borderRight: `1px solid ${isDarkMode ? '#444' : '#e0e0e0'}`
         }}>
           <div style={{
             padding: '15px',
-            borderBottom: '1px solid #e0e0e0',
-            backgroundColor: '#f5f5f5'
+            borderBottom: `1px solid ${isDarkMode ? '#444' : '#e0e0e0'}`,
+            backgroundColor: isDarkMode ? '#333' : '#f5f5f5'
           }}>
-            <h3 style={{ margin: 0, fontSize: '16px', color: '#333' }}>Chat History</h3>
+            <h3 style={{ margin: 0, fontSize: '16px', color: isDarkMode ? '#e0e0e0' : '#333' }}>Chat History</h3>
             {deleteSuccess && (
               <div style={{
                 marginTop: '8px',
@@ -1242,13 +1242,13 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
               justifyContent: 'center',
               alignItems: 'center',
               padding: isMobile ? '20px' : '40px',
-              backgroundColor: 'white'
+              backgroundColor: isDarkMode ? '#2d2d2d' : 'white'
             }}>
-              <h2 style={{ marginBottom: '20px', color: '#333', fontSize: isMobile ? '20px' : '24px', textAlign: 'center' }}>
+              <h2 style={{ marginBottom: '20px', color: isDarkMode ? '#e0e0e0' : '#333', fontSize: isMobile ? '20px' : '24px', textAlign: 'center' }}>
                 Start a New Debate
               </h2>
               
-              <p style={{ marginBottom: '20px', color: '#666', textAlign: 'center', maxWidth: '600px' }}>
+              <p style={{ marginBottom: '20px', color: isDarkMode ? '#bbb' : '#666', textAlign: 'center', maxWidth: '600px' }}>
                 I can help you explore Islamic topics with integrated verse lookup, media search, and root analysis.
                 I have access to all Quran translations, Rashad Khalifa's videos, articles, and newsletters.
                 <br />
@@ -1340,21 +1340,22 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                           onClick={() => startDebate(topic)}
                           style={{
                             padding: isMobile ? '12px' : '15px',
-                            backgroundColor: 'white',
-                            border: '2px solid #e0e0e0',
+                            backgroundColor: isDarkMode ? '#3d3d3d' : 'white',
+                            border: `2px solid ${isDarkMode ? '#555' : '#e0e0e0'}`,
                             borderRadius: '8px',
                             cursor: 'pointer',
                             fontSize: isMobile ? '14px' : '15px',
                             textAlign: 'left',
-                            transition: 'all 0.2s ease'
+                            transition: 'all 0.2s ease',
+                            color: isDarkMode ? '#e0e0e0' : '#333'
                           }}
                           onMouseEnter={(e) => {
                             e.target.style.borderColor = '#2196F3';
-                            e.target.style.backgroundColor = '#f0f8ff';
+                            e.target.style.backgroundColor = isDarkMode ? '#4d4d4d' : '#f0f8ff';
                           }}
                           onMouseLeave={(e) => {
-                            e.target.style.borderColor = '#e0e0e0';
-                            e.target.style.backgroundColor = 'white';
+                            e.target.style.borderColor = isDarkMode ? '#555' : '#e0e0e0';
+                            e.target.style.backgroundColor = isDarkMode ? '#3d3d3d' : 'white';
                           }}
                         >
                           {topic}
@@ -1373,7 +1374,7 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                 flex: 1,
                 overflowY: 'auto',
                 padding: '20px',
-                backgroundColor: 'white'
+                backgroundColor: isDarkMode ? '#2d2d2d' : 'white'
               }}>
                 {messages.map((message) => (
                   <div
@@ -1552,8 +1553,8 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
               {/* Input */}
               <div style={{
                 padding: isMobile ? '12px' : '20px',
-                backgroundColor: 'white',
-                borderTop: '1px solid #e0e0e0'
+                backgroundColor: isDarkMode ? '#2d2d2d' : 'white',
+                borderTop: `1px solid ${isDarkMode ? '#444' : '#e0e0e0'}`
               }}>
                 {error && (
                   <div style={{
@@ -1695,21 +1696,21 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
         {showRelatedContent && (
           <div style={{
             width: '350px',
-            backgroundColor: '#f9f9f9',
-            borderLeft: '1px solid #e0e0e0',
+            backgroundColor: isDarkMode ? '#2d2d2d' : '#f9f9f9',
+            borderLeft: `1px solid ${isDarkMode ? '#444' : '#e0e0e0'}`,
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden'
           }}>
             <div style={{
               padding: '15px',
-              borderBottom: '1px solid #e0e0e0',
-              backgroundColor: '#fff',
+              borderBottom: `1px solid ${isDarkMode ? '#444' : '#e0e0e0'}`,
+              backgroundColor: isDarkMode ? '#333' : '#fff',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center'
             }}>
-              <h3 style={{ margin: 0, fontSize: '16px', color: '#333' }}>Related Content</h3>
+              <h3 style={{ margin: 0, fontSize: '16px', color: isDarkMode ? '#e0e0e0' : '#333' }}>Related Content</h3>
               <button
                 onClick={() => setShowRelatedContent(false)}
                 style={{
@@ -1773,10 +1774,10 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                   {displayRelatedData.verses.map((verse, index) => (
                     <div key={index} style={{
                       padding: '10px',
-                      backgroundColor: 'white',
+                      backgroundColor: isDarkMode ? '#3d3d3d' : 'white',
                       borderRadius: '6px',
                       marginBottom: '8px',
-                      border: '1px solid #e0e0e0'
+                      border: `1px solid ${isDarkMode ? '#555' : '#e0e0e0'}`
                     }}>
                       <button
                         onClick={() => handleVerseClick(verse.sura_verse.split(':')[0], verse.sura_verse.split(':')[1])}
@@ -1853,10 +1854,10 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
                   {displayRelatedData.searchResults.map((result, index) => (
                     <div key={index} style={{
                       padding: '10px',
-                      backgroundColor: 'white',
+                      backgroundColor: isDarkMode ? '#3d3d3d' : 'white',
                       borderRadius: '6px',
                       marginBottom: '8px',
-                      border: '1px solid #e0e0e0'
+                      border: `1px solid ${isDarkMode ? '#555' : '#e0e0e0'}`
                     }}>
                       <div>
                         <button
@@ -2015,7 +2016,7 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
           zIndex: 10000
         }}>
           <div style={{
-            backgroundColor: 'white',
+            backgroundColor: isDarkMode ? '#2d2d2d' : 'white',
             borderRadius: '12px',
             padding: '24px',
             maxWidth: '600px',
@@ -2024,10 +2025,10 @@ const EnhancedDebaterBot = ({ onNavigateToTab, currentTab, currentVerses, recent
             overflow: 'auto',
             boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
           }}>
-            <h3 style={{ margin: '0 0 16px 0', color: '#333' }}>
+            <h3 style={{ margin: '0 0 16px 0', color: isDarkMode ? '#e0e0e0' : '#333' }}>
               🎓 Training Correction
             </h3>
-            <p style={{ color: '#666', marginBottom: '16px' }}>
+            <p style={{ color: isDarkMode ? '#bbb' : '#666', marginBottom: '16px' }}>
               Provide a correction for this AI response. Your correction will help improve future responses.
             </p>
             

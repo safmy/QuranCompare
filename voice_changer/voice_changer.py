@@ -135,21 +135,94 @@ class VoiceTransformer:
             "reverb_decay": 0.15
         })
             
-        # Available OpenAI voices
-        self.openai_voices = {
-            "alloy": "Neutral, balanced",
-            "echo": "Male, conversational",
-            "fable": "Male, British accent",
-            "onyx": "Male, deep and authoritative",
-            "nova": "Female, friendly and warm",
-            "shimmer": "Female, soft and gentle"
+        # Voice personas with different accents and characteristics
+        self.voice_personas = {
+            "british_woman": {
+                "voice": "fable",
+                "speed": 1.0,
+                "pitch_shift": 1.1,
+                "description": "British Woman - Sophisticated British accent",
+                "formant_shift": 1.15
+            },
+            "indian_man": {
+                "voice": "echo",
+                "speed": 0.95,
+                "pitch_shift": 0.95,
+                "description": "Indian Man - Warm Indian accent",
+                "formant_shift": 1.05,
+                "add_texture": True
+            },
+            "american_woman": {
+                "voice": "nova",
+                "speed": 1.05,
+                "pitch_shift": 1.05,
+                "description": "American Woman - Energetic American accent",
+                "formant_shift": 1.1
+            },
+            "australian_man": {
+                "voice": "onyx",
+                "speed": 1.0,
+                "pitch_shift": 0.98,
+                "description": "Australian Man - Laid-back Australian accent",
+                "formant_shift": 1.02
+            },
+            "french_woman": {
+                "voice": "shimmer",
+                "speed": 0.95,
+                "pitch_shift": 1.08,
+                "description": "French Woman - Elegant French accent",
+                "formant_shift": 1.12,
+                "add_texture": True
+            },
+            "scottish_man": {
+                "voice": "echo",
+                "speed": 0.92,
+                "pitch_shift": 0.92,
+                "description": "Scottish Man - Strong Scottish accent",
+                "formant_shift": 0.98,
+                "add_texture": True
+            },
+            "japanese_woman": {
+                "voice": "nova",
+                "speed": 1.02,
+                "pitch_shift": 1.15,
+                "description": "Japanese Woman - Soft Japanese accent",
+                "formant_shift": 1.18
+            },
+            "german_man": {
+                "voice": "onyx",
+                "speed": 0.94,
+                "pitch_shift": 0.90,
+                "description": "German Man - Precise German accent",
+                "formant_shift": 0.95
+            },
+            "spanish_woman": {
+                "voice": "shimmer",
+                "speed": 1.08,
+                "pitch_shift": 1.12,
+                "description": "Spanish Woman - Passionate Spanish accent",
+                "formant_shift": 1.14,
+                "add_texture": True
+            },
+            "russian_man": {
+                "voice": "echo",
+                "speed": 0.88,
+                "pitch_shift": 0.85,
+                "description": "Russian Man - Deep Russian accent",
+                "formant_shift": 0.92,
+                "add_texture": True
+            }
         }
         
-    def transform_with_openai(self, text: str, voice: str = "alloy", 
-                            speed: float = 1.0, apply_disguise: bool = True) -> str:
-        """Transform text to speech using OpenAI TTS with optional voice disguise"""
+    def transform_with_persona(self, text: str, persona: str = "british_woman") -> str:
+        """Transform text to speech using a specific persona with accent and gender"""
         if not self.openai_client:
             raise ValueError("OpenAI API key not configured")
+            
+        if persona not in self.voice_personas:
+            raise ValueError(f"Unknown persona: {persona}")
+            
+        persona_config = self.voice_personas[persona]
             
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         temp_file = OUTPUT_FOLDER / f"temp_openai_{voice}_{timestamp}.mp3"
