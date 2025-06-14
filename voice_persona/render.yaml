@@ -3,6 +3,7 @@ services:
     name: quran-voice-persona
     runtime: python
     plan: free
+    rootDir: voice_persona
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn voice_persona_web:app
     envVars:

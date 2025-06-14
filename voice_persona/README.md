@@ -7,10 +7,10 @@ This is the voice transformation API for the QuranCompare Domain Control Panel.
 1. **Create a new Render account** at https://render.com if you don't have one
 
 2. **Deploy from GitHub:**
-   - Push the voice_persona folder to your GitHub repository
+   - Push these changes to your GitHub repository
    - In Render, create a new Web Service
-   - Connect your GitHub repository
-   - Set the root directory to `voice_persona`
+   - Connect your GitHub repository (safmy/QuranCompare)
+   - **IMPORTANT**: Set the root directory to `voice_persona` (not `/QuranCompare/voice_persona`)
    - Render will automatically detect it's a Python app
 
 3. **Manual deployment alternative:**
