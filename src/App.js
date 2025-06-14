@@ -504,4 +504,4 @@ function App() {
 }
 
 export default App;
-// Trigger Netlify deployment - Fri 13 Dec 2024 - v1.5.20 - CRITICAL FIX: Restored AI Debater and main branch functionality after iOS merge error
+// Trigger Netlify deployment - Sat 14 Jun 2025 - v1.5.50 - Voice Persona System: Complete voice transformation with accents and genders
