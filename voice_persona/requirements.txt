@@ -1,0 +1,8 @@
+flask==2.3.2
+flask-cors==4.0.0
+numpy==1.24.3
+scipy==1.11.1
+gunicorn==21.2.0
+pydub==0.25.1
+# Note: PyAudio requires system-level audio libraries that won't work on Render
+# We'll need to modify the server to handle audio processing differently

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Domain.css';
+import VOICE_API_URL from '../config/voiceApi';
 
 const Domain = ({ onClose }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -299,7 +300,7 @@ const Domain = ({ onClose }) => {
       formData.append('persona', selectedPersona);
       
       // Send to voice transformation API
-      const response = await fetch('http://localhost:8888/api/transform_voice', {
+      const response = await fetch(`${VOICE_API_URL}/api/transform_voice`, {
         method: 'POST',
         body: formData
       });
