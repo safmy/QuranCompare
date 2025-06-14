@@ -159,7 +159,7 @@ const Domain = ({ onClose }) => {
     // Process based on effect
     let processedData = new Float32Array(channelData.length);
     
-    switch (currentEffect) {
+    switch (selectedPersona) {
       case 'deep':
         // Deep voice - pitch down by stretching
         for (let i = 0; i < channelData.length; i++) {
