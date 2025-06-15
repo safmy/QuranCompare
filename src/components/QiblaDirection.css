@@ -291,6 +291,15 @@ body.dark-mode .qibla-info {
   background: #2a2a2a;
 }
 
+body.dark-mode .location-info {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+}
+
+body.dark-mode .location-info p {
+  color: #cccccc !important;
+}
+
 body.dark-mode .location-display {
   background: #333;
 }

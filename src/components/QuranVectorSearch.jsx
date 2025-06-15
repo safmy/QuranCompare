@@ -764,72 +764,66 @@ const QuranVectorSearch = ({ savedState = {} }) => {
       </div>
 
       {/* Collection Filters */}
-      <div style={{ 
-        marginBottom: '20px',
-        padding: '15px',
-        backgroundColor: '#f5f5f5',
-        borderRadius: '8px',
-        border: '1px solid #ddd'
-      }}>
-        <h4 style={{ marginBottom: '10px', color: '#333' }}>Search In:</h4>
-        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+      <div className="search-sources-box">
+        <h4 className="search-sources-header">Search In:</h4>
+        <div className="search-sources-options">
+          <label className="search-checkbox-label">
             <input
               type="checkbox"
               checked={includeFinalTestament}
               onChange={(e) => setIncludeFinalTestament(e.target.checked)}
-              style={{ marginRight: '8px' }}
+              className="search-checkbox"
             />
-            <span style={{ color: '#2196F3', fontWeight: 'bold' }}>📖 Final Testament</span>
+            <span className="search-source-final">📖 Final Testament</span>
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+          <label className="search-checkbox-label">
             <input
               type="checkbox"
               checked={includeArabicVerses}
               onChange={(e) => setIncludeArabicVerses(e.target.checked)}
-              style={{ marginRight: '8px' }}
+              className="search-checkbox"
             />
-            <span style={{ color: '#7c3aed', fontWeight: 'bold' }}>🕌 Arabic Verses</span>
+            <span className="search-source-arabic">🕌 Arabic Verses</span>
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+          <label className="search-checkbox-label">
             <input
               type="checkbox"
               checked={includeRashadMedia}
               onChange={(e) => setIncludeRashadMedia(e.target.checked)}
-              style={{ marginRight: '8px' }}
+              className="search-checkbox"
             />
-            <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>🎥 Rashad Khalifa Media</span>
+            <span className="search-source-media">🎥 Rashad Khalifa Media</span>
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+          <label className="search-checkbox-label">
             <input
               type="checkbox"
               checked={includeNewsletters}
               onChange={(e) => setIncludeNewsletters(e.target.checked)}
-              style={{ marginRight: '8px' }}
+              className="search-checkbox"
             />
-            <span style={{ color: '#9C27B0', fontWeight: 'bold' }}>📰 Newsletters & Articles</span>
+            <span className="search-source-newsletters">📰 Newsletters & Articles</span>
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+          <label className="search-checkbox-label">
             <input
               type="checkbox"
               checked={includeAppendices}
               onChange={(e) => setIncludeAppendices(e.target.checked)}
-              style={{ marginRight: '8px' }}
+              className="search-checkbox"
             />
-            <span style={{ color: '#FF5722', fontWeight: 'bold' }}>📚 Appendices</span>
+            <span className="search-source-appendices">📚 Appendices</span>
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+          <label className="search-checkbox-label">
             <input
               type="checkbox"
               checked={useRegex}
               onChange={(e) => setUseRegex(e.target.checked)}
-              style={{ marginRight: '8px' }}
+              className="search-checkbox"
             />
-            <span style={{ color: '#666', fontWeight: 'bold' }}>🔍 Regex Search</span>
+            <span className="search-source-regex">🔍 Regex Search</span>
           </label>
         </div>
         {useRegex && (
-          <p style={{ fontSize: '13px', color: '#666', marginTop: '8px', marginBottom: 0 }}>
+          <p className="regex-hint">
             Regex searches Final Testament for all words in any order
           </p>
         )}
