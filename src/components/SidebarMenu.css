@@ -50,19 +50,17 @@
   left: -300px;
   width: 300px;
   height: 100vh;
-  background: #1a1a1a;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+  background: white;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   transition: left 0.3s ease, width 0.3s ease;
   z-index: 1001;
   overflow-y: auto;
 }
 
-/* Light mode override */
-@media (prefers-color-scheme: light) {
-  .sidebar-menu {
-    background: white;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  }
+/* Dark mode override */
+body.dark-mode .sidebar-menu {
+  background: #1a1a1a;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
 }
 
 .sidebar-menu.open {
@@ -140,51 +138,47 @@
   border: none;
   border-radius: 12px;
   overflow: hidden;
-  background: #2a2a2a;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
 }
 
 .sidebar-section:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   transform: translateY(-2px);
 }
 
-/* Light mode override */
-@media (prefers-color-scheme: light) {
-  .sidebar-section {
-    background: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  }
-  
-  .sidebar-section:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  }
+/* Dark mode override */
+body.dark-mode .sidebar-section {
+  background: #2a2a2a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .sidebar-section:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .sidebar-section-header {
   display: flex;
   align-items: center;
   padding: 16px 20px;
-  background: linear-gradient(135deg, #333 0%, #2a2a2a 100%);
+  background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
   cursor: pointer;
   transition: all 0.3s ease;
   border-bottom: 1px solid transparent;
 }
 
 .sidebar-section-header:hover {
-  background: linear-gradient(135deg, #3a3a3a 0%, #333 100%);
+  background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
 }
 
-/* Light mode override */
-@media (prefers-color-scheme: light) {
-  .sidebar-section-header {
-    background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
-  }
-  
-  .sidebar-section-header:hover {
-    background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
-  }
+/* Dark mode override */
+body.dark-mode .sidebar-section-header {
+  background: linear-gradient(135deg, #333 0%, #2a2a2a 100%);
+}
+
+body.dark-mode .sidebar-section-header:hover {
+  background: linear-gradient(135deg, #3a3a3a 0%, #333 100%);
 }
 
 .section-icon {
@@ -204,29 +198,25 @@
   flex: 1;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #ffffff;
+  color: #333;
   letter-spacing: -0.02em;
 }
 
-/* Light mode override */
-@media (prefers-color-scheme: light) {
-  .section-title {
-    color: #333;
-  }
+/* Dark mode override */
+body.dark-mode .section-title {
+  color: #ffffff;
 }
 
 .toggle-icon {
   font-size: 0.8rem;
-  color: #a78bfa;
+  color: #6b46c1;
   transition: transform 0.3s ease;
   font-weight: bold;
 }
 
-/* Light mode override */
-@media (prefers-color-scheme: light) {
-  .toggle-icon {
-    color: #6b46c1;
-  }
+/* Dark mode override */
+body.dark-mode .toggle-icon {
+  color: #a78bfa;
 }
 
 .toggle-icon.open {
@@ -235,22 +225,20 @@
 
 .sidebar-section-content {
   padding: 20px;
+  background: white;
+  color: #333;
+  animation: slideDown 0.3s ease;
+}
+
+/* Dark mode override */
+body.dark-mode .sidebar-section-content {
   background: #1f1f1f;
   color: #ffffff;
-  animation: slideDown 0.3s ease;
 }
 
 /* Ensure all child elements inherit the text color */
 .sidebar-section-content * {
   color: inherit;
-}
-
-/* Light mode override */
-@media (prefers-color-scheme: light) {
-  .sidebar-section-content {
-    background: white;
-    color: #333;
-  }
 }
 
 @keyframes slideDown {
@@ -271,16 +259,14 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.3);
   z-index: 1000;
   animation: fadeIn 0.3s ease;
 }
 
-/* Light mode override */
-@media (prefers-color-scheme: light) {
-  .sidebar-overlay {
-    background: rgba(0, 0, 0, 0.3);
-  }
+/* Dark mode override */
+body.dark-mode .sidebar-overlay {
+  background: rgba(0, 0, 0, 0.5);
 }
 
 @keyframes fadeIn {

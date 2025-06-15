@@ -423,4 +423,263 @@
     opacity: 1;
     transform: translateY(0);
   }
+}/* Dark mode overrides for PrayerTimes.css */
+
+/* Header */
+body.dark-mode .prayer-times-header h4 {
+  color: #ffffff;
+}
+
+body.dark-mode .prayer-description {
+  color: #cccccc;
+  background: #2a2a2a;
+  border-left-color: #8b5cf6;
+}
+
+/* Input fields */
+body.dark-mode .location-input input,
+body.dark-mode .date-input,
+body.dark-mode .method-select select,
+body.dark-mode input[type="text"],
+body.dark-mode input[type="date"],
+body.dark-mode select {
+  background: #2d2d2d;
+  color: #e0e0e0;
+  border: 1px solid #404040;
+}
+
+body.dark-mode .location-input input:focus,
+body.dark-mode .date-input:focus,
+body.dark-mode .method-select:focus,
+body.dark-mode input:focus,
+body.dark-mode select:focus {
+  border-color: #8b5cf6;
+}
+
+/* Buttons */
+body.dark-mode .location-button {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+body.dark-mode .location-button:hover {
+  background: linear-gradient(135deg, #9f7aea 0%, #b794f6 100%);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+/* Loading and Error states */
+body.dark-mode .loading {
+  color: #cccccc;
+}
+
+body.dark-mode .error {
+  background: #3a2020;
+  border: 1px solid #5a3030;
+}
+
+body.dark-mode .error p {
+  color: #ff6b6b;
+}
+
+/* Location display */
+body.dark-mode .current-location {
+  background: #2a2a2a;
+}
+
+body.dark-mode .city-name {
+  color: #ffffff;
+}
+
+body.dark-mode .coordinates {
+  color: #cccccc;
+}
+
+body.dark-mode .local-time {
+  color: #ffffff;
+  background: #333;
+  border: 1px solid #444;
+}
+
+body.dark-mode .local-time strong {
+  color: #a78bfa;
+}
+
+/* Prayer times grid */
+body.dark-mode .time-item {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+}
+
+body.dark-mode .time-item.active {
+  background: #3a3a3a;
+  border-color: #8b5cf6;
+}
+
+body.dark-mode .prayer-name {
+  color: #cccccc;
+}
+
+body.dark-mode .prayer-time {
+  color: #ffffff;
+}
+
+/* Settings */
+body.dark-mode .alarm-settings {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+}
+
+body.dark-mode .alarm-option label {
+  color: #e0e0e0;
+}
+
+body.dark-mode .alarm-option input[type="checkbox"] {
+  accent-color: #8b5cf6;
+}
+
+/* Alert boxes */
+body.dark-mode .location-prompt {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+}
+
+body.dark-mode .prompt-icon {
+  background: #333;
+}
+
+body.dark-mode .prompt-message h4 {
+  color: #ffffff;
+}
+
+body.dark-mode .prompt-message p {
+  color: #cccccc;
+}
+
+/* Misc text elements */
+body.dark-mode .method-label,
+body.dark-mode .test-alarm-button,
+body.dark-mode .alarm-item label {
+  color: #e0e0e0;
+}
+
+body.dark-mode .alarm-item {
+  background: #333;
+  border: 1px solid #444;
+}
+
+body.dark-mode .alarm-item.active {
+  background: #3a2d4a;
+  border-color: #8b5cf6;
+}
+
+/* Switch/Toggle */
+body.dark-mode .switch {
+  background-color: #555;
+}
+
+body.dark-mode input:checked + .switch {
+  background-color: #8b5cf6;
+}
+
+body.dark-mode .switch:after {
+  background-color: #2a2a2a;
+}
+
+/* Additional elements */
+body.dark-mode .upcoming-prayer {
+  background: #333;
+  color: #ffffff;
+}
+
+body.dark-mode .next-prayer-label {
+  color: #cccccc;
+}
+
+body.dark-mode .time-remaining {
+  color: #a78bfa;
+}
+
+body.dark-mode .alarm-active {
+  background: #3a2d4a;
+  color: #a78bfa;
+}
+
+body.dark-mode .test-alarm-button {
+  background: #3a3a3a;
+  border-color: #8b5cf6;
+  color: #a78bfa;
+}
+
+body.dark-mode .test-alarm-button:hover {
+  background: #444;
+}
+
+/* Permission warning */
+body.dark-mode .permission-warning {
+  background: #3a3a20;
+  border: 1px solid #5a5a30;
+  color: #ffeb3b;
+}
+
+/* Additional dark mode overrides */
+body.dark-mode .time-item-with-alarm {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+}
+
+body.dark-mode .time-item-with-alarm:hover {
+  background: #333;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+}
+
+body.dark-mode .time-label {
+  color: #cccccc;
+}
+
+body.dark-mode .time-value {
+  color: #ffffff;
+}
+
+body.dark-mode .time-item:first-child .time-value,
+body.dark-mode .time-item:last-child .time-value {
+  color: #a78bfa;
+}
+
+body.dark-mode .twilight-info {
+  background: #3a2d4a;
+}
+
+body.dark-mode .twilight-info small {
+  color: #a78bfa;
+}
+
+body.dark-mode .notification-prompt {
+  background: #3a3a20;
+  border: 1px solid #5a5a30;
+}
+
+body.dark-mode .notification-prompt p {
+  color: #ffeb3b;
+}
+
+body.dark-mode .toggle-slider {
+  background-color: #555;
+}
+
+body.dark-mode .alarm-toggle input:checked + .toggle-slider {
+  background-color: #8b5cf6;
+}
+
+body.dark-mode .alarm-options label {
+  color: #cccccc;
+}
+
+body.dark-mode .alarm-options select {
+  background: #2d2d2d;
+  color: #e0e0e0;
+  border: 1px solid #404040;
+}
+
+body.dark-mode .alarm-options select:focus {
+  border-color: #8b5cf6;
 }

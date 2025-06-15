@@ -11,16 +11,25 @@
 
 .appendices-header h4 {
   margin: 0 0 10px 0;
-  color: inherit;
+  color: #333;
   font-size: 1.5rem;
   font-weight: 600;
 }
 
+/* Dark mode override */
+body.dark-mode .appendices-header h4 {
+  color: #ffffff;
+}
+
 .appendices-description {
   font-size: 0.95rem;
-  color: inherit;
-  opacity: 0.8;
+  color: #666;
   margin-bottom: 0;
+}
+
+/* Dark mode override */
+body.dark-mode .appendices-description {
+  color: #cccccc;
 }
 
 /* Grid Layout */
@@ -50,8 +59,8 @@
 }
 
 .appendix-card {
-  background: #2a2a2a;
-  border: 1px solid #3a3a3a;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
   border-radius: 8px;
   padding: 15px;
   text-decoration: none;
@@ -62,49 +71,43 @@
   min-height: 120px;
 }
 
-/* Light mode override */
-@media (prefers-color-scheme: light) {
-  .appendix-card {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-  }
+/* Dark mode override */
+body.dark-mode .appendix-card {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
 }
 
 .appendix-card:hover {
-  background: #333;
-  border-color: #8b5cf6;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+  background: #fff;
+  border-color: #6b46c1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
 }
 
-/* Light mode override */
-@media (prefers-color-scheme: light) {
-  .appendix-card:hover {
-    background: #fff;
-    border-color: #6b46c1;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
+/* Dark mode override */
+body.dark-mode .appendix-card:hover {
+  background: #333;
+  border-color: #8b5cf6;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
 }
 
 .appendix-card-title {
   margin: 0 0 8px 0;
   font-size: 1rem;
   font-weight: 600;
-  color: #ffffff;
+  color: #333;
   line-height: 1.2;
 }
 
-/* Light mode override */
-@media (prefers-color-scheme: light) {
-  .appendix-card-title {
-    color: #333;
-  }
+/* Dark mode override */
+body.dark-mode .appendix-card-title {
+  color: #ffffff;
 }
 
 .appendix-card-preview {
   margin: 0;
   font-size: 0.85rem;
-  color: #cccccc;
+  color: #666;
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -113,16 +116,14 @@
   text-overflow: ellipsis;
 }
 
-/* Light mode override */
-@media (prefers-color-scheme: light) {
-  .appendix-card-preview {
-    color: #666;
-  }
+/* Dark mode override */
+body.dark-mode .appendix-card-preview {
+  color: #cccccc;
 }
 
 /* Footer Section */
 .appendices-footer {
-  border-top: 1px solid #3a3a3a;
+  border-top: 1px solid #e9ecef;
   padding-top: 30px;
   margin-top: 40px;
   display: flex;
@@ -132,24 +133,31 @@
   gap: 20px;
 }
 
-/* Light mode override */
-@media (prefers-color-scheme: light) {
-  .appendices-footer {
-    border-top: 1px solid #e9ecef;
-  }
+/* Dark mode override */
+body.dark-mode .appendices-footer {
+  border-top: 1px solid #3a3a3a;
 }
 
 .download-section h5 {
   margin: 0 0 5px 0;
   font-size: 1rem;
-  color: inherit;
+  color: #333;
+}
+
+/* Dark mode override */
+body.dark-mode .download-section h5 {
+  color: #ffffff;
 }
 
 .download-section p {
   margin: 0;
   font-size: 0.9rem;
-  color: inherit;
-  opacity: 0.8;
+  color: #666;
+}
+
+/* Dark mode override */
+body.dark-mode .download-section p {
+  color: #cccccc;
 }
 
 .discord-link {
@@ -178,32 +186,30 @@
 }
 
 .appendices-container::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: #f1f1f1;
   border-radius: 3px;
 }
 
 .appendices-container::-webkit-scrollbar-thumb {
-  background: #4a4a4a;
+  background: #ccc;
   border-radius: 3px;
 }
 
 .appendices-container::-webkit-scrollbar-thumb:hover {
-  background: #5a5a5a;
+  background: #999;
 }
 
-/* Light mode scrollbar */
-@media (prefers-color-scheme: light) {
-  .appendices-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
-  
-  .appendices-container::-webkit-scrollbar-thumb {
-    background: #ccc;
-  }
-  
-  .appendices-container::-webkit-scrollbar-thumb:hover {
-    background: #999;
-  }
+/* Dark mode scrollbar */
+body.dark-mode .appendices-container::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+body.dark-mode .appendices-container::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+}
+
+body.dark-mode .appendices-container::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
 }
 
 /* Mobile responsive */

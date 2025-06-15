@@ -217,4 +217,112 @@
     opacity: 1;
     transform: translateY(0);
   }
+}/* Dark mode overrides for QiblaDirection.css */
+
+/* Header */
+body.dark-mode .qibla-header h4 {
+  color: #ffffff;
+}
+
+body.dark-mode .qibla-header p {
+  color: #cccccc;
+}
+
+body.dark-mode .qibla-content {
+  background: #2a2a2a;
+}
+
+/* Error state */
+body.dark-mode .error {
+  background: #3a2020;
+  border: 1px solid #5a3030;
+}
+
+body.dark-mode .error p {
+  color: #ff6b6b;
+}
+
+/* Compass */
+body.dark-mode .compass-container {
+  background: #2a2a2a;
+}
+
+body.dark-mode .compass {
+  background: #333;
+  border: 3px solid #444;
+}
+
+body.dark-mode .compass-label {
+  color: #cccccc;
+}
+
+body.dark-mode .direction-label {
+  color: #ffffff;
+}
+
+body.dark-mode .direction-label.north {
+  color: #ff6b6b;
+}
+
+body.dark-mode .angle-display {
+  color: #a78bfa;
+}
+
+/* Info section */
+body.dark-mode .qibla-info {
+  background: #2a2a2a;
+}
+
+body.dark-mode .location-display {
+  background: #333;
+}
+
+body.dark-mode .city-name {
+  color: #ffffff;
+}
+
+body.dark-mode .coordinates {
+  color: #cccccc;
+}
+
+body.dark-mode .distance-info {
+  color: #cccccc;
+}
+
+body.dark-mode .distance-info strong {
+  color: #a78bfa;
+}
+
+/* Alert */
+body.dark-mode .permission-alert {
+  background: #3a3a20;
+  border: 1px solid #5a5a30;
+}
+
+body.dark-mode .permission-alert p {
+  color: #ffeb3b;
+}
+
+/* Loading */
+body.dark-mode .loading {
+  color: #cccccc;
+}
+
+/* Additional dark mode styles for elements that might exist */
+body.dark-mode .info-text {
+  color: #cccccc;
+}
+
+body.dark-mode .qibla-distance {
+  color: #a78bfa;
+}
+
+body.dark-mode .accuracy-indicator {
+  color: #cccccc;
+}
+
+body.dark-mode .calibration-hint {
+  color: #ffeb3b;
+  background: #3a3a20;
+  border-color: #5a5a30;
 }
