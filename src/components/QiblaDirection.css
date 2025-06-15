@@ -311,6 +311,36 @@ body.dark-mode .distance-info strong {
   color: #a78bfa;
 }
 
+/* Fix for angle and distance info boxes */
+body.dark-mode .angle-info,
+body.dark-mode .distance-info {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+}
+
+body.dark-mode .angle-info h5,
+body.dark-mode .distance-info h5 {
+  color: #cccccc;
+}
+
+body.dark-mode .angle-value,
+body.dark-mode .distance-value {
+  color: #ffffff;
+}
+
+body.dark-mode .direction-text {
+  color: #cccccc;
+}
+
+body.dark-mode .compass-note {
+  background: #3a3a20;
+  border: 1px solid #5a5a30;
+}
+
+body.dark-mode .compass-note p {
+  color: #ffeb3b;
+}
+
 /* Alert */
 body.dark-mode .permission-alert {
   background: #3a3a20;

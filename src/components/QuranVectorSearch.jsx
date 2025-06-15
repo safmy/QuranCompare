@@ -686,11 +686,11 @@ const QuranVectorSearch = ({ savedState = {} }) => {
         }
       `}</style>
     <div className="vector-search-container">
-      <h2 style={{ color: '#333', marginBottom: '20px' }}>Semantic Search</h2>
-      <p style={{ color: '#666', marginBottom: '20px' }}>
+      <h2 className="search-header">Semantic Search</h2>
+      <p className="search-description">
         Search individual collections using AI-powered semantic search. Select checkboxes below to choose sources.
         <br />
-        <span style={{ fontSize: '14px', color: '#888' }}>
+        <span className="search-hint">
           ✨ Final Testament (English) • Arabic Verses • Media • Newsletters & Articles
         </span>
       </p>
@@ -703,7 +703,7 @@ const QuranVectorSearch = ({ savedState = {} }) => {
         alignItems: 'flex-end'
       }}>
         <div style={{ flex: 1, minWidth: '300px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+          <label className="search-label">
             Search Query:
           </label>
           <input
@@ -724,7 +724,7 @@ const QuranVectorSearch = ({ savedState = {} }) => {
         </div>
         
         <div style={{ minWidth: '120px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+          <label className="search-label">
             Results:
           </label>
           <select

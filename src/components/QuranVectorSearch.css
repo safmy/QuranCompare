@@ -184,10 +184,49 @@
     padding: 20px;
 }
 
+/* Search header and description */
+.search-header {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.search-description {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.search-hint {
+    font-size: 14px;
+    color: #888;
+}
+
+.search-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
 /* Dark mode support */
-bodybody.dark-mode .vector-search-container {
+body.dark-mode .vector-search-container {
     background-color: #1a1a1a !important;
     color: #e0e0e0 !important;
+}
+
+body.dark-mode .search-header {
+    color: #ffffff;
+}
+
+body.dark-mode .search-description {
+    color: #cccccc;
+}
+
+body.dark-mode .search-hint {
+    color: #aaaaaa;
+}
+
+body.dark-mode .search-label {
+    color: #e0e0e0;
 }
 
 body.dark-mode .vector-search-header h2 {
