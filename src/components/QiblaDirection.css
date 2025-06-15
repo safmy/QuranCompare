@@ -220,12 +220,22 @@
 }/* Dark mode overrides for QiblaDirection.css */
 
 /* Header */
+body.dark-mode .qibla-info h4 {
+  color: #ffffff;
+}
+
 body.dark-mode .qibla-header h4 {
   color: #ffffff;
 }
 
 body.dark-mode .qibla-header p {
   color: #cccccc;
+}
+
+body.dark-mode .qibla-description {
+  color: #cccccc;
+  background: #2a2a2a;
+  border-left-color: #8b5cf6;
 }
 
 body.dark-mode .qibla-content {
@@ -244,7 +254,7 @@ body.dark-mode .error p {
 
 /* Compass */
 body.dark-mode .compass-container {
-  background: #2a2a2a;
+  background: transparent;
 }
 
 body.dark-mode .compass {
@@ -254,6 +264,14 @@ body.dark-mode .compass {
 
 body.dark-mode .compass-label {
   color: #cccccc;
+}
+
+body.dark-mode .direction {
+  color: #ffffff;
+}
+
+body.dark-mode .direction.north {
+  color: #ff6b6b;
 }
 
 body.dark-mode .direction-label {
@@ -325,4 +343,18 @@ body.dark-mode .calibration-hint {
   color: #ffeb3b;
   background: #3a3a20;
   border-color: #5a5a30;
+}
+
+/* Additional dark mode fixes for any missing elements */
+body.dark-mode .qibla-container {
+  color: #e0e0e0;
+}
+
+body.dark-mode .compass-angle {
+  color: #a78bfa;
+  font-weight: bold;
+}
+
+body.dark-mode .accuracy-text {
+  color: #cccccc;
 }

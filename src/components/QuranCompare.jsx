@@ -541,10 +541,10 @@ const QuranCompare = ({ initialVerses = [] }) => {
 
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-      <h2 style={{ color: '#333', marginBottom: '20px' }}>Compare Quran Verses</h2>
+      <h2 className="compare-heading">Compare Quran Verses</h2>
       
       <div style={{ marginBottom: '20px' }}>
-        <p style={{ color: '#666', marginBottom: '15px' }}>
+        <p className="compare-description">
           Enter verse references to compare side by side. Use format: sura:verse (e.g., 2:255, 112:1)
         </p>
         
@@ -575,14 +575,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
             {verseInputs.length > 1 && (
               <button
                 onClick={() => removeVerseInput(index)}
-                style={{
-                  padding: '8px 12px',
-                  backgroundColor: '#f44336',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
+                className="remove-verse-btn"
               >
                 Remove
               </button>
@@ -593,14 +586,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
         <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
           <button
             onClick={addVerseInput}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#2196F3',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
+            className="add-verse-btn"
           >
             Add Another Verse
           </button>
@@ -608,14 +594,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
           <button
             onClick={handleCompare}
             disabled={loading || !quranData}
-            style={{
-              padding: '10px 25px',
-              backgroundColor: loading ? '#ccc' : '#7c3aed',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: loading ? 'not-allowed' : 'pointer'
-            }}
+            className={loading ? 'compare-btn disabled' : 'compare-btn'}
           >
             {loading ? 'Comparing...' : 'Compare Verses'}
           </button>
@@ -623,14 +602,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
       </div>
 
       {error && (
-        <div style={{
-          padding: '10px',
-          backgroundColor: '#ffebee',
-          border: '1px solid #f44336',
-          borderRadius: '4px',
-          color: '#d32f2f',
-          marginBottom: '20px'
-        }}>
+        <div className="error-message">
           {error}
         </div>
       )}
@@ -648,13 +620,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
           
           {/* Root Analysis Summary */}
           {rootSummary && rootSummary.length > 0 && (
-            <div style={{
-              marginBottom: '30px',
-              padding: '20px',
-              backgroundColor: '#f0f8ff',
-              borderRadius: '8px',
-              border: '1px solid #1976d2'
-            }}>
+            <div className="root-analysis-summary">
               <div 
                 style={{
                   display: 'flex',
@@ -672,18 +638,12 @@ const QuranCompare = ({ initialVerses = [] }) => {
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(25, 118, 210, 0.05)'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                <h4 style={{ margin: 0, color: '#1976d2' }}>
+                <h4 className="root-analysis-heading">
                   🌳 Root Analysis Summary {selectedRootData ? `for "${selectedRootData.selectedRoot}"` : `(${rootSummary.length} unique root${rootSummary.length !== 1 ? 's' : ''})`}
                 </h4>
                 <button
+                  className="expand-collapse-btn"
                   style={{
-                    background: 'none',
-                    border: '1px solid #1976d2',
-                    color: '#1976d2',
-                    padding: '5px 10px',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
                     pointerEvents: 'none'
                   }}
                 >
@@ -692,14 +652,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
               </div>
               
               {selectedRootData && showRootSummary && (
-                <div style={{
-                  marginBottom: '15px',
-                  padding: '10px',
-                  backgroundColor: '#fff3cd',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  border: '1px solid #ffc107'
-                }}>
+                <div className="selected-root-info">
                   <strong>Source:</strong> Clicked "{selectedRootData.clickedWord}" in [{selectedRootData.sourceVerse?.sura_verse || 'N/A'}]<br/>
                   <strong>Root meaning there:</strong> {selectedRootData.clickedWordMeaning || 'N/A'}<br/>
                   <strong>Total occurrences in Quran:</strong> {selectedRootData.totalCount || 'N/A'} verses
@@ -709,12 +662,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
               {showRootSummary && rootSummary && rootSummary.length > 0 && (
                 <div style={{ display: 'grid', gap: '15px' }}>
                   {rootSummary.map((rootData, idx) => (
-                    <div key={idx} style={{
-                      padding: '15px',
-                      backgroundColor: 'white',
-                      borderRadius: '6px',
-                      border: '1px solid #e0e0e0'
-                    }}>
+                    <div key={idx} className="root-card">
                       <div style={{
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -722,18 +670,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
                         marginBottom: '10px'
                       }}>
                         <div>
-                          <span style={{
-                            fontSize: '20px',
-                            fontWeight: 'bold',
-                            color: '#333',
-                            fontFamily: 'Traditional Arabic, serif',
-                            direction: 'rtl',
-                            display: 'inline-block',
-                            padding: '2px 8px',
-                            backgroundColor: '#fff3cd',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                          }}
+                          <span className="root-arabic-text"
                           onClick={() => {
                             // Navigate to Root Search with this root
                             sessionStorage.setItem('rootSearchQuery', rootData.root);
@@ -747,30 +684,17 @@ const QuranCompare = ({ initialVerses = [] }) => {
                             {rootData.root}
                           </span>
                         </div>
-                        <span style={{
-                          backgroundColor: '#e3f2fd',
-                          color: '#1976d2',
-                          padding: '4px 12px',
-                          borderRadius: '16px',
-                          fontSize: '13px',
-                          fontWeight: '500'
-                        }}>
+                        <span className="occurrence-badge">
                           {rootData.totalCount} occurrence{rootData.totalCount !== 1 ? 's' : ''}
                         </span>
                       </div>
                       
                       {rootData.meanings.length > 0 && (
                         <div style={{ marginTop: '10px' }}>
-                          <strong style={{ color: '#666', fontSize: '14px' }}>Meanings found:</strong>
+                          <strong className="meanings-label">Meanings found:</strong>
                           <div style={{ marginTop: '5px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                             {rootData.meanings.map((meaning, midx) => (
-                              <span key={midx} style={{
-                                backgroundColor: '#f0f0f0',
-                                color: '#333',
-                                padding: '3px 10px',
-                                borderRadius: '12px',
-                                fontSize: '13px'
-                              }}>
+                              <span key={midx} className="meaning-tag">
                                 {meaning}
                               </span>
                             ))}
@@ -786,17 +710,11 @@ const QuranCompare = ({ initialVerses = [] }) => {
           
           {/* Meaning Variations Summary */}
           {meaningData && (
-            <div style={{
-              marginBottom: '30px',
-              padding: '20px',
-              backgroundColor: '#f8f9fa',
-              borderRadius: '8px',
-              border: '1px solid #e0e0e0'
-            }}>
-              <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#333' }}>
+            <div className="meaning-variations-summary">
+              <h4 className="meaning-variations-heading">
                 📚 Root Analysis Summary: "{meaningData.root}"
               </h4>
-              <p style={{ marginBottom: '15px', color: '#666' }}>
+              <p className="meaning-variations-description">
                 {meaningData.selectedMeaning ? 
                   `Showing verses where the root "${meaningData.root}" means "${meaningData.selectedMeaning}" (${meaningData.totalWithThisMeaning} occurrences):` :
                   `The following verses demonstrate different meanings of the root "${meaningData.root}" in the Quran:`
@@ -804,11 +722,11 @@ const QuranCompare = ({ initialVerses = [] }) => {
               </p>
               {meaningData.selectedMeaning ? (
                 // Similar meaning comparison view
-                <div style={{ padding: '10px', backgroundColor: '#fff3cd', borderRadius: '4px' }}>
-                  <p style={{ margin: 0, fontSize: '0.9em' }}>
+                <div className="similar-meaning-info">
+                  <p className="similar-meaning-text">
                     All verses below contain the root "{meaningData.root}" with the meaning: <strong>"{meaningData.selectedMeaning}"</strong>
                   </p>
-                  <p style={{ margin: '5px 0 0 0', fontSize: '0.85em', color: '#666' }}>
+                  <p className="total-verses-count">
                     Total verses with this meaning: {meaningData.totalWithThisMeaning || verses.length}
                   </p>
                 </div>
@@ -816,47 +734,31 @@ const QuranCompare = ({ initialVerses = [] }) => {
                 // Different meanings comparison view
                 <div style={{ display: 'grid', gap: '10px' }}>
                   {meaningData.variations && Object.entries(meaningData.variations).map(([verseRef, data]) => (
-                    <div key={verseRef} style={{
-                      padding: '10px',
-                      backgroundColor: verseRef === meaningData.sourceVerse ? '#e3f2fd' : 'white',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px'
-                    }}>
+                    <div key={verseRef} className={verseRef === meaningData.sourceVerse ? 'variation-card source-verse' : 'variation-card'}>
                       <strong>[{verseRef}]</strong>
                       {verseRef === meaningData.sourceVerse && (
-                        <span style={{ 
-                          marginLeft: '10px', 
-                          fontSize: '0.8em', 
-                          color: '#1976d2',
-                          fontWeight: 'normal'
-                        }}>
+                        <span className="source-verse-label">
                           (Source verse)
                         </span>
                       )}
                       <br />
-                      <span style={{ color: '#2e7d32' }}>"{data.arabicWord}"</span> → 
+                      <span className="arabic-word-highlight">"{data.arabicWord}"</span> → 
                       <strong style={{ marginLeft: '5px' }}>{data.meaning}</strong>
                       <br />
-                      <small style={{ color: '#666' }}>
+                      <small className="occurrence-count">
                         This meaning appears in {data.occurrences} verse{data.occurrences !== 1 ? 's' : ''} total
                       </small>
                     </div>
                   ))}
                 </div>
               )}
-              <div style={{ 
-                marginTop: '15px', 
-                padding: '10px',
-                backgroundColor: '#fff3cd',
-                borderRadius: '4px',
-                fontSize: '0.9em'
-              }}>
+              <div className="meaning-tip-box">
                 💡 <strong>Tip:</strong> {meaningData.selectedMeaning ? 
                   `These verses all share the same meaning for the root "${meaningData.root}". To see different meanings, go back and select "Compare One from Each Meaning".` :
                   `Each verse below shows one example of how the root "${meaningData.root}" is used with different meanings. This helps understand the semantic range and contextual flexibility of Arabic roots in the Quran.`
                 }
                 {meaningData.totalOccurrences && !meaningData.selectedMeaning && (
-                  <span style={{ display: 'block', marginTop: '5px', fontSize: '0.85em', color: '#666' }}>
+                  <span className="total-occurrences-note">
                     Note: The root "{meaningData.root}" appears in {meaningData.totalOccurrences} verses total. 
                     Only representative examples are shown above.
                   </span>
@@ -894,23 +796,17 @@ const QuranCompare = ({ initialVerses = [] }) => {
                 )}
                 
                 {getFootnoteText(verse, currentLanguage) && (
-                  <div className="footnote" style={{ direction: getLanguageConfig(currentLanguage).direction, fontSize: '0.85em', color: '#666', marginTop: '10px' }}>
+                  <div className="footnote" style={{ direction: getLanguageConfig(currentLanguage).direction }}>
                     <small>{getFootnoteText(verse, currentLanguage)}</small>
                   </div>
                 )}
                 
                 {/* Show meaning variation for this verse if available */}
                 {meaningData && meaningData.variations && meaningData.variations[verse.sura_verse] && (
-                  <div style={{
-                    marginTop: '10px',
-                    padding: '8px',
-                    backgroundColor: '#f0f7ff',
-                    borderRadius: '4px',
-                    fontSize: '0.85em'
-                  }}>
+                  <div className="verse-meaning-variation">
                     <strong>Root "{meaningData.root}" meaning:</strong> {meaningData.variations[verse.sura_verse].meaning}
                     <br />
-                    <small style={{ color: '#666' }}>
+                    <small className="occurrence-count">
                       ({meaningData.variations[verse.sura_verse].occurrences} occurrences in Quran)
                     </small>
                   </div>
@@ -929,18 +825,10 @@ const QuranCompare = ({ initialVerses = [] }) => {
           
           {/* Enhanced Audio Player Controls */}
           {verses.length === 1 && !memorizationMode && (
-            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            <div className="audio-player-toggle-container">
               <button
                 onClick={() => setShowEnhancedPlayer(!showEnhancedPlayer)}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: showEnhancedPlayer ? '#ff9800' : '#7c3aed',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
+                className={showEnhancedPlayer ? 'audio-player-toggle-btn active' : 'audio-player-toggle-btn'}
               >
                 {showEnhancedPlayer ? '🎵 Hide Advanced Player' : '🎵 Show Advanced Player'}
               </button>
@@ -990,11 +878,7 @@ const QuranCompare = ({ initialVerses = [] }) => {
       )}
 
       {!quranData && !error && (
-        <div style={{
-          padding: '20px',
-          textAlign: 'center',
-          color: '#666'
-        }}>
+        <div className="loading-message">
           Loading Quran data...
         </div>
       )}

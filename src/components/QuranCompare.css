@@ -404,3 +404,482 @@ body.dark-mode .scroll-to-top-btn {
 body.dark-mode .scroll-to-top-btn:hover {
     background: #7c3aed;
 }
+
+/* Compare heading and description */
+.compare-heading {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+body.dark-mode .compare-heading {
+    color: #e0e0e0;
+}
+
+.compare-description {
+    color: #666;
+    margin-bottom: 15px;
+}
+
+body.dark-mode .compare-description {
+    color: #b0b0b0;
+}
+
+/* Error message */
+.error-message {
+    padding: 10px;
+    background-color: #ffebee;
+    border: 1px solid #f44336;
+    border-radius: 4px;
+    color: #d32f2f;
+    margin-bottom: 20px;
+}
+
+body.dark-mode .error-message {
+    background-color: #3d1515;
+    border-color: #d32f2f;
+    color: #ff6b6b;
+}
+
+/* Root analysis summary */
+.root-analysis-summary {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #f0f8ff;
+    border-radius: 8px;
+    border: 1px solid #1976d2;
+}
+
+body.dark-mode .root-analysis-summary {
+    background-color: #1a2332;
+    border-color: #3b82c4;
+}
+
+.root-analysis-heading {
+    margin: 0;
+    color: #1976d2;
+}
+
+body.dark-mode .root-analysis-heading {
+    color: #64b5f6;
+}
+
+/* Selected root info */
+.selected-root-info {
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #fff3cd;
+    border-radius: 6px;
+    font-size: 14px;
+    border: 1px solid #ffc107;
+}
+
+body.dark-mode .selected-root-info {
+    background-color: #3d3416;
+    border-color: #ffc107;
+    color: #e0e0e0;
+}
+
+/* Root card */
+.root-card {
+    padding: 15px;
+    background-color: white;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+}
+
+body.dark-mode .root-card {
+    background-color: #2d2d2d;
+    border-color: #404040;
+}
+
+/* Root Arabic text */
+.root-arabic-text {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+    font-family: 'Traditional Arabic', serif;
+    direction: rtl;
+    display: inline-block;
+    padding: 2px 8px;
+    background-color: #fff3cd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+body.dark-mode .root-arabic-text {
+    color: #ffffff;
+    background-color: #4a3f1f;
+}
+
+/* Meanings label */
+.meanings-label {
+    color: #666;
+    font-size: 14px;
+}
+
+body.dark-mode .meanings-label {
+    color: #b0b0b0;
+}
+
+/* Meaning variations summary */
+.meaning-variations-summary {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+body.dark-mode .meaning-variations-summary {
+    background-color: #1a1a1a;
+    border-color: #404040;
+}
+
+.meaning-variations-heading {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+body.dark-mode .meaning-variations-heading {
+    color: #e0e0e0;
+}
+
+.meaning-variations-description {
+    margin-bottom: 15px;
+    color: #666;
+}
+
+body.dark-mode .meaning-variations-description {
+    color: #b0b0b0;
+}
+
+/* Variation card */
+.variation-card {
+    padding: 10px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+body.dark-mode .variation-card {
+    background-color: #2d2d2d;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+.variation-card.source-verse {
+    background-color: #e3f2fd;
+}
+
+body.dark-mode .variation-card.source-verse {
+    background-color: #1e3a5f;
+}
+
+/* Arabic word highlight */
+.arabic-word-highlight {
+    color: #2e7d32;
+}
+
+body.dark-mode .arabic-word-highlight {
+    color: #66bb6a;
+}
+
+/* Occurrence count */
+.occurrence-count {
+    color: #666;
+}
+
+body.dark-mode .occurrence-count {
+    color: #b0b0b0;
+}
+
+/* Expand/Collapse button */
+.expand-collapse-btn {
+    background: none;
+    border: 1px solid #1976d2;
+    color: #1976d2;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+body.dark-mode .expand-collapse-btn {
+    border-color: #64b5f6;
+    color: #64b5f6;
+}
+
+/* Source verse label */
+.source-verse-label {
+    margin-left: 10px;
+    font-size: 0.8em;
+    color: #1976d2;
+    font-weight: normal;
+}
+
+body.dark-mode .source-verse-label {
+    color: #64b5f6;
+}
+
+/* Occurrence badge */
+.occurrence-badge {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+body.dark-mode .occurrence-badge {
+    background-color: #1e3a5f;
+    color: #64b5f6;
+}
+
+/* Meaning tag */
+.meaning-tag {
+    background-color: #f0f0f0;
+    color: #333;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 13px;
+}
+
+body.dark-mode .meaning-tag {
+    background-color: #404040;
+    color: #e0e0e0;
+}
+
+/* Similar meaning info */
+.similar-meaning-info {
+    padding: 10px;
+    background-color: #fff3cd;
+    border-radius: 4px;
+}
+
+body.dark-mode .similar-meaning-info {
+    background-color: #3d3416;
+}
+
+.similar-meaning-text {
+    margin: 0;
+    font-size: 0.9em;
+}
+
+body.dark-mode .similar-meaning-text {
+    color: #e0e0e0;
+}
+
+/* Total verses count */
+.total-verses-count {
+    margin: 5px 0 0 0;
+    font-size: 0.85em;
+    color: #666;
+}
+
+body.dark-mode .total-verses-count {
+    color: #b0b0b0;
+}
+
+/* Meaning tip box */
+.meaning-tip-box {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #fff3cd;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+body.dark-mode .meaning-tip-box {
+    background-color: #3d3416;
+    color: #e0e0e0;
+}
+
+/* Total occurrences note */
+.total-occurrences-note {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.85em;
+    color: #666;
+}
+
+body.dark-mode .total-occurrences-note {
+    color: #b0b0b0;
+}
+
+/* Footnote styles updated */
+.footnote {
+    font-size: 0.85em;
+    color: #666;
+    margin-top: 10px;
+}
+
+body.dark-mode .footnote {
+    color: #b0b0b0;
+}
+
+/* Loading message */
+.loading-message {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+}
+
+body.dark-mode .loading-message {
+    color: #b0b0b0;
+}
+
+/* Verse meaning variation */
+.verse-meaning-variation {
+    margin-top: 10px;
+    padding: 8px;
+    background-color: #f0f7ff;
+    border-radius: 4px;
+    font-size: 0.85em;
+}
+
+body.dark-mode .verse-meaning-variation {
+    background-color: #1a2e4a;
+    color: #e0e0e0;
+}
+
+/* Audio player toggle container */
+.audio-player-toggle-container {
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* Audio player toggle button */
+.audio-player-toggle-btn {
+    padding: 8px 16px;
+    background-color: #7c3aed;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.audio-player-toggle-btn:hover {
+    background-color: #6d28d9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+}
+
+.audio-player-toggle-btn.active {
+    background-color: #ff9800;
+}
+
+.audio-player-toggle-btn.active:hover {
+    background-color: #fb8c00;
+}
+
+body.dark-mode .audio-player-toggle-btn {
+    background-color: #8b5cf6;
+}
+
+body.dark-mode .audio-player-toggle-btn:hover {
+    background-color: #7c3aed;
+}
+
+body.dark-mode .audio-player-toggle-btn.active {
+    background-color: #ff9800;
+}
+
+body.dark-mode .audio-player-toggle-btn.active:hover {
+    background-color: #fb8c00;
+}
+
+/* Form buttons */
+.remove-verse-btn {
+    padding: 8px 12px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.remove-verse-btn:hover {
+    background-color: #e53935;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(244, 67, 54, 0.3);
+}
+
+body.dark-mode .remove-verse-btn {
+    background-color: #d32f2f;
+}
+
+body.dark-mode .remove-verse-btn:hover {
+    background-color: #c62828;
+}
+
+.add-verse-btn {
+    padding: 10px 20px;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.add-verse-btn:hover {
+    background-color: #1976d2;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+}
+
+body.dark-mode .add-verse-btn {
+    background-color: #1976d2;
+}
+
+body.dark-mode .add-verse-btn:hover {
+    background-color: #1565c0;
+}
+
+.compare-btn {
+    padding: 10px 25px;
+    background-color: #7c3aed;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.compare-btn:hover {
+    background-color: #6d28d9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(124, 58, 237, 0.3);
+}
+
+.compare-btn.disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.compare-btn.disabled:hover {
+    background-color: #ccc;
+    transform: none;
+    box-shadow: none;
+}
+
+body.dark-mode .compare-btn {
+    background-color: #8b5cf6;
+}
+
+body.dark-mode .compare-btn:hover {
+    background-color: #7c3aed;
+}
+
+body.dark-mode .compare-btn.disabled {
+    background-color: #666;
+}
+
+body.dark-mode .compare-btn.disabled:hover {
+    background-color: #666;
+}
